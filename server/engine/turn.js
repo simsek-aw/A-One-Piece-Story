@@ -25,8 +25,10 @@ import { panelFor, momentPanel } from "../ai/artProvider.js";
 import { unlockedLore, nextLore } from "../content/loreArcs.js";
 import { SKILLS } from "./character.js";
 import { startCombat, combatTurn, combatView } from "./combat.js";
-import { attemptJoinCanon, listCanonStatus } from "./canon.js";
+import { attemptJoinCanon, perspectiveCanon } from "./canon.js";
 import { currentEdition, newsHeadlines } from "./news.js";
+import { syncNewsDiscoveries, discoverCrew, metCrewIds, heardOfCrewIds } from "./knowledge.js";
+import { CANON_CREWS } from "../content/canonCrews.js";
 
 const HISTORY_LIMIT = 8;
 
@@ -186,6 +188,7 @@ async function resolveCombatEnd(game, provider) {
 // Kostet eine Tagesaktion. Erfolgschance hängt von der Offenheit der Crew ab.
 export async function doJoinCanon(game, provider, { crewId }) {
   requireAction(game);
+  discoverCrew(game, crewId, "begegnet"); // du suchst sie auf — Begegnung in Person
   const result = attemptJoinCanon(game, crewId); // deterministischer Check
   advanceTime(game, 2);
   const playerAction = result.success
@@ -266,6 +269,8 @@ function syncDailyEffects(game) {
 
 function buildContext(game, { kind, playerAction, checkResult, recruitTarget, activity, travelInfo, fruit, loreUnlocks, combatResult, canonResult }) {
   const c = game.character;
+  syncNewsDiscoveries(game); // aus der Zeitung "gehörte" Crews aktualisieren
+  const nameOf = (id) => CANON_CREWS[id]?.name || id;
   return {
     language: game.language,
     kind,
@@ -287,6 +292,9 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
       loreUnlocked: unlockedLore(game.world.flags.lore_fortschritt || 0).map((l) => l.title),
       // Schlagzeilen aus der Welt (auch außerhalb der Spieler-Bubble)
       news: newsHeadlines(game),
+      // Perspektive: Was der Charakter kennt (nur diese Crews darf er benennen).
+      crewsMet: metCrewIds(game).map(nameOf), // in Person getroffen — kennen ihn auch
+      crewsKnownOf: heardOfCrewIds(game).map(nameOf), // nur gehört — kennen ihn NICHT
     },
     character: characterDigest(game),
     // Rohwerte für Konsequenz-Logik (Mock nutzt sie, Claude sieht sie als Kontext).
@@ -361,8 +369,12 @@ function applyGmResponse(game, gm, turnInfo) {
     startCombat(game, gm.combatStart.enemies);
   }
 
-  // Angebot, einer kanonischen Crew beizutreten (von der KI eingestreut)
-  if (gm.canonOffer) game.world.canonOffer = gm.canonOffer;
+  // Angebot, einer kanonischen Crew beizutreten (von der KI eingestreut).
+  // Ein Abgesandter steht vor dir -> ihr seid euch in Person begegnet.
+  if (gm.canonOffer) {
+    game.world.canonOffer = gm.canonOffer;
+    discoverCrew(game, gm.canonOffer.crewId, "begegnet");
+  }
 
   // Szene (inkl. Key-Moment-Panels)
   const keyPanels = (gm.panels || []).map((p) => momentPanel(p.kind, p.caption));
@@ -407,6 +419,7 @@ function slug(name) {
 // Sichtbare Szene fürs Frontend.
 export function currentSceneView(game) {
   syncDailyEffects(game);
+  syncNewsDiscoveries(game); // frisch gehörte Crews vor dem Rendern übernehmen
   const c = game.character;
   return {
     gameId: game.id,
@@ -455,7 +468,7 @@ export function currentSceneView(game) {
     memory: memorySummary(game, 20),
     travelOptions: travelOptions(game),
     activities: listActivities(),
-    canon: listCanonStatus(game),
+    canon: perspectiveCanon(game), // nur was der Charakter kennt (Spielersicht)
     canonOffer: game.world.canonOffer || null,
     news: newsEdition(game),
     denDen: game.denDen,

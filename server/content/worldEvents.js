@@ -8,12 +8,12 @@ export const WORLD_EVENTS = [
   { day: 1, scope: "weltweit", headline: "Der Piratenkönig ist tot", body: "Gol D. Roger wurde in Loguetown hingerichtet. Seine letzten Worte haben ein Feuer entfacht — überall brechen Menschen zur See auf." },
   { day: 3, scope: "east_blue", headline: "Ansturm auf die Häfen", body: "In allen vier Blues rüsten frische Crews ihre Schiffe. Werften und Waffenschmiede kommen kaum nach." },
   { day: 10, scope: "weltweit", headline: "Marine verstärkt Patrouillen", body: "Das Hauptquartier ordnet verschärfte Kontrollen an. Wer auffällt, landet schnell auf einem Steckbrief." },
-  { day: 25, scope: "grand_line", headline: "Weißbart weiterhin unangefochten", body: "Berichte bestätigen: Edward Newgates Flotte kontrolliert weite Teile ihrer Gewässer. Niemand wagt den offenen Konflikt." },
-  { day: 40, scope: "grand_line", headline: "Eine Kaiserin sammelt Familie", body: "Aus dem Neuen Land heißt es, eine mächtige Piratin nehme immer mehr Untergebene in ihre 'Familie' auf." },
+  { day: 25, scope: "grand_line", headline: "Weißbart weiterhin unangefochten", body: "Berichte bestätigen: Edward Newgates Flotte kontrolliert weite Teile ihrer Gewässer. Niemand wagt den offenen Konflikt.", crews: ["whitebeard"] },
+  { day: 40, scope: "grand_line", headline: "Eine Kaiserin sammelt Familie", body: "Aus dem Neuen Land heißt es, eine mächtige Piratin nehme immer mehr Untergebene in ihre 'Familie' auf.", crews: ["big_mom"] },
   { day: 60, scope: "weltweit", headline: "Kopfgelder steigen", body: "Die Weltregierung hebt Kopfgelder für aufstrebende Piraten an — das Zeitalter wird gefährlicher." },
   { day: 90, scope: "grand_line", headline: "Gerücht: Ein Strohhut auf der Grand Line", body: "Man munkelt von einem jungen Kapitän, der einst zu Rogers Crew gehörte — mit rotem Haar und einem Strohhut." },
-  { day: 120, scope: "weltweit", headline: "Riesen aus Elbaf gesichtet", body: "Krieger von der Insel der Riesen sollen wieder zur See fahren. Wer ihnen begegnet, berichtet von Ehrfurcht und Furcht zugleich." },
-  { day: 160, scope: "grand_line", headline: "Eine Bestie im Neuen Land", body: "Von einem scheinbar unbesiegbaren Piraten ist die Rede, der ganze Inseln unterwirft." },
+  { day: 120, scope: "weltweit", headline: "Riesen aus Elbaf gesichtet", body: "Krieger von der Insel der Riesen sollen wieder zur See fahren. Wer ihnen begegnet, berichtet von Ehrfurcht und Furcht zugleich.", crews: ["giants"] },
+  { day: 160, scope: "grand_line", headline: "Eine Bestie im Neuen Land", body: "Von einem scheinbar unbesiegbaren Piraten ist die Rede, der ganze Inseln unterwirft.", crews: ["kaido"] },
   { day: 200, scope: "weltweit", headline: "Die Regierung schweigt über die Leere", body: "Gelehrte, die zu einem gewissen 'fehlenden Jahrhundert' forschen, verschwinden. Offiziell gibt es 'nichts zu berichten'." },
 ];
 

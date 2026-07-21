@@ -6,6 +6,7 @@
 import { skillCheck } from "./dice.js";
 import { bountyTier } from "./bounty.js";
 import { CANON_CREWS } from "../content/canonCrews.js";
+import { discoverCrew, demoteCrew, crewRelation, metCrewIds, heardOfCrewIds } from "./knowledge.js";
 
 // DC aus Offenheit: openness 90 -> 7 (leicht), 65 -> 12, 5 -> 24 (fast unmöglich).
 export function joinDC(openness) {
@@ -45,28 +46,49 @@ export function effectiveJoinDC(crew, character) {
   return Math.max(3, base - fameBonus(crew, character));
 }
 
-// Status aller Crews fürs UI (canonical zuerst, dann kleinere Gruppen).
+// Vollständige Crew-Liste (ADMIN-/Designsicht — sieht alles).
 export function listCanonStatus(game) {
   return Object.values(CANON_CREWS)
-    .map((crew) => {
-      const av = joinAvailability(game, crew);
-      return {
-        id: crew.id,
-        name: crew.name,
-        recruiter: crew.recruiter,
-        faction: crew.faction,
-        canonical: !!crew.canonical,
-        openness: crew.openness,
-        prestige: crew.prestige,
-        blurb: crew.blurb,
-        joinable: crew.joinable,
-        available: av.available,
-        reason: av.reason,
-        effectiveDc: effectiveJoinDC(crew, game.character),
-        affiliated: game.character.canonAffiliation?.crewId === crew.id,
-      };
-    })
+    .map((crew) => crewStatus(game, crew))
     .sort((a, b) => (b.canonical - a.canonical) || (b.prestige - a.prestige));
+}
+
+function crewStatus(game, crew) {
+  const av = joinAvailability(game, crew);
+  return {
+    id: crew.id,
+    name: crew.name,
+    recruiter: crew.recruiter,
+    faction: crew.faction,
+    canonical: !!crew.canonical,
+    openness: crew.openness,
+    prestige: crew.prestige,
+    blurb: crew.blurb,
+    joinable: crew.joinable,
+    available: av.available,
+    reason: av.reason,
+    effectiveDc: effectiveJoinDC(crew, game.character),
+    affiliated: game.character.canonAffiliation?.crewId === crew.id,
+    relation: crewRelation(game, crew.id),
+  };
+}
+
+// SPIELERSICHT: nur Crews, die der Charakter kennt. "met" = in Person getroffen
+// (beitretbar), "heardOf" = nur aus Nachrichten/Gerüchten gehört (erst finden).
+export function perspectiveCanon(game) {
+  const met = metCrewIds(game)
+    .map((id) => crewStatus(game, CANON_CREWS[id]))
+    .filter(Boolean)
+    .sort((a, b) => (b.affiliated - a.affiliated) || (b.prestige - a.prestige));
+  const heardOf = heardOfCrewIds(game)
+    .map((id) => CANON_CREWS[id])
+    .filter(Boolean)
+    .map((crew) => ({
+      id: crew.id, name: crew.name, faction: crew.faction,
+      canonical: !!crew.canonical, blurb: crew.blurb, prestige: crew.prestige,
+    }))
+    .sort((a, b) => b.prestige - a.prestige);
+  return { met, heardOf };
 }
 
 // Beitrittsversuch (deterministischer Überzeugen-Check gegen den crew-abhängigen DC).
@@ -94,12 +116,14 @@ export function attemptJoinCanon(game, crewId) {
       c.standing = { typ: "marine_rang", wert: crew.effects?.rank || "Rekrut", kopfgeld: 0 };
     }
     game.world.flags[`canon_${crew.id}`] = true;
+    discoverCrew(game, crew.id, "mitglied");
   }
   return { crew, check, success: check.success, dc };
 }
 
 export function leaveCanon(game) {
   const aff = game.character.canonAffiliation;
+  if (aff) demoteCrew(game, aff.crewId, "begegnet"); // man kennt sie weiterhin
   game.character.canonAffiliation = null;
   return aff;
 }

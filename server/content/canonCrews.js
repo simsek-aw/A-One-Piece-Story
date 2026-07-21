@@ -55,6 +55,7 @@ export const CANON_CREWS = {
   marine: {
     id: "marine", name: "Die Marine", recruiter: "ein Rekrutierungsoffizier",
     faction: "marine", canonical: true, openness: 75, prestige: 60, eraFromDay: 1, requirements: { maxBounty: 0 },
+    initialRelation: "begegnet", // Die Marine hat überall Rekrutierungsbüros — jederzeit ansprechbar.
     effects: { marineFriendly: true, rank: "Rekrut", note: "Als Marine wird man kaum von Patrouillen behelligt — solange die Weste sauber bleibt." },
     blurb: "Die Streitkräfte der Weltregierung nehmen gern Freiwillige mit sauberer Weste. Ein Kopfgeld schließt dich aus.",
     joinable: true,
@@ -62,6 +63,7 @@ export const CANON_CREWS = {
   roger: {
     id: "roger", name: "Roger-Piratenbande", recruiter: "—",
     faction: "pirat", canonical: true, openness: 0, prestige: 100, eraFromDay: 1, requirements: {},
+    initialRelation: "gehört", // Rogers Hinrichtung kennt gerade die ganze Welt (aber unbeitretbare Legende).
     effects: {},
     blurb: "Die Crew des Piratenkönigs — soeben aufgelöst, ihr Kapitän hingerichtet. Ein Beitritt ist unmöglich; nur Legenden bleiben.",
     joinable: false,

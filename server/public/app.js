@@ -600,16 +600,22 @@ function renderCanon(view) {
   const affEl = $("#canonAffil");
   const offerEl = $("#canonOffer");
   const listEl = $("#canonList");
+  const heardWrap = $("#canonHeardWrap");
+  const heardEl = $("#canonHeard");
+  const emptyEl = $("#canonEmpty");
   const aff = view.character.canonAffiliation;
   const disabled = actionsBlocked(view);
+  // Spielersicht: canon = { met: [...], heardOf: [...] }
+  const met = (view.canon && view.canon.met) || [];
+  const heardOf = (view.canon && view.canon.heardOf) || [];
 
   affEl.innerHTML = aff
     ? `✅ Mitglied: <b>${escapeHtml(aff.name)}</b> (${escapeHtml(aff.rank)})${aff.marineFriendly ? " · Marine-Schutz" : aff.protection ? " · Schutz der Crew" : ""}`
-    : `<span class="hint">Noch ungebunden — du kannst versuchen, einer kanonischen Crew beizutreten.</span>`;
+    : `<span class="hint">Noch ungebunden. Wem du begegnest, den kannst du um Aufnahme bitten.</span>`;
 
   // Aktives Angebot hervorheben
   if (view.canonOffer && !aff) {
-    const crew = (view.canon || []).find((c) => c.id === view.canonOffer.crewId);
+    const crew = met.find((c) => c.id === view.canonOffer.crewId);
     if (crew) {
       offerEl.classList.remove("hidden");
       offerEl.innerHTML = `<b>Angebot:</b> ${escapeHtml(crew.name)} `;
@@ -621,9 +627,9 @@ function renderCanon(view) {
     } else offerEl.classList.add("hidden");
   } else offerEl.classList.add("hidden");
 
-  // Liste aller Crews mit Offenheit + Status
+  // Begegnete Crews: mit Status + Beitritts-Option
   listEl.innerHTML = "";
-  (view.canon || []).forEach((crew) => {
+  met.forEach((crew) => {
     const openTxt = crew.openness >= 80 ? "sehr offen" : crew.openness >= 55 ? "offen" : crew.openness >= 25 ? "wählerisch" : "extrem wählerisch";
     const canonTag = crew.canonical ? `<span class="tier t3">Canon</span>` : `<span class="tier t0">kleine Crew</span>`;
     const row = el("div", "li");
@@ -640,6 +646,19 @@ function renderCanon(view) {
     }
     listEl.appendChild(row);
   });
+  listEl.classList.toggle("hidden", met.length === 0);
+
+  // Nur gehört: Name + Blurb, KEIN Beitritt (du müsstest sie erst finden)
+  heardEl.innerHTML = "";
+  heardOf.forEach((crew) => {
+    const canonTag = crew.canonical ? `<span class="tier t3">Canon</span>` : `<span class="tier t0">Gruppe</span>`;
+    const row = el("div", "li muted");
+    row.innerHTML = `<b>${escapeHtml(crew.name)}</b> ${canonTag}<small>${escapeHtml(crew.blurb)}</small><div class="canon-row-status"><span class="hint">nur vom Hörensagen — du müsstest sie erst aufspüren</span></div>`;
+    heardEl.appendChild(row);
+  });
+  heardWrap.classList.toggle("hidden", heardOf.length === 0);
+
+  emptyEl.classList.toggle("hidden", met.length > 0 || heardOf.length > 0);
 }
 
 function renderNews(view) {

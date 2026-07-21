@@ -63,6 +63,19 @@ folgenden Punkte bauen darauf auf.
       `manifest.json` + Service-Worker (Offline-Shell, /api network-first),
       App-Icons — Grundlage für späteres 2-Spieler-Handy-Multiplayer.
 
+## Erledigt (Ausbaustufe 8)
+
+- [x] Perspektiven-/Wissenssystem (Spielersicht statt Admin-Allwissen):
+      Im Spiel sieht man nicht mehr die komplette Crew-Liste, sondern nur, was
+      der Charakter kennt (engine/knowledge.js, world.knownCrews). Gerichtete
+      Beziehung: „gehört" (nur aus der Zeitung/Gerücht — Einbahnwissen),
+      „begegnet" (in Person getroffen, gegenseitig), „mitglied". Daraus folgt
+      das gegenseitige Gedächtnis: Kaido/Big Mom & Co. erinnern sich nur an den
+      Spieler, wenn es eine echte Begegnung gab. News verlinken Weltgrößen
+      (worldEvents.crews) → man hört von ihnen, ohne dass sie einen kennen.
+      Spielleiter-Prompt um „Perspektive & Wissen" ergänzt; UI zeigt
+      „Begegnet / vor Ort" vs. „Nur vom Hörensagen".
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen
