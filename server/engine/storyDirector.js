@@ -12,11 +12,16 @@ const THREADS_BY_LOCATION = {
   windmuehlendorf: { title: "Das zerrissene Logbuch", hook: "In der Bibliothek fehlt genau die Seite, die von einem fremden Schiff erzählt." },
 };
 
-const INVESTIGATE_PATTERN = /\b(nachforsch(?:e|en|t|st)?|herausfind(?:e|en|t|st)?|frag(?:e|en|t|st)?|such(?:e|en|t|st)?|spür(?:e|en|t|st)?|verfolg(?:e|en|t|st)?|lausch(?:e|en|t|st)?|zuhoer(?:e|en|t|st)?|zuhör(?:e|en|t|st)?|beobacht(?:e|en|t|st)?)\b/i;
+const INVESTIGATE_PATTERN = /\b(nachforsch(?:e|en|t|st)?|herausfind(?:e|en|t|st)?|frag(?:e|en|t|st)?|such(?:e|en|t|st)?|spur(?:e|en|t|st)?|verfolg(?:e|en|t|st)?|lausch(?:e|en|t|st)?|zuhor(?:e|en|t|st)?|beobacht(?:e|en|t|st)?)\b/i;
+const THREAD_FOCUS_PATTERN = /\b(spur|hinweis|faden|ratsel|geheimnis|auftrag|ermittlung)\w*/i;
+const THREAD_STOP_WORDS = new Set([
+  "aber", "aktiv", "dass", "deine", "einen", "einer", "eines", "erhalt", "faden", "geheim", "gegen", "ihre", "ihren",
+  "selbst", "seine", "seinen", "sich", "story", "uber", "unter", "werden", "wird", "title", "hook", "location",
+]);
 
 export function ensureStoryDirector(game) {
   const director = game.world.storyDirector || (game.world.storyDirector = { threads: [], lastEvent: null });
-  if (!director.threads.some((t) => t.status === "aktiv")) {
+  if (!director.threads.some((t) => t.status === "aktiv" && t.location === game.world.location)) {
     const source = THREADS_BY_LOCATION[game.world.location] || THREADS_BY_LOCATION.loguetown;
     director.threads.push({
       id: `faden_${game.world.location}_${game.world.day}`,
@@ -36,11 +41,11 @@ export function ensureStoryDirector(game) {
 
 export function advanceStoryDirector(game, playerAction) {
   const director = ensureStoryDirector(game);
-  const thread = director.threads.find((t) => t.status === "aktiv");
+  const thread = director.threads.find((t) => t.status === "aktiv" && t.location === game.world.location);
   if (!thread) return null;
 
   let event = null;
-  if (INVESTIGATE_PATTERN.test(playerAction || "")) {
+  if (isThreadInvestigation(playerAction, thread)) {
     thread.progress = Math.min(3, thread.progress + 1);
     thread.neglect = 0;
     event = { type: thread.progress === 3 ? "geloest" : "fortschritt", threadId: thread.id, title: thread.title, progress: thread.progress };
@@ -66,11 +71,40 @@ export function advanceStoryDirector(game, playerAction) {
   return event;
 }
 
+// Ein allgemeines „ich beobachte“ darf keinen beliebigen Plot lösen. Neben
+// einer ermittelnden Handlung braucht es einen Bezug zum Titel/Haken oder eine
+// ausdrückliche Nennung von Spur, Hinweis oder Ermittlungsfaden.
+export function isThreadInvestigation(playerAction, thread) {
+  const action = normalize(playerAction);
+  if (!INVESTIGATE_PATTERN.test(action)) return false;
+  if (THREAD_FOCUS_PATTERN.test(action)) return true;
+
+  const threadWords = tokenize(`${thread?.title || ""} ${thread?.hook || ""}`);
+  const actionWords = new Set(tokenize(action));
+  return threadWords.some((word) => actionWords.has(word));
+}
+
+function tokenize(value) {
+  return normalize(value)
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length >= 5 && !THREAD_STOP_WORDS.has(word))
+    .map(wordStem);
+}
+
+function wordStem(word) {
+  return word.length >= 7 ? word.replace(/(?:ern|en|er|es|e|n|s)$/, "") : word;
+}
+
+function normalize(value) {
+  return String(value || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
 export function storyDirectorView(game) {
   const director = ensureStoryDirector(game);
   return {
     active: director.threads
       .filter((t) => t.status === "aktiv")
+      .sort((a, b) => Number(b.location === game.world.location) - Number(a.location === game.world.location))
       .map((t) => ({ title: t.title, hook: t.hook, progress: t.progress, stage: t.stage, location: t.location })),
     lastEvent: director.lastEvent,
   };

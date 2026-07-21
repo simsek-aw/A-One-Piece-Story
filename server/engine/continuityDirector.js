@@ -7,10 +7,12 @@ import { validateGmResponse } from "./schema.js";
 const MOVEMENT = /\b(geh|lauf|renn|fahr|segel|reise|ankomm|rud|kletter|spring|betret|verlass|steig|bring|führ|folg|kehr|gelang|flieh|schleich|anleg|ableg|nehme mir .{0,20}zimmer|suche .{0,30}schlafplatz)/i;
 const ARRIVAL = /\b(kommt? an bord|klettert|springt (?:an|auf)|legt an|rudert heran|tritt ein|öffnet .{0,24}tür|wird .{0,24}(?:gebracht|geführt)|folgt dir|war .{0,30}versteckt|aus der (?:kajüte|luke|zelle)|erscheint in der tür)/i;
 const DEPARTURE = /\b(geht|verlässt|verschwindet|zieht sich zurück|steigt aus|springt von bord|wird abgeführt|läuft davon|verabschiedet sich)/i;
-const CONVERSATION = /\b(sprech|red|frag|antwort|verhandel|überzeug|diskut|kaufe|verkaufe|bitte)/i;
 const VIOLENT_ACTION = /\b(angreif|schlag|trete|schieß|erstech|bedroh|provozier|ziehe .*waffe|kämpf)/i;
 const COMBAT_CAUSE = /\b(greift? .{0,24}an|überfällt|zieht .{0,20}waffe|stürzt sich|feuert auf|schlägt nach|bedroht|stellt dich|versperrt .{0,20}weg|aus rache|wegen .{0,30}(?:beute|kopfgeld|befehl)|verteidig)/i;
 const COMBAT_MOTIVE = /\b(weil|nachdem|aus rache|kopfgeld|beute|befehl|verhaft|ausraub|überfall|erkennt dich|verfolgt|beschützt|territorium|schmuggel|zeuge|streit)/i;
+const DISCOVERY_ACTION = /\b(such|untersuch|durchstöber|durchsuch|öffn|kiste|truhe|lager|höhle|wrack|beute|grab)\w*/i;
+const SHIP_ACTION = /\b(schiff|boot|kahn|kai|dock)\w*.{0,40}\b(kauf|nehm|beanspruch|reparier|übernehm|stehl)\w*|\b(kauf|nehm|beanspruch|reparier|übernehm|stehl)\w*.{0,40}\b(schiff|boot|kahn)\w*/i;
+const EXPLICIT_REWARD = /\b(überreicht|übergibt|schenkt|belohnt|als belohnung|vermacht|gibt dir|bietet dir)/i;
 
 export function continuityContext(game) {
   const present = new Set(game.scene?.presentNpcIds || []);
@@ -29,6 +31,7 @@ export function continuityContext(game) {
       "Neue Personen brauchen an abgeschlossenen Orten einen plausiblen Zugang.",
       "Ein Kampf braucht einen sichtbaren Auslöser und ein nachvollziehbares Motiv.",
       "Ortswechsel müssen durch Spielerhandlung oder Erzählung überbrückt werden.",
+      "Funde und neue Besitztümer brauchen eine passende Suche, Übergabe oder Belohnung.",
     ],
   };
 }
@@ -99,24 +102,20 @@ export function auditContinuity(game, context, gm) {
     }
   }
 
-  if (confined && !placeChanged) {
+  if (context.kind === "turn" && !placeChanged) {
     for (const npc of continuity.presentNpcs || []) {
       if (!newIds.has(npc.id) && !actorTransitionExplained(gm.narration, npc, DEPARTURE)) {
-        issues.push(`„${npc.name}“ verschwindet vom abgeschlossenen Schauplatz ohne erzählten Weggang.`);
+        issues.push(`„${npc.name}“ verschwindet aus der laufenden Szene ohne erzählten Weggang.`);
       }
     }
   }
 
-  if (!confined) {
-    const namedTargets = (continuity.presentNpcs || []).filter((npc) => actorReferenced(context.playerAction, npc));
-    for (const npc of namedTargets) {
-      if (!newIds.has(npc.id) && !DEPARTURE.test(gm.narration) && !placeChanged) {
-        issues.push(`Der angesprochene NPC „${npc.name}“ verschwindet ohne erklärten Weggang.`);
-      }
-    }
-    if (CONVERSATION.test(context.playerAction || "") && oldIds.size && ![...oldIds].some((id) => newIds.has(id)) && !DEPARTURE.test(gm.narration) && !placeChanged) {
-      issues.push("Alle bisherigen Gesprächspartner verschwinden mitten im Gespräch.");
-    }
+  if (gm.devilFruitFound && !DISCOVERY_ACTION.test(context.playerAction || "") && !EXPLICIT_REWARD.test(gm.narration) && context.storyEvent?.type !== "geloest") {
+    issues.push("Die Teufelsfrucht erscheint ohne passende Suche, Öffnung, Übergabe oder Belohnung.");
+  }
+
+  if (gm.shipAcquired && !SHIP_ACTION.test(context.playerAction || "") && !EXPLICIT_REWARD.test(gm.narration) && context.storyEvent?.type !== "geloest") {
+    issues.push("Das Schiff geht ohne passende Handlung, Übergabe oder Belohnung in den Besitz des Spielers über.");
   }
 
   if (gm.combatStart) {
@@ -171,13 +170,6 @@ function npcMentioned(narration, npc) {
   const text = normalize(narration);
   const name = normalize(npc.name);
   if (name.length >= 3 && text.includes(name)) return true;
-  return String(npc.role || "").split(/[^\p{L}\p{N}]+/u).map(normalize).some((word) => word.length >= 5 && text.includes(word));
-}
-
-function actorReferenced(action, npc) {
-  const text = normalize(action);
-  if (!text) return false;
-  if (text.includes(normalize(npc.name))) return true;
   return String(npc.role || "").split(/[^\p{L}\p{N}]+/u).map(normalize).some((word) => word.length >= 5 && text.includes(word));
 }
 

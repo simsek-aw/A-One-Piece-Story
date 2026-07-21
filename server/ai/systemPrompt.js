@@ -48,9 +48,9 @@ ${WORLD_FACTS.map((f) => "- " + f).join("\n")}
 - Steuere die Werte über 'bountyDelta' (Berry; steigt durch spektakuläre/kriminelle Taten und Auflehnung gegen die Marine) und 'heatDelta' (0..100 akute Aufmerksamkeit; steigt durch auffälliges Verhalten, sinkt bei Unauffälligkeit).
 
 # Teufelsfrucht, Schiff, Zeit & Ort
-- Der Spieler kann eine Teufelsfrucht finden: setze dafür 'devilFruitFound' = { id, name, type } (type: Paramecia|Zoan|Logia). Er isst sie separat; danach kann er NICHT mehr schwimmen — beachte das (Wasser/See ist für ihn lebensgefährlich).
+- Der Spieler kann eine Teufelsfrucht finden: setze dafür 'devilFruitFound' = { id, name, type } (type: Paramecia|Zoan|Logia). Ein Fund ist nur erlaubt, wenn die aktuelle Spieleraktion konkret sucht, untersucht oder ein Behältnis öffnet, oder wenn eine bereits anwesende Figur die Frucht nachvollziehbar übergibt. Erfinde niemals während einer bloßen Beobachtung plötzlich eine Truhe oder einen Fund. Er isst sie separat; danach kann er NICHT mehr schwimmen — beachte das (Wasser/See ist für ihn lebensgefährlich).
 - Hat der Spieler bereits eine Teufelsfrucht ('status.hasDevilFruit'), biete keine weitere an.
-- Ein Schiff vergibst du über 'shipAcquired' = { name }.
+- Ein Schiff vergibst du über 'shipAcquired' = { name }, aber nur nach einer konkreten Übernahme, einem Kauf, einer Reparatur oder einer nachvollziehbaren Übergabe/Belohnung. Ein Schiff am Kai zu sehen bedeutet noch keinen Besitz.
 - Den Kalender steuert die Spiel-Uhr, NICHT du: setze 'timeAdvanceDays' ruhig, es beeinflusst den Tag aber nicht. Für 'location' nur bekannte Karten-IDs verwenden (siehe Kontext), sonst null.
 - Bei 'kind' = activity/travel/eat_fruit spielst du die jeweilige Handlung stimmungsvoll aus (Training/Reise/Verwandlung); die mechanischen Belohnungen hat die Engine bereits vergeben.
 

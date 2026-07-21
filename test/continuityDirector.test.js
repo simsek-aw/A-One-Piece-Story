@@ -100,3 +100,42 @@ test("uses a safe local continuation when both drafts are implausible", async ()
   assert.deepEqual(result.npcs.map((npc) => npc.id), ["seller", "officer"]);
   assert.equal(game.lastContinuityReview.fallback, true);
 });
+
+test("keeps an established NPC present even at an open location", () => {
+  const game = gameOnBoat();
+  game.world.sceneLocation = "Loguetown – Kai";
+  game.scene.presentNpcIds = ["seller"];
+  const context = { kind: "turn", playerAction: "Ich halte Abstand und beobachte.", continuity: continuityContext(game) };
+  const bad = scene({
+    narration: "Du beobachtest den Kai. Niemand reagiert auf dich.",
+    npcs: [],
+  });
+
+  assert.ok(auditContinuity(game, context, bad).some((issue) => issue.includes("Taro") && issue.includes("verschwindet")));
+});
+
+test("rejects a random devil fruit during passive observation", () => {
+  const game = gameOnBoat();
+  game.scene.presentNpcIds = [];
+  const context = { kind: "turn", playerAction: "Ich halte Abstand und beobachte.", continuity: continuityContext(game) };
+  const bad = scene({
+    narration: "In einer alten Truhe entdeckst du plötzlich eine Knet-Frucht.",
+    npcs: [],
+    devilFruitFound: { id: "knet_frucht", name: "Knet-Frucht", type: "Paramecia" },
+  });
+
+  assert.ok(auditContinuity(game, context, bad).some((issue) => issue.includes("Teufelsfrucht")));
+});
+
+test("accepts a devil fruit after a deliberate search", () => {
+  const game = gameOnBoat();
+  game.scene.presentNpcIds = [];
+  const context = { kind: "turn", playerAction: "Ich durchsuche die alte Truhe und öffne den doppelten Boden.", continuity: continuityContext(game) };
+  const plausible = scene({
+    narration: "Im doppelten Boden der Truhe entdeckst du eine Knet-Frucht.",
+    npcs: [],
+    devilFruitFound: { id: "knet_frucht", name: "Knet-Frucht", type: "Paramecia" },
+  });
+
+  assert.deepEqual(auditContinuity(game, context, plausible), []);
+});

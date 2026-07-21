@@ -37,34 +37,39 @@ const LOCATION_FLAVOR = {
 };
 
 const NPC_POOL = [
-  { id: "npc_kaya_die_wirtin", name: "Kaya die Wirtin", role: "Kneipenwirtin" },
-  { id: "npc_gunkan_der_soeldner", name: "Gunkan", role: "Söldner mit Narbe" },
-  { id: "npc_lina_navigatorin", name: "Lina", role: "junge Navigatorin" },
-  { id: "npc_offizier_borrot", name: "Offizier Borrot", role: "Marine-Offizier" },
-  { id: "npc_alter_job", name: "Der alte Job", role: "Schiffszimmermann a.D." },
-  { id: "npc_maskierter_fremder", name: "Ein maskierter Fremder", role: "?" },
+  { id: "npc_kaya_die_wirtin", name: "Kaya die Wirtin", role: "Kneipenwirtin", locations: ["hafenstadt", "dorf"] },
+  { id: "npc_gunkan_der_soeldner", name: "Gunkan", role: "Söldner mit Narbe", locations: ["hafenstadt", "dorf", "marinestadt"] },
+  { id: "npc_lina_navigatorin", name: "Lina", role: "junge Navigatorin", locations: ["hafenstadt", "dorf"] },
+  { id: "npc_offizier_borrot", name: "Offizier Borrot", role: "Marine-Offizier", locations: ["marinevorposten", "marinestadt"] },
+  { id: "npc_rekrut_nilo", name: "Rekrut Nilo", role: "nervöser Marine-Rekrut", locations: ["marinevorposten", "marinestadt"] },
+  { id: "npc_alter_job", name: "Der alte Job", role: "Schiffszimmermann a.D.", locations: ["hafenstadt", "dorf"] },
+  { id: "npc_maskierter_fremder", name: "Ein maskierter Fremder", role: "zwielichtiger Reisender", locations: ["hafenstadt", "dorf", "marinestadt"] },
 ];
 
-const OPENERS = [
-  "Ein hagerer Mann mit stechendem Blick spricht dich an.",
-  "Aus einer Seitengasse hörst du einen unterdrückten Hilferuf.",
-  "Ein Kind zupft an deinem Ärmel und deutet aufgeregt zum Kai.",
-  "Eine Gestalt am Tresen beobachtet dich schon eine ganze Weile.",
-  "Ein Aushang flattert an der Wand: gesucht wird eine mutige Hand für einen Auftrag.",
-];
-
-const TWISTS = [
-  "Doch etwas an der Sache stimmt nicht — der Fremde trägt ein Marine-Abzeichen unter dem Mantel.",
-  "Erst später wird dir klar: Der Name auf dem Papier gehört jemandem, den du bereits getroffen hast.",
-  "Als du dich umdrehst, ist die Person spurlos verschwunden — und deine Börse fühlt sich leichter an.",
-  "Ein Windstoß enthüllt für einen Moment eine Tätowierung, die verdächtig nach einem berüchtigten Jolly Roger aussieht.",
-];
+const DISCOVERY_ACTION = /\b(such|untersuch|durchstöber|durchsuch|öffn|kiste|truhe|lager|höhle|wrack|beute|grab)\w*/i;
+const SHIP_ACTION = /\b(schiff|boot|kahn|kai|dock)\w*.{0,40}\b(kauf|nehm|beanspruch|reparier|übernehm|stehl)\w*|\b(kauf|nehm|beanspruch|reparier|übernehm|stehl)\w*.{0,40}\b(schiff|boot|kahn)\w*/i;
 
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 function chance(p) {
   return Math.random() < p;
+}
+
+function npcForContext(context) {
+  const type = context.world.locationType;
+  const candidates = NPC_POOL.filter((npc) => npc.locations.includes(type));
+  return pick(candidates.length ? candidates : NPC_POOL);
+}
+
+function introduceNpc(npc, context) {
+  if (npc.id === "npc_kaya_die_wirtin") return `Vor der kleinen Hafenkneipe winkt dich ${npc.name}, die Wirtin, zu sich.`;
+  if (npc.id === "npc_offizier_borrot") return `${npc.name} löst sich aus einer Marine-Patrouille und tritt mit prüfendem Blick auf dich zu.`;
+  if (npc.id === "npc_rekrut_nilo") return `${npc.name} wartet, bis sein Vorgesetzter außer Hörweite ist, und spricht dich leise an.`;
+  if (npc.id === "npc_lina_navigatorin") return `${npc.name}, eine junge Navigatorin mit Seekarten unter dem Arm, spricht dich nahe dem Kai an.`;
+  if (npc.id === "npc_alter_job") return `${npc.name} legt sein Werkzeug beiseite und mustert dich vom Rand der Werft aus.`;
+  if (npc.id === "npc_gunkan_der_soeldner") return `${npc.name}, ein narbengesichtiger Söldner, lehnt unweit von dir an einer Mauer und spricht dich an.`;
+  return `${npc.name} hält sich am Rand von ${context.world.sceneLocation || context.world.locationName} auf und gibt dir ein knappes Zeichen.`;
 }
 
 export class MockProvider {
@@ -196,15 +201,15 @@ export class MockProvider {
 
     const rumor = context.world.rumors[context.world.rumors.length - 1];
 
-    const npc = pick(NPC_POOL);
+    const npc = npcForContext(context);
     const thread = context.story?.active?.[0];
     return {
       narration:
         `${flavor}\n\n${archLine}\n\n` +
         (rumor ? `Am Rande hörst du ein Gerücht: „${rumor}“\n\n` : "") +
-        `${pick(OPENERS)} Es ist ${npc.name} (${npc.role}).` + (thread ? `\n\nEin Gedanke bleibt hängen: ${thread.hook}` : ""),
+        `${introduceNpc(npc, context)}` + (thread ? `\n\nEin Gedanke bleibt hängen: ${thread.hook}` : ""),
       choices: [
-        { id: "a", text: "Zuhören und herausfinden, was los ist.", skillCheck: { skill: "wahrnehmung", dc: 10 } },
+        { id: "a", text: thread ? `Den Hinweis zu „${thread.title}“ gezielt untersuchen.` : "Zuhören und herausfinden, was los ist.", skillCheck: { skill: "wahrnehmung", dc: 10 } },
         { id: "b", text: "Selbstbewusst das Gespräch übernehmen.", skillCheck: { skill: "ueberzeugen", dc: 12 } },
         { id: "c", text: "Vorsichtig Abstand halten und beobachten.", skillCheck: null },
       ],
@@ -265,13 +270,22 @@ export class MockProvider {
 
     // Bekannten NPC gelegentlich zurückbringen (Gedächtnis demonstrieren).
     const knownNpcs = context.memory?.npcs || [];
-    const npcs = [];
+    const presentNpcs = context.continuity?.presentNpcs || [];
+    const npcs = presentNpcs.map((npc) => ({
+      id: npc.id,
+      name: npc.name,
+      role: npc.role || "",
+      disposition: knownNpcs.find((known) => known.id === npc.id)?.gesinnung || 0,
+      note: "Bleibt am aktuellen Schauplatz anwesend.",
+    }));
     let recruitable = [];
 
-    if (knownNpcs.length && chance(0.5)) {
+    if (presentNpcs.length) {
+      parts.push(`${presentNpcs.map((npc) => npc.name).join(" und ")} ${presentNpcs.length === 1 ? "bleibt" : "bleiben"} in deiner Nähe und ${presentNpcs.length === 1 ? "verfolgt" : "verfolgen"} deine Handlung.`);
+    } else if (knownNpcs.length && chance(0.35)) {
       const known = pick(knownNpcs);
       const mood = known.gesinnung > 20 ? "freundlich" : known.gesinnung < -20 ? "feindselig" : "reserviert";
-      parts.push(`${known.name} taucht wieder auf und begegnet dir ${mood}.`);
+      parts.push(`${known.name} kommt von der Straße her auf dich zu und begegnet dir ${mood}.`);
       npcs.push({
         id: known.id,
         name: known.name,
@@ -280,15 +294,18 @@ export class MockProvider {
         note: check?.success ? "Der Spieler hat sich bewährt." : "Der Spieler enttäuschte ein wenig.",
       });
     } else if (chance(0.5)) {
-      const npc = pick(NPC_POOL);
-      parts.push(`${pick(OPENERS)} Es ist ${npc.name} (${npc.role}).`);
+      const npc = npcForContext(context);
+      parts.push(introduceNpc(npc, context));
       npcs.push({ id: npc.id, name: npc.name, role: npc.role, disposition: 0, note: "Neue Bekanntschaft." });
       if (chance(0.5)) {
         recruitable = [{ id: npc.id, name: npc.name, role: npc.role, reason: "sucht einen Grund mitzukommen" }];
       }
     }
 
-    if (chance(0.22)) parts.push(pick(TWISTS));
+    if (npcs.length && chance(0.18)) {
+      const actor = npcs[0];
+      parts.push(`An ${actor.name}s kurzer Reaktion merkst du, dass die Situation mehr verbirgt, als ${actor.name} offen zugibt.`);
+    }
 
     const changes = this.emptyChanges();
     changes.sceneLocation = this.sceneLocationFor(context);
@@ -336,7 +353,7 @@ export class MockProvider {
     }
 
     // Seltener Teufelsfrucht-Fund (nur wenn man noch keine hat).
-    if (!st.hasDevilFruit && chance(0.06)) {
+    if (!st.hasDevilFruit && DISCOVERY_ACTION.test(context.playerAction || "") && chance(0.06)) {
       const fruit = randomDevilFruit();
       parts.push(`In einer alten Truhe entdeckst du eine seltsame, spiralig gemusterte Frucht: eine ${fruit.name}!`);
       extra.devilFruitFound = { id: fruit.id, name: fruit.name, type: fruit.type };
@@ -363,9 +380,9 @@ export class MockProvider {
     }
 
     // Sehr seltenes Schiff (nur wenn man keins hat).
-    if (!extra.combatStart && !context.canonAffiliation && chance(0.04)) {
+    if (!extra.combatStart && !context.canonAffiliation && !st.hasShip && SHIP_ACTION.test(context.playerAction || "") && chance(0.04)) {
       const shipName = pick(["Möwenschwinge", "Roter Anker", "Sturmkind", "Alte Dame"]);
-      parts.push(`Am Kai liegt ein herrenloses kleines Schiff — mit etwas Mühe könnte es deins werden: die '${shipName}'.`);
+      parts.push(`Deine Suche am Kai führt dich zu einem aufgegebenen kleinen Schiff. Du prüfst die Besitzmarken und nimmst die '${shipName}' rechtmäßig als herrenloses Wrack in Anspruch.`);
       extra.shipAcquired = { name: shipName };
     }
 
@@ -410,8 +427,9 @@ export class MockProvider {
   }
 
   genericChoices(context) {
+    const thread = context.story?.active?.[0];
     const options = [
-      { id: "a", text: "Nachforschen und mehr herausfinden.", skillCheck: { skill: "wahrnehmung", dc: 11 } },
+      { id: "a", text: thread ? `Die Spur zu „${thread.title}“ gezielt untersuchen.` : "Nachforschen und mehr herausfinden.", skillCheck: { skill: "wahrnehmung", dc: 11 } },
       { id: "b", text: "Mit Worten die Lage entschärfen.", skillCheck: { skill: "ueberzeugen", dc: 12 } },
       { id: "c", text: "Zur Tat schreiten.", skillCheck: { skill: pick(["nahkampf", "schwertkunst", "geschick"]) === "geschick" ? "heimlichkeit" : "nahkampf", dc: 13 } },
       { id: "d", text: "Weiterziehen und die Sache ruhen lassen.", skillCheck: null },
