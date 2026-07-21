@@ -35,11 +35,15 @@ klassischer „kleiner Server" einfacher.
    Start `npm start`, Plan *Free*.)
 3. Deploy abwarten → du bekommst eine URL wie
    `https://a-one-piece-story.onrender.com`. Diese teilst du dem 2. Spieler.
-4. Optional den **echten Claude-Spielleiter** aktivieren: im Render-Dashboard
-   unter *Environment* setzen:
-   - `AI_PROVIDER = anthropic`
-   - `ANTHROPIC_API_KEY = <dein Schlüssel>` (als Secret)
-   Ohne diese Variablen läuft der deterministische Mock-Spielleiter.
+4. Optional den **echten KI-Spielleiter** aktivieren: im Render-Dashboard
+   unter *Environment* setzen. **Mit OpenAI-Key:**
+   - `AI_PROVIDER = openai`
+   - `OPENAI_API_KEY = <dein Schlüssel>` (als Secret)
+   - `OPENAI_MODEL = gpt-4o-mini` (optional; `gpt-4o` = mehr Qualität, teurer)
+
+   Alternativ mit Anthropic/Claude: `AI_PROVIDER = anthropic` +
+   `ANTHROPIC_API_KEY`. Ohne diese Variablen läuft der deterministische
+   Mock-Spielleiter (kostenlos, kein Schlüssel nötig).
 
 `PORT` musst du nicht setzen — Render gibt ihn vor, die App liest ihn aus.
 

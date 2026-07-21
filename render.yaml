@@ -14,8 +14,17 @@ services:
       - key: NODE_VERSION
         value: "20"
       # Standard ist der Mock-Spielleiter (kein Schlüssel nötig).
-      # Für den echten Claude-Spielleiter beide Werte im Render-Dashboard setzen:
+      #
+      # Echter Spielleiter über OpenAI (im Render-Dashboard setzen):
+      # - key: AI_PROVIDER
+      #   value: openai
+      # - key: OPENAI_API_KEY
+      #   sync: false        # als Secret im Dashboard eintragen, NICHT hier
+      # - key: OPENAI_MODEL
+      #   value: gpt-4o-mini # optional; z. B. gpt-4o für mehr Qualität
+      #
+      # Alternativ über Anthropic/Claude:
       # - key: AI_PROVIDER
       #   value: anthropic
       # - key: ANTHROPIC_API_KEY
-      #   sync: false        # als Secret im Dashboard eintragen, NICHT hier
+      #   sync: false

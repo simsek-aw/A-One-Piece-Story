@@ -15,6 +15,7 @@
     "nanoid": "^5.0.7"
   },
   "optionalDependencies": {
-    "@anthropic-ai/sdk": "^0.68.0"
+    "@anthropic-ai/sdk": "^0.68.0",
+    "openai": "^4.104.0"
   }
 }

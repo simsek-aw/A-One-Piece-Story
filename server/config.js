@@ -33,4 +33,11 @@ export const config = {
     apiKey: process.env.ANTHROPIC_API_KEY || "",
     model: process.env.ANTHROPIC_MODEL || "claude-opus-4-8",
   },
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY || "",
+    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    // Bildgenerierung (Panels). Standard aus, weil sie Zeit/Geld kostet.
+    images: process.env.OPENAI_IMAGES === "1" || process.env.OPENAI_IMAGES === "true",
+    imageModel: process.env.OPENAI_IMAGE_MODEL || "gpt-image-1",
+  },
 };
