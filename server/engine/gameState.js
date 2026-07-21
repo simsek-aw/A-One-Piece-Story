@@ -55,6 +55,7 @@ export function characterDigest(game) {
   return {
     name: c.name,
     archetyp: c.archetype,
+    aussehen: c.appearance || "",
     level: c.level,
     hp: `${c.hp}/${c.maxHp}`,
     beri: c.beri,

@@ -30,13 +30,26 @@ export const SKILLS = {
   haki: { id: "haki", name: "Haki (latent)", attribut: "willenskraft" },
 };
 
-// Perks (Fallout-Stil), wählbar bei Erstellung und Levelaufstieg.
+// Perks / "Talente" (Fallout-Stil), wählbar bei Erstellung und Levelaufstieg.
+// Bewusst mit augenzwinkernden One-Piece-Anspielungen — eigenständig formuliert,
+// keine Namen aus dem Kanon. Meist Erzähl-Flavor (der Spielleiter bezieht sie ein),
+// 'eisenkinn' hat zusätzlich einen mechanischen Effekt (mehr Trefferpunkte).
 export const PERKS = {
   seebein: { id: "seebein", name: "Seebein", desc: "Seekrankheit? Kennst du nicht. Bonus bei Navigation & auf See." },
   eisenkinn: { id: "eisenkinn", name: "Eisenkinn", desc: "+ Trefferpunkte, steckst mehr ein." },
   charmeur: { id: "charmeur", name: "Charmeur", desc: "Rekrutierung & Überzeugen leichter." },
   strassenkind: { id: "strassenkind", name: "Straßenkind", desc: "Heimlichkeit & Feilschen, kennt die Unterwelt." },
   unbeugsam: { id: "unbeugsam", name: "Unbeugsam", desc: "Widerstand gegen Einschüchterung, Keim von Haki." },
+
+  // --- Neue Talente mit kleinen Anspielungen ---
+  dreischwert_ambition: { id: "dreischwert_ambition", name: "Dreischwert-Ambition", desc: "Zwei Klingen sind dir zu wenig. Ein Faible für Schwertkunst — und der stille Schwur, einmal der Stärkste der Welt zu werden." },
+  schwarzbein: { id: "schwarzbein", name: "Schwarzbein-Tritt", desc: "Deine Hände sind fürs Kochen da, gekämpft wird mit den Beinen. Bonus im Nahkampf — und du lässt niemals gutes Essen verkommen." },
+  wetternase: { id: "wetternase", name: "Wetternase", desc: "Du riechst den Sturm, bevor die erste Wolke aufzieht. Vorteil bei Navigation und allem, was auf hoher See zählt." },
+  langnasen_latte: { id: "langnasen_latte", name: "Langnasen-Latte", desc: "Begnadeter Aufschneider mit ruhiger Hand am Abzug: treffsicheres Schießen und großspurige, wirkungsvolle Überredung." },
+  kind_des_geruechts: { id: "kind_des_geruechts", name: "Kind des Gerüchts", desc: "Über deine Herkunft wird getuschelt, als wärst du gefährlicher, als du aussiehst. Öffnet finstere Türen — zieht aber auch die falschen Blicke an." },
+  fassweise: { id: "fassweise", name: "Fassweise", desc: "Dich trinkt niemand unter den Tisch. Zungen lösen sich, Geheimnisse tropfen — ideal für Tresen und Taverne." },
+  vorahnung: { id: "vorahnung", name: "Vorahnung", desc: "Manchmal spürst du Gefahr, bevor sie zuschlägt — ein erster Hauch von Beobachtungs-Haki." },
+  froehlicher_roger: { id: "froehlicher_roger", name: "Grinsen am Galgen", desc: "Selbst mit dem Strick um den Hals würdest du lachen. Furchtlosigkeit, die andere ansteckt — und einschüchtert." },
 };
 
 const BASE_ATTRIBUTE = 4;
@@ -68,7 +81,7 @@ function maxHp(character) {
 
 // Validiert Spieler-Input aus der Charaktererstellung und baut die Figur.
 // Wirft bei ungültigen Eingaben (der Server fängt das ab).
-export function createCharacter({ name, archetype, attributes, perk }) {
+export function createCharacter({ name, archetype, attributes, perk, appearance }) {
   if (!name || typeof name !== "string" || name.trim().length < 2) {
     throw new Error("Bitte einen Namen (mind. 2 Zeichen) angeben.");
   }
@@ -110,6 +123,9 @@ export function createCharacter({ name, archetype, attributes, perk }) {
   const character = {
     name: name.trim(),
     archetype: arch.id,
+    // Freitext-Beschreibung fürs generierte Manga-Profilbild (optional).
+    appearance: (typeof appearance === "string" ? appearance.trim().slice(0, 400) : ""),
+    avatar: null, // Pfad zum generierten Porträt (/panels/...), sobald vorhanden
     attributes: attrs,
     skills,
     perks,

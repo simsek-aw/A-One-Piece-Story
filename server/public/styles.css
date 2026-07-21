@@ -46,8 +46,19 @@ body {
   color: var(--ink);
   min-height: 100vh;
 }
-/* Kräftige, gotische Anmutung für Überschriften/SFX — bewusst KEINE Comic-Schrift. */
-.brand, .create-wrap h1, .card h2, .panel h3, .combat-head, .news-scope, .panel-sub {
+/* Comic-Display-Schrift für Überschriften (selbst gehostet -> offline-tauglich). */
+@font-face {
+  font-family: "Bangers";
+  src: url("/fonts/bangers.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+.brand, .create-wrap h1, .card h2, .panel h3, .combat-head {
+  font-family: "Bangers", "Arial Black", Impact, system-ui, sans-serif;
+  text-transform: uppercase; letter-spacing: 1.4px; font-weight: 400;
+}
+.create-wrap h1 { letter-spacing: 2px; }
+/* Winzige Labels bleiben in gotischer Sans (Comic-Font wäre zu unleserlich). */
+.news-scope, .panel-sub {
   font-family: "Arial Black", "Helvetica Neue", Impact, system-ui, sans-serif;
   text-transform: uppercase; letter-spacing: 0.5px;
 }
@@ -414,6 +425,21 @@ input:focus { outline: 2px solid var(--ink); }
 /* Ladeschirm + Spinner in S/W */
 .loading { background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: none; }
 .spinner { border: 4px solid var(--line); border-top-color: transparent; }
+
+/* Charakter-Kopf mit Profilbild */
+.char-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.char-head .panel-head { margin-bottom: 0; flex: 1; }
+.avatar {
+  width: 60px; height: 60px; flex: 0 0 60px; object-fit: cover;
+  border: 2.5px solid var(--line); border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--shadow); filter: grayscale(1) contrast(1.12); background: var(--bg2);
+}
+:root[data-theme="ink"] .avatar { filter: grayscale(1) contrast(1.1) invert(0.92); }
+.char-head.drawing-avatar { position: relative; }
+.char-head.drawing-avatar::before {
+  content: "✎"; position: absolute; left: 22px; top: 20px; font-size: 1.1rem;
+  animation: pulse 1.4s ease-in-out infinite;
+}
 
 /* Panel wird gerade als echtes KI-Bild nachgezeichnet */
 figure.drawing { position: relative; }

@@ -203,6 +203,11 @@ app.post(
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const { scope, kind } = req.body || {};
     const result = await getPanelImage(game, { scope, kind });
+    // Profilbild dauerhaft am Charakter merken, damit es beim Laden sofort da ist.
+    if (scope === "avatar" && result?.src && game.character.avatar !== result.src) {
+      game.character.avatar = result.src;
+      saveGame(game);
+    }
     res.json(result);
   }),
 );

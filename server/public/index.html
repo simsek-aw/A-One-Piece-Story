@@ -70,6 +70,13 @@
           <div id="locationList" class="option-grid"></div>
         </section>
 
+        <section class="card">
+          <h2>6 · Aussehen (optional)</h2>
+          <p class="hint">Beschreibe deinen Charakter in Stichworten — daraus wird ein Manga-Profilbild (S/W) gezeichnet. Z. B. „junge Frau, kurze rote Haare, Narbe überm Auge, langer Mantel, freches Grinsen".</p>
+          <input id="charAppearance" type="text" placeholder="z. B. wilder schwarzer Haarschopf, Strohhut, weite Weste …" maxlength="240" />
+          <p class="hint" id="appearanceHint"></p>
+        </section>
+
         <div class="actions">
           <button id="startBtn" class="primary big">Abenteuer starten</button>
           <span id="createError" class="error"></span>
@@ -122,9 +129,12 @@
 
         <aside class="sidebar">
           <div class="panel">
-            <div class="panel-head">
-              <span id="charTitle"></span>
-              <span id="charDay" class="day-badge"></span>
+            <div class="char-head">
+              <img id="charAvatar" class="avatar hidden" alt="Profilbild" />
+              <div class="panel-head">
+                <span id="charTitle"></span>
+                <span id="charDay" class="day-badge"></span>
+              </div>
             </div>
             <div class="bars">
               <div class="bar-row"><span>❤️ TP</span><div class="bar"><div id="hpBar" class="bar-fill hp"></div></div><span id="hpText"></span></div>

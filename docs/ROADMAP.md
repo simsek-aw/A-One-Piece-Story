@@ -86,6 +86,29 @@ folgenden Punkte bauen darauf auf.
       (◑, „paper" ↔ „ink", in localStorage gemerkt, flackerfrei im <head> gesetzt).
       Rein CSS/variablenbasiert — die gesamte Palette hängt an --ink/--bg/--line.
 
+## Erledigt (Ausbaustufe 10)
+
+- [x] OpenAI als Spielleiter-Provider (server/ai/openaiProvider.js): dritte,
+      austauschbare KI-Anbindung neben Mock/Anthropic. AI_PROVIDER=openai +
+      OPENAI_API_KEY aktivieren; ohne Key sauberer Fallback auf Mock.
+- [x] Echte KI-Bild-Panels (server/ai/imageProvider.js): Szenen- und
+      Key-Moment-Panels werden bei aktivem OPENAI_IMAGES über die
+      OpenAI-Bild-API im Manga-S/W-Stil erzeugt, auf Platte gecacht
+      (data/panels/) und im Frontend nicht-blockierend gegen das
+      Sofort-SVG getauscht ("wird gezeichnet …"). Fällt komplett zurück auf
+      SVG, wenn aus oder fehlerhaft.
+- [x] Charakter-Profilbild: optionales Aussehen-Freitextfeld bei der
+      Erstellung → generiertes Schulter-aufwärts-Porträt im selben
+      Manga-S/W-Stil, im Charakter-Kopf der Seitenleiste angezeigt (gecacht
+      pro Charakter, am Spielstand gespeichert).
+- [x] Comic-Display-Schrift (Bangers, OFL, selbst gehostet) für Überschriften.
+- [x] Charaktererstellung erweitert: 4 neue Herkünfte (Kopfgeldjäger,
+      Schiffskoch, Schiffsarzt, Diebin & Navigatorin), 8 neue Talente mit
+      One-Piece-Anspielungen (Dreischwert-Ambition, Schwarzbein-Tritt,
+      Wetternase, Langnasen-Latte, Kind des Gerüchts, Fassweise, Vorahnung,
+      Grinsen am Galgen), 2 neue Startorte (Orangen-Hafen, Windmühlendorf).
+- [x] Deployment: render.yaml + docs/DEPLOY.md, live auf Render (Free-Tier).
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen

@@ -45,6 +45,14 @@ klassischer „kleiner Server" einfacher.
    `ANTHROPIC_API_KEY`. Ohne diese Variablen läuft der deterministische
    Mock-Spielleiter (kostenlos, kein Schlüssel nötig).
 
+5. Optional **echte KI-Bild-Panels** (Szenen, Schlüsselmomente, Profilbild)
+   dazuschalten — kostet OpenAI-Guthaben pro generiertem Bild, ist aber
+   gecacht (Wiederholungen sind gratis):
+   - `OPENAI_IMAGES = 1`
+   - `OPENAI_IMAGE_MODEL = gpt-image-1` (optional)
+   - `OPENAI_IMAGE_QUALITY = low` (optional; `medium`/`high` = teurer, schärfer)
+   Ohne `OPENAI_IMAGES=1` bleiben die schnellen, kostenlosen SVG-Panels aktiv.
+
 `PORT` musst du nicht setzen — Render gibt ihn vor, die App liest ihn aus.
 
 ## Fly.io (wenn Spielstände bleiben sollen)

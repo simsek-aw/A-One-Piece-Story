@@ -66,7 +66,11 @@ richtigen Format antwortet.
 - **Key-Moment-Panels**: für Schlüsselmomente (Ankunft, Duell, Explosion,
   Enthüllung, Crew, Sieg …) blendet der Spielleiter 1–2 gezeichnete
   Manga/Anime-Panels mitten im oder am Ende des Textes ein — stilisiertes SVG,
-  vom Spielleiter über ein JSON-Feld gesetzt.
+  vom Spielleiter über ein JSON-Feld gesetzt. Optional (mit OpenAI-Bild-Key)
+  werden echte KI-Bilder im Manga-S/W-Stil nachgeladen und tauschen das SVG
+  aus, sobald fertig — gecacht, nicht-blockierend.
+- **Charakter-Profilbild**: optionale Freitext-Beschreibung bei der Erstellung
+  → generiertes Schulter-aufwärts-Porträt im selben Manga-Stil.
 - **Story-Loop**: Szene → Auswahl (mit optionalen Checks) oder Freitext →
   Fortsetzung.
 - **NPC-Gedächtnis**: Figuren merken sich Begegnungen und Entscheidungen; ihre

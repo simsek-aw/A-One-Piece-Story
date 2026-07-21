@@ -39,5 +39,6 @@ export const config = {
     // Bildgenerierung (Panels). Standard aus, weil sie Zeit/Geld kostet.
     images: process.env.OPENAI_IMAGES === "1" || process.env.OPENAI_IMAGES === "true",
     imageModel: process.env.OPENAI_IMAGE_MODEL || "gpt-image-1",
+    imageQuality: process.env.OPENAI_IMAGE_QUALITY || "low", // low|medium|high
   },
 };

@@ -40,6 +40,10 @@ async function init() {
   state.meta = await api("/api/meta");
   $("#eraLabel").textContent = state.meta.era.label;
   $("#providerBadge").textContent = "Spielleiter: " + state.meta.provider;
+  const aHint = $("#appearanceHint");
+  if (aHint) aHint.textContent = state.meta.imagesEnabled
+    ? "✎ Bildgenerierung ist aktiv — dein Porträt wird beim Spielstart gezeichnet."
+    : "ℹ️ Bildgenerierung ist derzeit aus; die Beschreibung wird gespeichert und der Spielleiter bezieht sie ein.";
 
   const params = new URLSearchParams(location.search);
   const existing = params.get("game");
@@ -151,7 +155,7 @@ async function startGame() {
     const view = await api("/api/games", {
       method: "POST",
       body: JSON.stringify({
-        character: { name, archetype: state.sel.archetype, attributes: state.attrs, perk: state.sel.perk },
+        character: { name, archetype: state.sel.archetype, attributes: state.attrs, perk: state.sel.perk, appearance: $("#charAppearance")?.value.trim() || "" },
         startLocationId: state.sel.location,
       }),
     });
@@ -322,6 +326,32 @@ function renderKeyPanels(view) {
   });
 }
 
+// Profilbild anzeigen; falls noch keins da ist (und Bilder aktiv sind + eine
+// Beschreibung existiert), im Hintergrund generieren und einblenden.
+let _avatarRequested = false;
+function renderAvatar(c) {
+  const img = $("#charAvatar");
+  if (!img) return;
+  if (c.avatar) {
+    img.src = c.avatar;
+    img.classList.remove("hidden");
+    return;
+  }
+  img.classList.add("hidden");
+  if (!_avatarRequested && state.meta?.imagesEnabled && (c.appearance || "").trim()) {
+    _avatarRequested = true;
+    const head = img.closest(".char-head");
+    head?.classList.add("drawing-avatar");
+    fetch(`/api/games/${state.gameId}/panel`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scope: "avatar" }),
+    })
+      .then((r) => r.json())
+      .then((d) => { if (d && d.src) { img.src = d.src; img.classList.remove("hidden"); } })
+      .catch(() => {})
+      .finally(() => head?.classList.remove("drawing-avatar"));
+  }
+}
+
 // Echtes KI-Panel im Hintergrund holen und das SVG austauschen, sobald fertig.
 // Fällt es aus (aus/kein Guthaben/Fehler), bleibt einfach das SVG stehen.
 const panelImgCache = new Map();
@@ -466,6 +496,7 @@ function renderSidebar(view) {
   const c = view.character;
   $("#charTitle").textContent = `${c.name} · Lvl ${c.level}`;
   $("#charDay").textContent = `Tag ${view.day} · ${view.location}`;
+  renderAvatar(c);
 
   $("#hpBar").style.width = pct(c.hp, c.maxHp) + "%";
   $("#hpText").textContent = `${c.hp}/${c.maxHp}`;

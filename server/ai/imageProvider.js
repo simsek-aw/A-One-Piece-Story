@@ -56,6 +56,21 @@ function momentPrompt(kind) {
   return { key: `moment_${kind || "spannung"}`, prompt: `${desc}. ${STYLE}.` };
 }
 
+function avatarPrompt(game) {
+  const c = game.character || {};
+  const look = c.appearance && c.appearance.trim()
+    ? c.appearance.trim()
+    : `a determined young ${c.archetype || "adventurer"}`;
+  // Pro Charakter ein eigenes Porträt (Schlüssel = Spiel-ID).
+  return {
+    key: `avatar_${game.id}`,
+    prompt:
+      `Character portrait, shoulder-up, facing the viewer: ${look}. ` +
+      `One Piece anime/manga style, expressive face, ${STYLE}.`,
+    size: "1024x1024",
+  };
+}
+
 function hashName(key) {
   return crypto.createHash("md5").update(key).digest("hex") + ".png";
 }
@@ -78,7 +93,9 @@ async function client() {
 // Liefert { src } (Pfad unter /panels/...) oder { src: null } bei Aus/Fehler.
 export async function getPanelImage(game, { scope, kind } = {}) {
   if (!imagesEnabled()) return { src: null };
-  const { key, prompt } = scope === "moment" ? momentPrompt(kind) : scenePrompt(game);
+  const spec = scope === "moment" ? momentPrompt(kind) : scope === "avatar" ? avatarPrompt(game) : scenePrompt(game);
+  const { key, prompt } = spec;
+  const size = spec.size || "1536x1024";
   const file = hashName(key);
 
   const hit = cachedSrc(file);
@@ -92,7 +109,7 @@ export async function getPanelImage(game, { scope, kind } = {}) {
       const result = await c.images.generate({
         model: config.openai.imageModel || "gpt-image-1",
         prompt,
-        size: "1536x1024",
+        size,
         quality: config.openai.imageQuality || "low",
         n: 1,
       });

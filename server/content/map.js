@@ -66,7 +66,7 @@ export const LOCATIONS = {
     blurb:
       "Eine geschäftige kleine Hafenstadt, berühmt für ihre Obstgärten — und berüchtigt für " +
       "die Piratenbanden, die sie regelmäßig heimsuchen.",
-    startable: false,
+    startable: true,
   },
   windmuehlendorf: {
     id: "windmuehlendorf",
@@ -78,7 +78,7 @@ export const LOCATIONS = {
     blurb:
       "Ein ruhiges Dorf am Rand des Meeres, überragt von alten Windmühlen. Hier erzählt man " +
       "sich abends Geschichten von Rogers Crew — und von einer 'Lücke' in der Geschichte.",
-    startable: false,
+    startable: true,
   },
 };
 

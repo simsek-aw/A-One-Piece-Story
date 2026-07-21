@@ -443,6 +443,8 @@ export function currentSceneView(game) {
     character: {
       name: c.name,
       archetype: c.archetype,
+      appearance: c.appearance || "",
+      avatar: c.avatar || null,
       level: c.level,
       xp: c.xp,
       hp: c.hp,

@@ -1,7 +1,7 @@
 // Service-Worker: Offline-Shell + installierbare Web-App.
 // Strategie: /api immer live (network-first, Fallback Cache), restliche Shell
 // cache-first mit Nachladen.
-const CACHE = "ops-v1";
+const CACHE = "ops-v2";
 const ASSETS = [
   "/",
   "/index.html",
@@ -10,6 +10,7 @@ const ASSETS = [
   "/manifest.json",
   "/icon-192.png",
   "/icon-512.png",
+  "/fonts/bangers.woff2",
 ];
 
 self.addEventListener("install", (e) => {
