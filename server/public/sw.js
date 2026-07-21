@@ -1,7 +1,7 @@
 // Service-Worker: Offline-Shell + installierbare Web-App.
-// Strategie: /api immer live (network-first, Fallback Cache), restliche Shell
-// cache-first mit Nachladen.
-const CACHE = "ops-v2";
+// Strategie: Netz zuerst, Cache nur als Offline-Fallback. So erscheinen neue
+// UI-Versionen direkt nach einem Deploy statt dauerhaft aus einem alten Cache.
+const CACHE = "ops-v3";
 const ASSETS = [
   "/",
   "/index.html",
@@ -37,17 +37,14 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Shell: aus Cache, sonst Netz (und nachcachen). Offline-Fallback: Startseite.
+  // Shell: online immer frisch laden und nachcachen. Offline: letzter Stand.
   e.respondWith(
-    caches.match(e.request).then((cached) =>
-      cached ||
-      fetch(e.request)
-        .then((resp) => {
-          const copy = resp.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
-          return resp;
-        })
-        .catch(() => caches.match("/")),
-    ),
+    fetch(e.request)
+      .then((resp) => {
+        const copy = resp.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        return resp;
+      })
+      .catch(() => caches.match(e.request).then((cached) => cached || caches.match("/"))),
   );
 });

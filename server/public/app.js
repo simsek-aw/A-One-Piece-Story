@@ -960,7 +960,17 @@ window.addEventListener("touchend", (e) => {
 
 // Service-Worker (installierbare Web-App / Offline-Shell)
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+  let swRefreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (swRefreshing) return;
+    swRefreshing = true;
+    location.reload(); // neue App-Shell sofort sichtbar machen
+  });
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
+      .then((registration) => registration.update())
+      .catch(() => {});
+  });
 }
 
 // ---------- Helfer ----------
