@@ -1,0 +1,21 @@
+# Render.com — kostenloses Web-Deployment (Blueprint).
+# Anleitung: docs/DEPLOY.md. Kurz: Repo auf render.com verbinden -> "New +" ->
+# "Blueprint" -> dieses Repo wählen. Render liest diese Datei und richtet alles ein.
+services:
+  - type: web
+    name: a-one-piece-story
+    runtime: node
+    plan: free            # kostenlos (schläft nach ~15 Min Inaktivität ein)
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/meta
+    autoDeploy: true       # bei jedem Push auf den verbundenen Branch neu deployen
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Standard ist der Mock-Spielleiter (kein Schlüssel nötig).
+      # Für den echten Claude-Spielleiter beide Werte im Render-Dashboard setzen:
+      # - key: AI_PROVIDER
+      #   value: anthropic
+      # - key: ANTHROPIC_API_KEY
+      #   sync: false        # als Secret im Dashboard eintragen, NICHT hier
