@@ -456,8 +456,10 @@ function actionsBlocked(view) {
 
 function renderDayBar(view) {
   const bar = $("#dayBar");
+  const place = $("#sceneLocation");
   const c = view.clock;
   clearInterval(state.clockTimer);
+  place.innerHTML = `<span>📍 Aktueller Schauplatz</span><b>${escapeHtml(view.sceneLocation || view.location)}</b><small>${escapeHtml(view.location)}</small>`;
 
   if (c.locked) {
     // Optionaler Echtzeit-Takt zwischen Tagen (Multiplayer): Countdown.
@@ -721,7 +723,7 @@ function renderCombat(view) {
 function renderSidebar(view) {
   const c = view.character;
   $("#charTitle").textContent = `${c.name} · Lvl ${c.level}`;
-  $("#charDay").textContent = `Tag ${view.day} · ${view.location}`;
+  $("#charDay").textContent = `Tag ${view.day} · ${view.sceneLocation || view.location}`;
   renderAvatar(c);
 
   $("#hpBar").style.width = pct(c.hp, c.maxHp) + "%";

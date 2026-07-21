@@ -104,6 +104,9 @@ export async function attemptRecruit(game, provider, { npcId, approachId }) {
   requireAction(game);
   const target = (game.recruitable || []).find((r) => r.id === npcId);
   if (!target) throw new Error("Diese Person ist gerade nicht rekrutierbar.");
+  if (Array.isArray(game.scene?.presentNpcIds) && !game.scene.presentNpcIds.includes(target.id)) {
+    throw new Error("Diese Person ist am aktuellen Schauplatz nicht anwesend.");
+  }
   startRecruitment(game, target);
   return currentSceneView(game);
 }
@@ -137,6 +140,7 @@ export async function doActivity(game, provider, { activityId }) {
 export async function doTravel(game, provider, { destId }) {
   requireAction(game);
   const info = travelTo(game, destId); // ändert Ort, zieht Passage ab, Tage vergehen
+  game.world.sceneLocation = game.world.locationName; // alten Innenraum nicht an den Zielort mitnehmen
   const modeTxt = info.mode === "eigenes_schiff" ? "mit meinem eigenen Schiff" : "als Passagier auf einem fremden Schiff";
   const playerAction = `Ich reise ${modeTxt} nach ${game.world.locationName} (${info.days} Tage auf See).`;
 
@@ -322,6 +326,7 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
       istNacht: phaseFor(game.world.clock.hour).id === "nacht",
       location: game.world.location,
       locationName: game.world.locationName,
+      sceneLocation: game.world.sceneLocation || game.world.locationName,
       locationType: LOCATIONS[game.world.location]?.type || "",
       locationBlurb: LOCATIONS[game.world.location]?.blurb || "",
       localSuspicion: currentLocalSuspicion(game), // ortsgebundene Aufmerksamkeit durch riskante Taten
@@ -386,7 +391,10 @@ function applyGmResponse(game, gm, turnInfo) {
   if (s.location && s.location !== game.world.location && LOCATIONS[s.location]) {
     game.world.location = s.location;
     game.world.locationName = LOCATIONS[s.location].name;
+    game.world.sceneLocation = game.world.locationName;
   }
+  const resolvedSceneLocation = s.sceneLocation || inferSceneLocation(gm.narration, game.world.locationName);
+  if (resolvedSceneLocation) game.world.sceneLocation = qualifySceneLocation(resolvedSceneLocation, game.world.locationName);
 
   // Werte (Tag wird NICHT hier verändert — die Uhr besitzt den Kalender).
   recomputeMaxHp(c);
@@ -438,8 +446,14 @@ function applyGmResponse(game, gm, turnInfo) {
 
   // Szene (inkl. Key-Moment-Panels)
   const keyPanels = (gm.panels || []).map((p) => momentPanel(p.kind, p.caption));
-  game.scene = { narration: gm.narration, choices: gm.choices, panels: keyPanels };
-  game.recruitable = gm.recruitable;
+  const presentNpcIds = gm.npcs.map((npc) => npc.id);
+  game.scene = { narration: gm.narration, choices: gm.choices, panels: keyPanels, presentNpcIds };
+  // Ein Rekrutierungsangebot ist nur gültig, wenn dieselbe Person in dieser
+  // Szene physisch anwesend und im Erzähltext erkennbar eingeführt wurde.
+  game.recruitable = gm.recruitable.filter((candidate) => {
+    const npc = gm.npcs.find((entry) => entry.id === candidate.id);
+    return !!npc && npcMentionedInNarration(gm.narration, candidate, npc);
+  });
   game.lastCheck = turnInfo?.checkResult || null;
 
   // Historie
@@ -489,6 +503,7 @@ export function currentSceneView(game) {
     clock: clockView(game),
     day: game.world.day,
     location: game.world.locationName,
+    sceneLocation: game.world.sceneLocation || game.world.locationName,
     locationId: game.world.location,
     travelMode: currentTravelMode(game),
     scene: game.scene,
@@ -555,4 +570,48 @@ function newsEdition(game) {
   const fresh = (game.world._lastNewsDay || 0) !== game.world.day;
   game.world._lastNewsDay = game.world.day;
   return { ...edition, fresh };
+}
+
+function npcMentionedInNarration(narration, candidate, npc) {
+  const text = normalizeForMatch(narration);
+  const phrases = [candidate.name, npc.name]
+    .map(normalizeForMatch)
+    .filter((value) => value.length >= 3);
+  const roleWords = `${candidate.role || ""} ${npc.role || ""}`
+    .split(/[^\p{L}\p{N}]+/u)
+    .map(normalizeForMatch)
+    .filter((word) => word.length >= 5 && !["junge", "alter", "einem", "einer", "unbekannt"].includes(word));
+  return [...phrases, ...roleWords].some((phrase) => text.includes(phrase));
+}
+
+function normalizeForMatch(value) {
+  return String(value || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+// Sicherheitsnetz für schwächere/free Modelle, die sceneLocation trotz Prompt
+// gelegentlich null lassen. Der zuletzt konkret genannte Teilort gewinnt.
+function inferSceneLocation(narration, locationName) {
+  const text = normalizeForMatch(narration);
+  const places = [
+    { label: "Gefängnis", words: ["gefangnis", "zelle", "kerker"] },
+    { label: "Hafenkneipe", words: ["hafenkneipe", "taverne", "kneipe", "schankraum"] },
+    { label: "Hafen", words: ["hafen", "kai", "dock", "anlegestelle"] },
+    { label: "Marktviertel", words: ["markt", "marktplatz", "handlergasse"] },
+    { label: "Marinebasis", words: ["marinebasis", "garnison", "kaserne"] },
+    { label: "Straßen", words: ["hauptstrasse", "gasse", "strasse"] },
+  ];
+  let best = null;
+  for (const place of places) {
+    for (const word of place.words) {
+      const index = text.lastIndexOf(word);
+      if (index >= 0 && (!best || index > best.index)) best = { index, label: place.label };
+    }
+  }
+  return best ? `${locationName} – ${best.label}` : null;
+}
+
+function qualifySceneLocation(sceneLocation, locationName) {
+  const place = String(sceneLocation || "").trim();
+  if (!place) return locationName;
+  return normalizeForMatch(place).includes(normalizeForMatch(locationName)) ? place : `${locationName} – ${place}`;
 }

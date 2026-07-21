@@ -87,7 +87,7 @@ export class MockProvider {
         `Die Nacht senkt sich über ${context.world.locationName}. Für einen Moment ist die Welt still — ` +
         `dann bricht ein neuer ${context.world.tageszeit || "Morgen"} an.`,
       choices: this.genericChoices(context),
-      stateChanges: this.emptyChanges(),
+      stateChanges: { ...this.emptyChanges(), sceneLocation: this.defaultSceneLocation(context) },
       npcs: [],
       recruitable: [],
       panels: [{ kind: "nacht", caption: `Nachtruhe in ${context.world.locationName}` }],
@@ -199,13 +199,13 @@ export class MockProvider {
       narration:
         `${flavor}\n\n${archLine}\n\n` +
         (rumor ? `Am Rande hörst du ein Gerücht: „${rumor}“\n\n` : "") +
-        `${pick(OPENERS)}` + (thread ? `\n\nEin Gedanke bleibt hängen: ${thread.hook}` : ""),
+        `${pick(OPENERS)} Es ist ${npc.name} (${npc.role}).` + (thread ? `\n\nEin Gedanke bleibt hängen: ${thread.hook}` : ""),
       choices: [
         { id: "a", text: "Zuhören und herausfinden, was los ist.", skillCheck: { skill: "wahrnehmung", dc: 10 } },
         { id: "b", text: "Selbstbewusst das Gespräch übernehmen.", skillCheck: { skill: "ueberzeugen", dc: 12 } },
         { id: "c", text: "Vorsichtig Abstand halten und beobachten.", skillCheck: null },
       ],
-      stateChanges: this.emptyChanges(),
+      stateChanges: { ...this.emptyChanges(), sceneLocation: this.defaultSceneLocation(context) },
       npcs: [{ id: npc.id, name: npc.name, role: npc.role, disposition: 0, note: "Zum ersten Mal getroffen." }],
       recruitable: [],
       panels: [{ kind: "ankunft", caption: `${context.world.locationName} — ein neuer Anfang` }],
@@ -288,6 +288,7 @@ export class MockProvider {
     if (chance(0.22)) parts.push(pick(TWISTS));
 
     const changes = this.emptyChanges();
+    changes.sceneLocation = this.sceneLocationFor(context);
     changes.xpDelta = check?.success ? 20 : 10;
     if (check?.kritErfolg) changes.xpDelta = 35;
     if (check?.kritFehler) changes.hpDelta = -6;
@@ -425,9 +426,30 @@ export class MockProvider {
       bountyDelta: 0,
       heatDelta: 0,
       location: null,
+      sceneLocation: null,
       itemsAdded: [],
       itemsRemoved: [],
       flagsSet: {},
     };
+  }
+
+  defaultSceneLocation(context) {
+    const byType = {
+      hafenstadt: "Hafenviertel",
+      marinestadt: "Platz vor der Marinebasis",
+      marinevorposten: "Hof des Marinevorpostens",
+      dorf: "Dorfplatz",
+    };
+    return `${context.world.locationName} – ${byType[context.world.locationType] || "Hauptstraße"}`;
+  }
+
+  sceneLocationFor(context) {
+    const action = String(context.playerAction || "").toLowerCase();
+    if (/gefängnis|zelle|kerker/.test(action)) return `${context.world.locationName} – Gefängnis`;
+    if (/kneipe|taverne|bar|wirt/.test(action)) return `${context.world.locationName} – Hafenkneipe`;
+    if (/hafen|kai|dock|schiff/.test(action)) return `${context.world.locationName} – Hafen`;
+    if (/markt|händler|laden/.test(action)) return `${context.world.locationName} – Marktviertel`;
+    if (/marine|garnison|kaserne/.test(action)) return `${context.world.locationName} – Marinebasis`;
+    return context.world.sceneLocation || this.defaultSceneLocation(context);
   }
 }

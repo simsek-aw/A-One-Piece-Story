@@ -150,6 +150,10 @@ button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .consequence-banner.safe { border-style: dashed; }
 .consequence-banner.danger { background: var(--ink); color: var(--on-accent); }
 .consequence-title { font-family: "Bangers", "Arial Black", Impact, system-ui, sans-serif; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+.scene-location { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; margin: -4px 0 14px; padding: 9px 12px; border: 2px solid var(--line); background: var(--ink); color: var(--on-accent); }
+.scene-location span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
+.scene-location b { overflow-wrap: anywhere; }
+.scene-location small { opacity: .75; }
 
 .choices { display: flex; flex-direction: column; gap: 10px; }
 .choice { text-align: left; cursor: pointer; padding: 13px 15px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); transition: 0.12s; }
@@ -370,6 +374,8 @@ button.choice:disabled { opacity: 0.45; cursor: not-allowed; }
   .free-form { position: sticky; bottom: 0; background: linear-gradient(180deg, transparent, var(--bg) 30%); padding-top: 8px; padding-bottom: env(safe-area-inset-bottom); }
   .panel-art img, .key-panel img { border-radius: 10px; }
   .story-log .entry { font-size: 0.98rem; }
+  .scene-location { grid-template-columns: 1fr; gap: 2px; }
+  .scene-location small { display: none; }
   .recruit-options { grid-template-columns: 1fr; }
 }
 

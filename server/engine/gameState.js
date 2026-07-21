@@ -26,6 +26,9 @@ export function createGame({ character, startLocationId, language = "de" }) {
       day: 1, // Tage seit Rogers Hinrichtung
       location: location.id,
       locationName: location.name,
+      // Konkreter Schauplatz innerhalb des Kartenorts (z. B. Gefängniszelle,
+      // Hafenkneipe). Bleibt getrennt vom groben Reise-/Kartenort.
+      sceneLocation: location.name,
       travelMode: "zu_fuss", // zu_fuss | passage | eigenes_schiff
       clock: initClock(), // Echtzeit-Tagestakt (Aktionen + Cooldown)
       npcs: {},
