@@ -44,6 +44,21 @@ klassischer „kleiner Server" einfacher.
    - `GEMINI_API_KEY = <dein Schlüssel>` (als Secret)
    - `GEMINI_MODEL = gemini-2.0-flash` (optional; im freien Kontingent enthalten)
 
+   **Oder OpenRouter** — ein Key, Zugriff auf sehr viele Modelle (Claude, GPT,
+   Gemini, Llama, DeepSeek, Mistral, …), darunter mehrere komplett kostenlose
+   (Modell-IDs mit `:free`-Endung):
+   - `AI_PROVIDER = openrouter`
+   - `OPENROUTER_API_KEY = <dein Schlüssel>` (als Secret) —
+     [openrouter.ai/keys](https://openrouter.ai/keys)
+   - `OPENROUTER_MODEL = meta-llama/llama-3.1-8b-instruct:free` (Beispiel;
+     aktuelle kostenlose Modelle unter
+     [openrouter.ai/models?max_price=0](https://openrouter.ai/models?max_price=0) —
+     die Liste ändert sich, einfach eine `:free`-ID eintragen)
+   - Nicht jedes Modell hinter OpenRouter hält sich strikt an JSON-Ausgabe;
+     der Provider parst deshalb robust (Markdown-Codezäune, Vor-/Nachrede
+     werden entfernt) — bei Ausfall eines Modells einfach ein anderes
+     `:free`-Modell eintragen.
+
    **Mit OpenAI-Key:**
    - `AI_PROVIDER = openai`
    - `OPENAI_API_KEY = <dein Schlüssel>` (als Secret)

@@ -135,6 +135,18 @@ folgenden Punkte bauen darauf auf.
       Versuch, statt sie rückwirkend zu setzen — kein Bypass über die API
       möglich, nicht nur ein UI-Verstecken.
 
+## Erledigt (Ausbaustufe 12)
+
+- [x] OpenRouter als vierter Spielleiter-Provider (server/ai/openrouterProvider.js):
+      ein API-Key, Zugriff auf sehr viele Modelle (Claude, GPT, Gemini, Llama,
+      DeepSeek, Mistral, …), darunter mehrere komplett kostenlose (Modell-IDs
+      mit ":free"-Endung). API-kompatibel zur OpenAI-API (nur andere
+      Basis-URL) — nutzt darum bewusst dasselbe "openai"-Paket weiter statt
+      einer neuen Abhängigkeit. Robustes Fallback-Parsing (Markdown-Codezäune,
+      Vor-/Nachrede entfernen), da nicht jedes Modell dahinter JSON-Modus
+      strikt einhält. AI_PROVIDER=openrouter + OPENROUTER_API_KEY aktivieren;
+      ohne Key sauberer Fallback auf Mock.
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen

@@ -33,6 +33,11 @@ cp .env.example .env
 #   AI_PROVIDER=gemini
 #   GEMINI_API_KEY=...        # https://aistudio.google.com/apikey
 #
+# Oder OpenRouter (ein Key, viele Modelle, auch kostenlose ":free"-IDs):
+#   AI_PROVIDER=openrouter
+#   OPENROUTER_API_KEY=sk-or-...   # https://openrouter.ai/keys
+#   OPENROUTER_MODEL=meta-llama/llama-3.1-8b-instruct:free
+#
 # Oder OpenAI:
 #   AI_PROVIDER=openai
 #   OPENAI_API_KEY=sk-...
@@ -44,10 +49,12 @@ npm start
 ```
 
 Der Anthropic-Provider nutzt `claude-opus-4-8` mit adaptivem Thinking und
-**strukturierter Ausgabe** (JSON-Schema); OpenAI und Gemini laufen über deren
-JSON-Modus. Alle drei füllen denselben Vertrag (`engine/schema.js`), damit der
-Spielleiter garantiert im richtigen Format antwortet — ohne Key läuft
-automatisch der deterministische Mock-Spielleiter.
+**strukturierter Ausgabe** (JSON-Schema); OpenAI, Gemini und OpenRouter laufen
+über deren JSON-Modus (OpenRouter zusätzlich mit robustem Fallback-Parsing,
+da nicht jedes Modell dahinter JSON-Modus strikt einhält). Alle vier füllen
+denselben Vertrag (`engine/schema.js`), damit der Spielleiter garantiert im
+richtigen Format antwortet — ohne Key läuft automatisch der deterministische
+Mock-Spielleiter.
 
 ## Was schon funktioniert
 
@@ -165,12 +172,13 @@ server/
     schema.js           GM-Antwort-Vertrag + Validierung + JSON-Schema
     turn.js             Zug-Orchestrierung (alle Aktionstypen)
   ai/                   KI-Schicht (austauschbar)
-    provider.js         Fabrik (mock | anthropic | openai | gemini)
+    provider.js         Fabrik (mock | anthropic | openai | gemini | openrouter)
     systemPrompt.js     Spielleiter-Regeln (Deutsch)
     mockProvider.js     Platzhalter-Engine
     anthropicProvider.js Echter Claude-Spielleiter
     openaiProvider.js   Echter Spielleiter über OpenAI
     geminiProvider.js   Echter Spielleiter über Google Gemini (kostenlos)
+    openrouterProvider.js Echter Spielleiter über OpenRouter (viele Modelle, ein Key)
     artProvider.js      Anime-Panel (Platzhalter-SVG) + Key-Moment-Panels
     imageProvider.js    Echte KI-Bild-Panels (OpenAI/Gemini, gecacht)
   public/               Frontend (Vanilla JS, kein Build-Schritt)

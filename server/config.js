@@ -49,4 +49,13 @@ export const config = {
     images: process.env.GEMINI_IMAGES === "1" || process.env.GEMINI_IMAGES === "true",
     imageModel: process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image",
   },
+  openrouter: {
+    apiKey: process.env.OPENROUTER_API_KEY || "",
+    // Freie Modellwahl, z. B. ein Modell mit ":free"-Endung — siehe
+    // https://openrouter.ai/models?max_price=0 für die aktuell kostenlosen.
+    model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+    // Optional, nur fürs OpenRouter-eigene Ranking (nicht sicherheitsrelevant).
+    siteUrl: process.env.OPENROUTER_SITE_URL || "",
+    siteName: process.env.OPENROUTER_SITE_NAME || "A One Piece Story",
+  },
 };

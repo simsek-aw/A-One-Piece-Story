@@ -24,6 +24,15 @@ services:
       # - key: GEMINI_MODEL
       #   value: gemini-2.0-flash # optional
       #
+      # Alternativ über OpenRouter (EIN Key, viele Modelle — auch kostenlose
+      # mit ":free"-Endung, siehe https://openrouter.ai/models?max_price=0):
+      # - key: AI_PROVIDER
+      #   value: openrouter
+      # - key: OPENROUTER_API_KEY
+      #   sync: false
+      # - key: OPENROUTER_MODEL
+      #   value: meta-llama/llama-3.1-8b-instruct:free # Beispiel, austauschbar
+      #
       # Alternativ über OpenAI:
       # - key: AI_PROVIDER
       #   value: openai

@@ -8,6 +8,7 @@ import { MockProvider } from "./mockProvider.js";
 import { AnthropicProvider } from "./anthropicProvider.js";
 import { OpenAIProvider } from "./openaiProvider.js";
 import { GeminiProvider } from "./geminiProvider.js";
+import { OpenRouterProvider } from "./openrouterProvider.js";
 
 export function createProvider() {
   if (config.aiProvider === "anthropic") {
@@ -37,6 +38,15 @@ export function createProvider() {
     }
     return new GeminiProvider(config.gemini);
   }
+  if (config.aiProvider === "openrouter") {
+    if (!config.openrouter.apiKey) {
+      console.warn(
+        "[ai] AI_PROVIDER=openrouter, aber OPENROUTER_API_KEY fehlt. Fällt auf Mock zurück.",
+      );
+      return new MockProvider();
+    }
+    return new OpenRouterProvider(config.openrouter);
+  }
   return new MockProvider();
 }
 
@@ -44,5 +54,6 @@ export function activeProviderName() {
   if (config.aiProvider === "anthropic" && config.anthropic.apiKey) return "anthropic";
   if (config.aiProvider === "openai" && config.openai.apiKey) return "openai";
   if (config.aiProvider === "gemini" && config.gemini.apiKey) return "gemini";
+  if (config.aiProvider === "openrouter" && config.openrouter.apiKey) return "openrouter";
   return "mock";
 }
