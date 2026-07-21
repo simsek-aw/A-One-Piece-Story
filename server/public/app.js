@@ -199,11 +199,12 @@ function renderScene(view) {
   if (!view) return;
   state.view = view;
 
-  // Panel
+  // Panel (SVG sofort; echtes KI-Bild wird bei Bedarf nachgeladen)
   if (view.panel?.src) {
     $("#panelImg").src = view.panel.src;
     $("#panelImg").alt = view.panel.alt || "";
     $("#panelCaption").textContent = view.panel.caption || "";
+    upgradePanel($("#panelImg"), { scope: "scene" }, "s:" + view.locationId);
   }
 
   // Story-Log (nur bei neuer Erzählung anhängen; Rendering weiter unten)
@@ -317,7 +318,31 @@ function renderKeyPanels(view) {
     fig.appendChild(img);
     if (p.caption) fig.appendChild(el("figcaption", null, escapeHtml(p.caption)));
     wrap.appendChild(fig);
+    upgradePanel(img, { scope: "moment", kind: p.kind }, "m:" + p.kind);
   });
+}
+
+// Echtes KI-Panel im Hintergrund holen und das SVG austauschen, sobald fertig.
+// Fällt es aus (aus/kein Guthaben/Fehler), bleibt einfach das SVG stehen.
+const panelImgCache = new Map();
+async function upgradePanel(imgEl, body, key) {
+  if (!state.meta?.imagesEnabled || !state.gameId || !imgEl) return;
+  imgEl.dataset.pkey = key;
+  const cached = panelImgCache.get(key);
+  if (cached) { imgEl.src = cached; return; }
+  const fig = imgEl.closest("figure");
+  fig?.classList.add("drawing");
+  try {
+    const res = await fetch(`/api/games/${state.gameId}/panel`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data && data.src) {
+      panelImgCache.set(key, data.src);
+      if (imgEl.dataset.pkey === key) imgEl.src = data.src; // nur wenn noch aktuell
+    }
+  } catch (e) { /* SVG bleibt */ }
+  finally { fig?.classList.remove("drawing"); }
 }
 
 function inCombat(view) {

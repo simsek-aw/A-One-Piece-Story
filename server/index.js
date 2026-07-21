@@ -17,6 +17,7 @@ import {
   currentSceneView,
 } from "./engine/turn.js";
 import { createProvider, activeProviderName } from "./ai/provider.js";
+import { getPanelImage, PANELS_DIR, imagesEnabled } from "./ai/imageProvider.js";
 import { listArchetypes, listStartLocations } from "./content/startingScenarios.js";
 import { creationRules } from "./engine/character.js";
 import { ERA } from "./content/lore.js";
@@ -55,6 +56,7 @@ app.get(
       devilFruits: listDevilFruits(),
       canonCrews: listCanonCrews().map((c) => ({ id: c.id, name: c.name, recruiter: c.recruiter, faction: c.faction, openness: c.openness, blurb: c.blurb })),
       clock: clockConfig(),
+      imagesEnabled: imagesEnabled(),
     });
   }),
 );
@@ -191,6 +193,22 @@ app.post(
     res.json(view);
   }),
 );
+
+// --- Echtes KI-Bild-Panel (nicht-blockierend, gecacht). Liefert { src } oder
+//     { src: null } (dann bleibt im Frontend das SVG-Panel stehen). ---
+app.post(
+  "/api/games/:id/panel",
+  wrap(async (req, res) => {
+    const game = loadGame(req.params.id);
+    if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
+    const { scope, kind } = req.body || {};
+    const result = await getPanelImage(game, { scope, kind });
+    res.json(result);
+  }),
+);
+
+// Generierte Panels ausliefern (Cache auf Platte).
+app.use("/panels", express.static(PANELS_DIR));
 
 // --- Statisches Frontend ---
 app.use(express.static(PUBLIC_DIR));
