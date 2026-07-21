@@ -52,11 +52,31 @@ export class OpenRouterProvider {
   async generateScene(context) {
     const client = await this.client();
     const userMessage = this.buildUserMessage(context);
+    const firstText = await this.requestCompletion(client, userMessage, 0.85);
+    try {
+      return parseJsonLoose(firstText);
+    } catch (firstError) {
+      // Der Free-Router wechselt Modelle. Manche liefern trotz JSON-Modus
+      // gelegentlich einen fehlenden Trenner oder eine Vorrede. Ein zweiter,
+      // nüchterner Versuch verhindert, dass dadurch der ganze Zug scheitert.
+      const retryMessage =
+        userMessage +
+        `\n\nDeine vorige Antwort war kein valides JSON (${firstError.message}). ` +
+        "Erzeuge die Szene erneut. Gib ausschließlich ein valides JSON-Objekt aus: keine Markdown-Codeblöcke, keine Kommentare, keine Vorrede.";
+      const retryText = await this.requestCompletion(client, retryMessage, 0.2);
+      try {
+        return parseJsonLoose(retryText);
+      } catch (retryError) {
+        throw new Error(`OpenRouter lieferte zweimal ungültiges JSON: ${retryError.message}`);
+      }
+    }
+  }
 
+  async requestCompletion(client, userMessage, temperature) {
     const response = await client.chat.completions.create({
       model: this.model,
       response_format: { type: "json_object" },
-      temperature: 0.85,
+      temperature,
       max_tokens: 2200,
       messages: [
         { role: "system", content: this.system },
@@ -66,7 +86,7 @@ export class OpenRouterProvider {
 
     const text = response.choices?.[0]?.message?.content;
     if (!text) throw new Error("OpenRouter-Antwort ohne Inhalt.");
-    return parseJsonLoose(text);
+    return text;
   }
 
   buildUserMessage(context) {

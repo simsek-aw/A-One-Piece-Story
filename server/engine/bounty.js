@@ -46,10 +46,13 @@ export function heatLevel(heat) {
 // Wahrscheinlichkeit (0..1) einer Marine-Begegnung in einer Szene, abhängig von
 // Heat und Kopfgeld. Nutzt der Mock; der echte Spielleiter bekommt die Werte im
 // Kontext und entscheidet erzählerisch.
-export function marineTroubleChance(character) {
+export function marineTroubleChance(character, marineReputation = 0) {
   const h = heatLevel(character.heat || 0).level;
   const b = bountyTier(character.bounty || 0).level;
   let p = 0.05 + h * 0.18 + b * 0.08;
+  // Ein schlechter Ruf bei der Marine verschärft Kontrollen, ein guter Ruf
+  // lässt sie häufiger erst einmal wegsehen. Heat bleibt dabei wichtiger.
+  p -= Math.max(-100, Math.min(100, marineReputation)) / 1000;
   // Zugehörigkeit wirkt: Marine-Mitglieder werden kaum behelligt; der Schutz
   // einer mächtigen Piratencrew reduziert zufälligen Ärger.
   const aff = character.canonAffiliation;

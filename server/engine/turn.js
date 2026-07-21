@@ -31,6 +31,8 @@ import { syncNewsDiscoveries, syncLocationDiscoveries, discoverCrew, crewRelatio
 import { CANON_CREWS } from "../content/canonCrews.js";
 import { checkHakiUnlocks } from "./haki.js";
 import { currentLocalSuspicion, resolveActionRisk } from "./eavesdropping.js";
+import { advanceStoryDirector, ensureStoryDirector, storyDirectorView } from "./storyDirector.js";
+import { applyActionReputation, applyCombatReputation, ensureFactions, factionValue, factionView } from "./factions.js";
 
 const HISTORY_LIMIT = 8;
 
@@ -38,6 +40,8 @@ const HISTORY_LIMIT = 8;
 
 export async function startScene(game, provider) {
   syncDailyEffects(game);
+  ensureStoryDirector(game);
+  ensureFactions(game);
   const context = buildContext(game, { kind: "start", playerAction: "(Spielbeginn)", checkResult: null });
   const gm = validateGmResponse(await provider.generateScene(context));
   applyGmResponse(game, gm, null);
@@ -65,7 +69,9 @@ export async function playTurn(game, provider, { choiceId, freeText }) {
 
   advanceTime(game, 1); // ein Gespräch/eine kleine Handlung ~1 Stunde
   const actionRisk = resolveActionRisk(game, playerAction, actionSkill, checkResult);
-  const context = buildContext(game, { kind: "turn", playerAction, checkResult, actionRisk });
+  const storyEvent = advanceStoryDirector(game, playerAction);
+  const factionChanges = applyActionReputation(game, { actionRisk, playerAction });
+  const context = buildContext(game, { kind: "turn", playerAction, checkResult, actionRisk, storyEvent, factionChanges });
   const gm = validateGmResponse(await provider.generateScene(context));
   applyGmResponse(game, gm, { playerAction, checkResult });
   enforceEavesdroppingConsequence(game, actionRisk);
@@ -185,8 +191,9 @@ async function resolveCombatEnd(game, provider) {
   }
 
   cm.active = false;
+  const factionChanges = applyCombatReputation(game, cm.enemies, result);
   advanceTime(game, 1); // ein Kampf kostet etwa eine Stunde
-  const context = buildContext(game, { kind: "combat_end", playerAction: summary, checkResult: null, combatResult: { result, summary } });
+  const context = buildContext(game, { kind: "combat_end", playerAction: summary, checkResult: null, combatResult: { result, summary }, factionChanges });
   const gm = validateGmResponse(await provider.generateScene(context));
   gm.combatStart = null; // kein sofortiger Folgekampf aus dem Ausgang
   applyGmResponse(game, gm, { playerAction: summary, checkResult: null });
@@ -284,7 +291,7 @@ function syncDailyEffects(game) {
   }
 }
 
-function buildContext(game, { kind, playerAction, checkResult, recruitTarget, activity, travelInfo, fruit, loreUnlocks, hakiUnlocks, combatResult, canonResult, actionRisk }) {
+function buildContext(game, { kind, playerAction, checkResult, recruitTarget, activity, travelInfo, fruit, loreUnlocks, hakiUnlocks, combatResult, canonResult, actionRisk, storyEvent, factionChanges }) {
   const c = game.character;
   syncNewsDiscoveries(game); // aus der Zeitung "gehörte" Crews aktualisieren
   syncLocationDiscoveries(game); // vor Ort begegnete Fraktionen (z. B. Marine-Standort)
@@ -322,16 +329,20 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
       bountyTier: bountyTier(c.bounty).label,
       heat: c.heat,
       heatLevel: heatLevel(c.heat).label,
-      marineTroubleChance: Math.round(marineTroubleChance(c) * 100),
+      marineTroubleChance: Math.round(marineTroubleChance(c, factionValue(game, "marine")) * 100),
       hasDevilFruit: !!c.devilFruit,
       devilFruit: c.devilFruit,
       hasShip: !!c.ship,
     },
     memory: memorySummary(game),
     history: game.history.slice(-HISTORY_LIMIT),
+    story: storyDirectorView(game),
+    factions: factionView(game),
     playerAction,
     checkResult,
     actionRisk: actionRisk || null,
+    storyEvent: storyEvent || null,
+    factionChanges: factionChanges || [],
     recruitTarget: recruitTarget || null,
     activity: activity || null,
     travelInfo: travelInfo || null,
@@ -511,6 +522,7 @@ export function currentSceneView(game) {
     canonOffer: game.world.canonOffer || null,
     news: newsEdition(game),
     denDen: game.denDen,
+    factions: factionView(game),
   };
 }
 

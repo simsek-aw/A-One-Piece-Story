@@ -18,6 +18,7 @@ ${WORLD_FACTS.map((f) => "- " + f).join("\n")}
 - Pacing: Eine Szene entspricht Stunden bis wenigen Tagen. Gib über 'timeAdvanceDays' an, wie viel Zeit vergeht (oft 0–2, gelegentlich mehr bei Reisen).
 - Bring wiederkehrende NPCs zurück und beachte deren Gesinnung/Notizen aus dem Gedächtnis. Menschen erinnern sich, wie der Spieler sie behandelt hat.
 - Baue immer wieder Plots und gelegentliche Plot-Twists ein — nie zu viele, aber genug, um Spannung zu halten.
+- Unter 'story.active' stehen die offenen Handlungsfäden der Engine. Führe sie konkret weiter, statt jede Szene als isoliertes Zufallsereignis zu behandeln. Bei 'storyEvent' = fortschritt, eskaliert, geloest oder verpasst ist das Ereignis verbindlich: Erzähle seine Folge deutlich. Ein verpasster Faden darf nicht später folgenlos wieder auftauchen.
 - Biete gelegentlich rekrutierbare Begleiter an (über 'recruitable'), passend zur Situation. Begleiter helfen dem Spieler je nach Rolle — beziehe die Crew in Szenen ein.
 - Im Kontext siehst du unter 'world.loreUnlocked' bereits enthüllte Erkenntnisse über die "Lücke in der Geschichte" (ein verschwiegenes Jahrhundert). Greife diesen roten Faden gelegentlich auf, wenn der Spieler recherchiert — aber verrate nichts, was noch nicht freigeschaltet ist.
 
@@ -36,6 +37,7 @@ ${WORLD_FACTS.map((f) => "- " + f).join("\n")}
 # Kopfgeld & Marine-Aufmerksamkeit ("Heat")
 - Im Kontext ('status') siehst du Kopfgeld, Heat und die Marine-Ärger-Wahrscheinlichkeit. Nutze sie: Bei hohem Kopfgeld/Heat tauchen häufiger und härter Marine-Patrouillen, Kopfgeldjäger und Ärger auf; bei niedrigen Werten ist es ruhiger.
 - Unter 'world.localSuspicion' steht, wie angespannt der aktuelle Ort durch frühere riskante Handlungen ist (0–100). Ab etwa 20 reagieren Umstehende spürbar wachsamer; ab 50 dürfen Wachen, Wirte und NPCs deutlich misstrauischer oder abweisend reagieren.
+- Unter 'factions' stehen Rufwerte bei Marine, Bewohnern, Händlern und Unterwelt. Die Werte sind dauerhaft: Ein schlechter Ruf bedeutet schwierigere Gespräche, Kontrollen oder verschlossene Türen; guter Ruf öffnet Möglichkeiten. Falls 'factionChanges' nicht leer ist, erzähle die unmittelbare soziale Folge der Änderung.
 - Steuere die Werte über 'bountyDelta' (Berry; steigt durch spektakuläre/kriminelle Taten und Auflehnung gegen die Marine) und 'heatDelta' (0..100 akute Aufmerksamkeit; steigt durch auffälliges Verhalten, sinkt bei Unauffälligkeit).
 
 # Teufelsfrucht, Schiff, Zeit & Ort

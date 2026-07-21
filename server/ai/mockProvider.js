@@ -194,11 +194,12 @@ export class MockProvider {
     const rumor = context.world.rumors[context.world.rumors.length - 1];
 
     const npc = pick(NPC_POOL);
+    const thread = context.story?.active?.[0];
     return {
       narration:
         `${flavor}\n\n${archLine}\n\n` +
         (rumor ? `Am Rande hörst du ein Gerücht: „${rumor}“\n\n` : "") +
-        `${pick(OPENERS)}`,
+        `${pick(OPENERS)}` + (thread ? `\n\nEin Gedanke bleibt hängen: ${thread.hook}` : ""),
       choices: [
         { id: "a", text: "Zuhören und herausfinden, was los ist.", skillCheck: { skill: "wahrnehmung", dc: 10 } },
         { id: "b", text: "Selbstbewusst das Gespräch übernehmen.", skillCheck: { skill: "ueberzeugen", dc: 12 } },
@@ -215,6 +216,23 @@ export class MockProvider {
     const check = context.checkResult;
     const parts = [];
     const risk = context.actionRisk;
+    const storyEvent = context.storyEvent;
+    const factionChanges = context.factionChanges || [];
+
+    factionChanges.forEach((change) => {
+      const direction = change.delta > 0 ? "verbessert" : "verschlechtert";
+      parts.push(`Dein Ruf bei „${change.label}“ ${direction} sich (${change.delta > 0 ? "+" : ""}${change.delta}) – ${change.reason}.`);
+    });
+
+    if (storyEvent?.type === "fortschritt") {
+      parts.push(`Deine Nachforschungen bringen Bewegung in den Faden „${storyEvent.title}“. Ein neues Detail passt endlich zu den bisherigen Spuren.`);
+    } else if (storyEvent?.type === "eskaliert") {
+      parts.push(`Während du andere Dinge verfolgst, spitzt sich „${storyEvent.title}“ zu. Die Welt wartet nicht darauf, dass du bereit bist.`);
+    } else if (storyEvent?.type === "geloest") {
+      parts.push(`Die letzten Spuren fügen sich zusammen: „${storyEvent.title}“ ist fürs Erste aufgeklärt. Deine Entscheidung hat einen sichtbaren Unterschied gemacht.`);
+    } else if (storyEvent?.type === "verpasst") {
+      parts.push(`Für „${storyEvent.title}“ ist es zu spät. Die Gelegenheit ist vorbei und hinterlässt eine Veränderung, die du nicht einfach zurückdrehen kannst.`);
+    }
 
     if (risk) {
       if (!risk.discovered) {
