@@ -18,6 +18,12 @@ const state = {
   combatTarget: null,
 };
 const SAVE_SLOTS_KEY = "aops-save-slots";
+const RANDOM_NAMES = ["Aren", "Bela", "Ciro", "Dena", "Elio", "Fara", "Garo", "Ilya", "Juna", "Keno", "Lira", "Miro", "Nela", "Orin", "Rava", "Sena", "Taro", "Vika", "Yaro", "Zira"];
+const RANDOM_APPEARANCES = {
+  hair: ["kurzes zerzaustes schwarzes Haar", "lange kupferrote Zöpfe", "silberner Undercut", "wilde dunkelblaue Locken", "rasierter Kopf mit auffälliger Tätowierung", "strohblondes Haar unter einem Kopftuch"],
+  feature: ["eine feine Narbe über der Augenbraue", "unzählige Sommersprossen", "ein breites herausforderndes Grinsen", "ein ruhiger durchdringender Blick", "eine goldene Zahnlücke", "runde getönte Brillengläser"],
+  clothing: ["langer verwitterter Kapitänsmantel", "ärmellose Weste und breiter Gürtel", "praktische Reisekleidung mit vielen Taschen", "helle Marinejacke ohne Abzeichen", "auffälliger gemusterter Kimono", "schwere Stiefel und ein weiter Schal"],
+};
 
 async function api(path, opts = {}) {
   showLoading(true);
@@ -115,6 +121,45 @@ function buildCreation() {
   });
 
   $("#startBtn").onclick = startGame;
+  $("#randomizeCharacterBtn").onclick = randomizeCharacter;
+}
+
+function randomizeCharacter() {
+  const creation = state.meta.creation;
+  const archetypes = state.meta.archetypes;
+  const archetypeIndex = randomIndex(archetypes.length);
+  const archetype = archetypes[archetypeIndex];
+  const archetypeList = $("#archetypeList");
+  archetypeList.children[archetypeIndex].click();
+
+  state.attrs = Object.fromEntries(creation.attributes.map((attr) => [attr.id, creation.baseAttribute]));
+  for (let point = 0; point < creation.pointsToDistribute; point += 1) {
+    const eligible = creation.attributes.filter((attr) => state.attrs[attr.id] < creation.maxAttribute);
+    const weighted = eligible.flatMap((attr) => Array(archetype.attributeBonus?.[attr.id] ? 3 : 1).fill(attr.id));
+    state.attrs[pickRandom(weighted)] += 1;
+  }
+  updateAttrUI();
+
+  const perkIndex = randomIndex(creation.perks.length);
+  $("#perkList").children[perkIndex + 1].click(); // +1: „Keiner" steht an Position 0
+  const locationIndex = randomIndex(state.meta.startLocations.length);
+  $("#locationList").children[locationIndex].click();
+
+  $("#charName").value = pickRandom(RANDOM_NAMES);
+  $("#charAppearance").value = [
+    pickRandom(RANDOM_APPEARANCES.hair),
+    pickRandom(RANDOM_APPEARANCES.feature),
+    pickRandom(RANDOM_APPEARANCES.clothing),
+  ].join(", ");
+  $("#createError").textContent = "🎲 Charakter ausgewürfelt – du kannst alles noch ändern.";
+}
+
+function randomIndex(length) {
+  return Math.floor(Math.random() * length);
+}
+
+function pickRandom(values) {
+  return values[randomIndex(values.length)];
 }
 
 function select(key, value, container, node) {
