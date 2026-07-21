@@ -64,7 +64,13 @@ richtigen Format antwortet.
   Fortsetzung.
 - **NPC-Gedächtnis**: Figuren merken sich Begegnungen und Entscheidungen; ihre
   Gesinnung entwickelt sich und beeinflusst spätere Szenen.
-- **Rekrutierung**: Begleiter über einen Überzeugen-Check gewinnen (Crew/Party).
+- **Rekrutierung & Crew-Boni**: Begleiter über einen Überzeugen-Check gewinnen;
+  sie geben je nach Rolle Bonus auf passende Checks (Navigator → Navigation,
+  Söldner → Nahkampf, …).
+- **Levelaufstieg**: pro Stufe ein Skillpunkt, den du frei auf Fertigkeiten
+  verteilst.
+- **Lore-Chronik**: der „Lücke in der Geschichte"-Handlungsstrang schaltet über
+  Recherche (Bücherwurm) nach und nach Fragmente frei (Void-Century-Faden).
 - **Kanon-Koexistenz**: Hintergrund-Ereignisse aus der One-Piece-Timeline werden
   als Gerüchte eingestreut.
 - **Multiplayer vorbereitet**: geteilter Tages-Takt, Den-Den-Mushi- & Raum-

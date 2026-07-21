@@ -10,6 +10,7 @@ import {
   doActivity,
   doTravel,
   doEatFruit,
+  spendSkillPoint,
   currentSceneView,
 } from "./engine/turn.js";
 import { createProvider, activeProviderName } from "./ai/provider.js";
@@ -132,6 +133,18 @@ app.post(
     const game = loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const view = await doEatFruit(game, provider, { fruitId: req.body?.fruitId });
+    saveGame(game);
+    res.json(view);
+  }),
+);
+
+// --- Skillpunkt aus Levelaufstieg verteilen (keine KI, keine Tagesaktion) ---
+app.post(
+  "/api/games/:id/spend-skill",
+  wrap(async (req, res) => {
+    const game = loadGame(req.params.id);
+    if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
+    const view = spendSkillPoint(game, { skillId: req.body?.skillId });
     saveGame(game);
     res.json(view);
   }),

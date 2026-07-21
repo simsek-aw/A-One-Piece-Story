@@ -222,7 +222,7 @@ function renderScene(view) {
     cb.className = "check-banner " + (k.success ? "ok" : "bad");
     cb.textContent = k.teufelsfruchtSchwaeche
       ? `🌀 Teufelsfrucht-Schwäche: Du kannst nicht schwimmen — der Versuch scheitert katastrophal.`
-      : `🎲 ${k.skillName}: ${k.roll} + Attr ${signed(k.attrMod)} + Rang ${k.rank}${k.dfBonus ? " + Frucht " + k.dfBonus : ""} = ${k.total} vs DC ${k.dc} → ` +
+      : `🎲 ${k.skillName}: ${k.roll} + Attr ${signed(k.attrMod)} + Rang ${k.rank}${k.dfBonus ? " + Frucht " + k.dfBonus : ""}${k.partyBonus ? " + Crew " + k.partyBonus : ""} = ${k.total} vs DC ${k.dc} → ` +
         (k.kritErfolg ? "KRITISCHER ERFOLG!" : k.kritFehler ? "KRITISCHER PATZER!" : k.success ? "Erfolg" : "Misserfolg");
     cb.classList.remove("hidden");
   } else cb.classList.add("hidden");
@@ -230,7 +230,13 @@ function renderScene(view) {
   if (view.lastLevelUps?.length) {
     const lvl = view.lastLevelUps.at(-1).level;
     if (storyBuffer.at(-1)?.text !== `★ Levelaufstieg! Stufe ${lvl}.`)
-      storyBuffer.push({ type: "action", text: `★ Levelaufstieg! Stufe ${lvl}.` });
+      storyBuffer.push({ type: "action", text: `★ Levelaufstieg! Stufe ${lvl}. Du hast einen Skillpunkt zu verteilen.` });
+  }
+  if (view.lastLoreUnlocks?.length) {
+    view.lastLoreUnlocks.forEach((l) => {
+      const note = `📜 Neue Erkenntnis: „${l.title}“`;
+      if (!storyBuffer.some((e) => e.text === note)) storyBuffer.push({ type: "action", text: note });
+    });
   }
 
   renderDayBar(view);
@@ -240,6 +246,8 @@ function renderScene(view) {
   renderMap(view);
   renderTravel(view);
   renderActivities(view);
+  renderSkillAlloc(view);
+  renderLore(view);
   renderDenDen(view);
 
   $("#shareLink").value = `${location.origin}${location.pathname}?game=${view.gameId}`;
@@ -426,6 +434,42 @@ function renderActivities(view) {
     btn.onclick = () => post("/activity", { activityId: a.id }, a.name);
     list.appendChild(btn);
   });
+}
+
+function renderSkillAlloc(view) {
+  const hint = $("#skillPointsHint");
+  const alloc = $("#skillAlloc");
+  const points = view.character.unspentSkillPoints || 0;
+  alloc.innerHTML = "";
+  if (points > 0 && !locked(view)) {
+    hint.textContent = `★ ${points} freie(r) Skillpunkt(e) — wähle eine Fertigkeit:`;
+    hint.classList.remove("hidden");
+    state.meta.creation.skills.forEach((s) => {
+      const cur = view.character.skills[s.id] || 0;
+      const btn = el("button", "chip", `${s.name} ${cur} →`);
+      btn.onclick = () => post("/spend-skill", { skillId: s.id }, `Ich verbessere ${s.name}.`);
+      alloc.appendChild(btn);
+    });
+    alloc.classList.remove("hidden");
+  } else {
+    hint.classList.add("hidden");
+    alloc.classList.add("hidden");
+  }
+}
+
+function renderLore(view) {
+  const bar = $("#loreBar");
+  const list = $("#loreList");
+  const lore = view.lore || { progress: 0, unlocked: [], next: null };
+  bar.textContent = lore.next
+    ? `Fortschritt: ${lore.progress} · nächste Erkenntnis bei ${lore.next.threshold} (recherchiere als Bücherwurm)`
+    : `Fortschritt: ${lore.progress} · alle bekannten Fragmente entschlüsselt`;
+  list.innerHTML = "";
+  if (lore.unlocked?.length) {
+    lore.unlocked.forEach((l) => list.appendChild(el("div", "li", `<b>${escapeHtml(l.title)}</b><small>${escapeHtml(l.text)}</small>`)));
+  } else {
+    list.innerHTML = `<div class="hint">Noch nichts entschlüsselt. Werde zum Bücherwurm, um die Lücke zu erforschen.</div>`;
+  }
 }
 
 function renderDenDen(view) {

@@ -4,6 +4,7 @@
 // erzählt danach nur das Ergebnis aus.
 
 import { SKILLS } from "./character.js";
+import { partyBonusForSkill } from "./party.js";
 
 // Attribut-Modifikator: Wert 5 = 0, jeder Punkt darüber/darunter ±1 (grob D&D-artig).
 export function attributeModifier(value) {
@@ -15,8 +16,9 @@ export function rollDie(sides = 20) {
 }
 
 // Führt einen Check aus. skillId muss in SKILLS existieren.
+// party (optional): rekrutierte Begleiter geben je nach Rolle einen Bonus.
 // Rückgabe enthält alle Einzelteile, damit das UI transparent würfeln kann.
-export function skillCheck(character, skillId, dc) {
+export function skillCheck(character, skillId, dc, party = []) {
   const skill = SKILLS[skillId];
   const attrId = skill ? skill.attribut : "glueck";
   const attrValue = character.attributes[attrId] ?? 5;
@@ -38,7 +40,9 @@ export function skillCheck(character, skillId, dc) {
 
   // Fähigkeits-Bonus der Teufelsfrucht auf passende Skills.
   const dfBonus = character.devilFruit?.bonusSkills?.includes(skillId) ? 2 : 0;
-  const total = roll + attrMod + rank + dfBonus;
+  // Crew-Bonus je nach Rolle der Begleiter.
+  const partyBonus = partyBonusForSkill(party, skillId);
+  const total = roll + attrMod + rank + dfBonus + partyBonus;
 
   const kritErfolg = roll === 20;
   const kritFehler = roll === 1;
@@ -46,6 +50,7 @@ export function skillCheck(character, skillId, dc) {
 
   return {
     dfBonus,
+    partyBonus,
     skillId,
     skillName: skill ? skill.name : skillId,
     attribut: attrId,

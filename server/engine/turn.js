@@ -22,6 +22,8 @@ import { runActivity } from "./progression.js";
 import { travelOptions, travelTo, currentTravelMode } from "./travel.js";
 import { eatDevilFruit } from "./devilfruit.js";
 import { panelFor } from "../ai/artProvider.js";
+import { unlockedLore, nextLore } from "../content/loreArcs.js";
+import { SKILLS } from "./character.js";
 
 const HISTORY_LIMIT = 8;
 
@@ -45,7 +47,7 @@ export async function playTurn(game, provider, { choiceId, freeText }) {
     const choice = scene.choices.find((c) => c.id === choiceId);
     if (!choice) throw new Error("Unbekannte Auswahlmöglichkeit.");
     playerAction = choice.text;
-    if (choice.skillCheck) checkResult = skillCheck(game.character, choice.skillCheck.skill, choice.skillCheck.dc);
+    if (choice.skillCheck) checkResult = skillCheck(game.character, choice.skillCheck.skill, choice.skillCheck.dc, game.party);
   } else if (freeText && freeText.trim()) {
     playerAction = freeText.trim().slice(0, 500);
   } else {
@@ -64,7 +66,7 @@ export async function attemptRecruit(game, provider, { npcId }) {
   const target = (game.recruitable || []).find((r) => r.id === npcId);
   if (!target) throw new Error("Diese Person ist gerade nicht rekrutierbar.");
 
-  const check = skillCheck(game.character, "ueberzeugen", 13);
+  const check = skillCheck(game.character, "ueberzeugen", 13, game.party);
   const playerAction =
     `Ich versuche, ${target.name} (${target.role}) für meine Sache zu gewinnen. ` +
     (check.success ? "Meine Worte treffen — die Person ist überzeugt." : "Meine Worte verfehlen ihre Wirkung.");
@@ -87,13 +89,17 @@ export async function doActivity(game, provider, { activityId }) {
   const rankTxt = result.rankUps.length
     ? " Dabei steige ich auf in: " + result.rankUps.map((r) => `${r.skill} (Rang ${r.rank})`).join(", ") + "."
     : "";
-  const playerAction = `Ich verbringe den Tag mit: ${result.activity.name}.${rankTxt}`;
+  const loreTxt = result.loreUnlocks?.length
+    ? " Eine neue Erkenntnis über die Lücke in der Geschichte: " + result.loreUnlocks.map((l) => l.title).join(", ") + "."
+    : "";
+  const playerAction = `Ich verbringe den Tag mit: ${result.activity.name}.${rankTxt}${loreTxt}`;
 
   consumeAction(game);
-  const context = buildContext(game, { kind: "activity", playerAction, checkResult: null, activity: result.activity });
+  const context = buildContext(game, { kind: "activity", playerAction, checkResult: null, activity: result.activity, loreUnlocks: result.loreUnlocks });
   const gm = validateGmResponse(await provider.generateScene(context));
   applyGmResponse(game, gm, { playerAction, checkResult: null });
   game.lastLevelUps = [...(game.lastLevelUps || []), ...result.levelUps];
+  game.lastLoreUnlocks = result.loreUnlocks || [];
   return currentSceneView(game);
 }
 
@@ -161,6 +167,7 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
       travelMode: currentTravelMode(game),
       rumors: rumorsForDay(game.world.day).map((r) => r.rumor),
       loreProgress: game.world.flags.lore_fortschritt || 0,
+      loreUnlocked: unlockedLore(game.world.flags.lore_fortschritt || 0).map((l) => l.title),
     },
     character: characterDigest(game),
     // Rohwerte für Konsequenz-Logik (Mock nutzt sie, Claude sieht sie als Kontext).
@@ -247,6 +254,17 @@ function applyGmResponse(game, gm, turnInfo) {
   if (game.history.length > HISTORY_LIMIT * 3) game.history = game.history.slice(-HISTORY_LIMIT * 3);
 
   game.lastLevelUps = levelUps;
+  game.lastLoreUnlocks = []; // wird von doActivity danach ggf. gefüllt
+}
+
+// Levelaufstieg: freien Skillpunkt in einen Skill investieren (keine Tagesaktion).
+export function spendSkillPoint(game, { skillId }) {
+  const c = game.character;
+  if ((c.unspentSkillPoints || 0) <= 0) throw new Error("Keine freien Skillpunkte.");
+  if (!SKILLS[skillId]) throw new Error("Unbekannte Fertigkeit.");
+  c.skills[skillId] = (c.skills[skillId] || 0) + 1;
+  c.unspentSkillPoints -= 1;
+  return currentSceneView(game);
 }
 
 function slug(name) {
@@ -271,6 +289,12 @@ export function currentSceneView(game) {
     recruitable: game.recruitable,
     lastCheck: game.lastCheck,
     lastLevelUps: game.lastLevelUps || [],
+    lastLoreUnlocks: game.lastLoreUnlocks || [],
+    lore: {
+      progress: game.world.flags.lore_fortschritt || 0,
+      unlocked: unlockedLore(game.world.flags.lore_fortschritt || 0),
+      next: nextLore(game.world.flags.lore_fortschritt || 0),
+    },
     character: {
       name: c.name,
       archetype: c.archetype,
@@ -287,6 +311,7 @@ export function currentSceneView(game) {
       attributes: c.attributes,
       skills: c.skills,
       skillProgress: c.skillProgress || {},
+      unspentSkillPoints: c.unspentSkillPoints || 0,
       perks: c.perks,
       inventory: c.inventory,
       devilFruit: c.devilFruit,

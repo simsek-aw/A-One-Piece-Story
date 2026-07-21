@@ -5,6 +5,7 @@ import { ACTIVITIES, TRAIN_THRESHOLD } from "../content/activities.js";
 import { SKILLS, applyXp } from "./character.js";
 import { applyHeat } from "./bounty.js";
 import { LOCATIONS } from "../content/map.js";
+import { newlyUnlocked } from "../content/loreArcs.js";
 
 // Führt eine Aktivität aus (deterministisch) und liefert eine Zusammenfassung,
 // die der Spielleiter als Kontext ausspielt.
@@ -33,10 +34,16 @@ export function runActivity(game, activityId) {
   const eff = act.effects || {};
   if (eff.beriDelta) c.beri = Math.max(0, c.beri + eff.beriDelta);
   if (eff.heatDelta) applyHeat(c, eff.heatDelta);
+
+  let loreUnlocks = [];
   if (eff.loreProgress) {
-    game.world.flags.lore_fortschritt = (game.world.flags.lore_fortschritt || 0) + eff.loreProgress;
+    const prev = game.world.flags.lore_fortschritt || 0;
+    const next = prev + eff.loreProgress;
+    game.world.flags.lore_fortschritt = next;
+    loreUnlocks = newlyUnlocked(prev, next);
   }
+
   const levelUps = applyXp(c, act.xp || 0);
 
-  return { activity: act, rankUps, levelUps, effects: eff };
+  return { activity: act, rankUps, levelUps, effects: eff, loreUnlocks };
 }

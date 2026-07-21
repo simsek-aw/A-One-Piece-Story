@@ -79,10 +79,15 @@ export class MockProvider {
 
   activityScene(context) {
     const a = context.activity;
+    let lore = "";
+    if (context.loreUnlocks?.length) {
+      lore = "\n\n📜 In den Aufzeichnungen stößt du auf etwas Neues:\n" +
+        context.loreUnlocks.map((l) => `„${l.title}“ — ${l.text}`).join("\n\n");
+    }
     return {
       narration:
         `Du widmest den Tag der Aktivität: ${a.name}.\n\n` +
-        `${a.desc}\n\nDie Mühe zahlt sich aus — du spürst, wie du ein Stück wächst.`,
+        `${a.desc}\n\nDie Mühe zahlt sich aus — du spürst, wie du ein Stück wächst.${lore}`,
       choices: this.genericChoices(context),
       stateChanges: this.emptyChanges(),
       npcs: [],

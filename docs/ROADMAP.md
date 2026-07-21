@@ -13,18 +13,22 @@ folgenden Punkte bauen darauf auf.
 - [x] Anime-Panel-Slot pro Szene (Platzhalter-SVG)
 - [x] Multiplayer-Datenmodell (Tages-Takt, Den-Den-Mushi, Raum) + UI-Slots
 
+## Erledigt (Ausbaustufe 3)
+
+- [x] Levelaufstieg: Skillpunkte verteilen (Endpoint + UI)
+- [x] Party-Boni wirksam: Begleiter geben je nach Rolle Bonus auf passende Checks
+- [x] „Lücke in der Geschichte"-Handlungsstrang: lore_fortschritt-Schwellen lösen
+      Chronik-Enthüllungen aus (Void-Century-Faden für Bücherwürmer)
+
 ## Als Nächstes (Solo vertiefen)
 
-- [ ] **Levelaufstieg-UI**: Beim Aufstieg Skill-Punkte/Perk wählen (Backend
-      unterstützt Level bereits; UI + Endpoint fehlen).
-- [ ] **Party-Boni wirksam machen**: Begleiter geben je nach Rolle Bonus auf
-      passende Checks (Kampf/Erkundung/sozial/Handwerk). Loyalität steigt/fällt
-      mit Entscheidungen und kann zu eigenen Begleiter-Plots führen.
+- [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen
+      neuen Perk wählen dürfen.
+- [ ] **Party-Loyalität dynamisch**: Loyalität steigt/fällt mit Entscheidungen
+      und schaltet eigene Begleiter-Plots frei.
 - [ ] **Haki-Ausbau**: Meditation/Willens-Pfad zu echten Haki-Fähigkeiten führen.
-- [ ] **„Lücke in der Geschichte"-Handlungsstrang**: lore_fortschritt-Schwellen
-      lösen Enthüllungen aus (Void-Century-artiger roter Faden für Bücherwürmer).
-- [ ] **Kampf-Substruktur**: Aktuell abstrakt über Checks. Optional ein
-      leichtgewichtiges Runden-/Initiative-System für größere Konfrontationen.
+- [ ] **Kampf-Substruktur**: leichtgewichtiges Runden-/Initiative-System für
+      größere Konfrontationen (aktuell abstrakt über Checks).
 - [ ] **Inventar-Nutzung**: Items im Zug einsetzen (heilen, Werkzeuge),
       Feilschen/Handel an Orten.
 - [ ] **Eigenes Schiff ausbauen**: Werft, Upgrades, Crew-Positionen an Bord.

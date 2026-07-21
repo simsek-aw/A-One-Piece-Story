@@ -130,6 +130,8 @@ export function createCharacter({ name, archetype, attributes, perk }) {
     ship: null,
     // Trainingsfortschritt pro Skill (für Rang-Aufstiege via Aktivitäten)
     skillProgress: {},
+    // Freie Skillpunkte aus Levelaufstiegen (verteilbar)
+    unspentSkillPoints: 0,
   };
   character.maxHp = maxHp(character);
   character.hp = character.maxHp;
@@ -151,6 +153,7 @@ export function applyXp(character, xpDelta) {
     const oldMax = character.maxHp;
     character.maxHp = maxHp(character) + (character.level - 1) * 5;
     character.hp += character.maxHp - oldMax; // Level-Up heilt die Differenz.
+    character.unspentSkillPoints = (character.unspentSkillPoints || 0) + 1; // 1 Skillpunkt je Level
     events.push({ level: character.level, maxHp: character.maxHp });
   }
   return events;
