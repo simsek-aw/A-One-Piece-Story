@@ -56,7 +56,9 @@ export class OpenRouterProvider {
     try {
       const client = await this.client();
       const userMessage = this.buildUserMessage(context);
-      const firstText = await this.requestCompletion(client, userMessage, 0.85);
+      // Etwas weniger Temperatur verbessert bei wechselnden Free-Modellen
+      // Grammatik und JSON-Treue, ohne die Szenen völlig glattzubügeln.
+      const firstText = await this.requestCompletion(client, userMessage, 0.7);
       try {
         return parseJsonLoose(firstText);
       } catch (firstError) {

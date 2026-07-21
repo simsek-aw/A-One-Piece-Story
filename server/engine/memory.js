@@ -26,12 +26,16 @@ export function upsertNpc(game, npc, currentDay) {
     role: npc.role || "",
     firstMetDay: currentDay,
     disposition: 0,
+    personality: npc.personality || null,
+    nameKnown: npc.nameKnown ?? false,
     notes: [],
   };
 
   record.name = npc.name || record.name;
   record.role = npc.role || record.role;
   record.disposition = disposition;
+  if (npc.personality) record.personality = npc.personality;
+  if (npc.nameKnown != null) record.nameKnown = !!npc.nameKnown;
   record.lastSeenDay = currentDay;
   if (npc.note && typeof npc.note === "string") {
     record.notes.push({ day: currentDay, text: npc.note });
@@ -61,6 +65,8 @@ export function memorySummary(game, limit = 12) {
       id: n.id,
       name: n.name,
       role: n.role,
+      persoenlichkeit: n.personality || "unbekannt",
+      nameBekannt: !!n.nameKnown,
       gesinnung: n.disposition,
       zuletztGesehenTag: n.lastSeenDay,
       letzteNotizen: n.notes.slice(-2).map((x) => x.text),

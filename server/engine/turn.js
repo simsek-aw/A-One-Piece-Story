@@ -33,6 +33,7 @@ import { checkHakiUnlocks } from "./haki.js";
 import { currentLocalSuspicion, resolveActionRisk } from "./eavesdropping.js";
 import { advanceStoryDirector, ensureStoryDirector, storyDirectorView } from "./storyDirector.js";
 import { applyActionReputation, applyCombatReputation, ensureFactions, factionValue, factionView } from "./factions.js";
+import { ensureNpcPersonality, startRecruitment, advanceRecruitment, closeRecruitment, recruitmentView } from "./recruitment.js";
 
 const HISTORY_LIMIT = 8;
 
@@ -79,24 +80,31 @@ export async function playTurn(game, provider, { choiceId, freeText }) {
   return currentSceneView(game);
 }
 
-export async function attemptRecruit(game, provider, { npcId }) {
+export async function attemptRecruit(game, provider, { npcId, approachId }) {
+  if (approachId === "close") {
+    if (game.recruitment?.status === "active") throw new Error("Beende zuerst alle fünf Gesprächsphasen.");
+    closeRecruitment(game);
+    return currentSceneView(game);
+  }
+
+  if (game.recruitment?.status === "active") {
+    const dialogue = advanceRecruitment(game, approachId);
+    if (dialogue.status !== "active") {
+      advanceTime(game, 1);
+      game.history.push({
+        day: game.world.day,
+        action: dialogue.status === "joined"
+          ? `${dialogue.realName} wurde nach einem fünfstufigen Gespräch rekrutiert.`
+          : `Das Rekrutierungsgespräch mit ${dialogue.realName} scheiterte.`,
+      });
+    }
+    return currentSceneView(game);
+  }
+
   requireAction(game);
   const target = (game.recruitable || []).find((r) => r.id === npcId);
   if (!target) throw new Error("Diese Person ist gerade nicht rekrutierbar.");
-
-  const check = skillCheck(game.character, "ueberzeugen", 13, game.party);
-  const playerAction =
-    `Ich versuche, ${target.name} (${target.role}) für meine Sache zu gewinnen. ` +
-    (check.success ? "Meine Worte treffen — die Person ist überzeugt." : "Meine Worte verfehlen ihre Wirkung.");
-
-  advanceTime(game, 1);
-  const context = buildContext(game, { kind: "recruit", playerAction, checkResult: check, recruitTarget: target });
-  const gm = validateGmResponse(await provider.generateScene(context));
-
-  if (check.success && !game.party.some((p) => p.id === target.id)) {
-    game.party.push({ id: target.id, name: target.name, role: target.role, loyalty: 50, joinedDay: game.world.day });
-  }
-  applyGmResponse(game, gm, { playerAction, checkResult: check });
+  startRecruitment(game, target);
   return currentSceneView(game);
 }
 
@@ -274,6 +282,9 @@ function requireNoCombat(game) {
 
 function requireAction(game) {
   requireNoCombat(game);
+  if (game.recruitment?.status === "active") {
+    throw new Error("Du führst gerade ein Rekrutierungsgespräch. Triff dort zuerst deine nächste Entscheidung.");
+  }
   syncDailyEffects(game);
   if (isLocked(game)) {
     throw new Error(`Der neue Tag beginnt in ${clockView(game).secondsRemaining}s — ruh dich noch aus.`);
@@ -408,7 +419,10 @@ function applyGmResponse(game, gm, turnInfo) {
 
   // Flags & NPC-Gedächtnis
   setFlags(game, s.flagsSet);
-  for (const npc of gm.npcs) upsertNpc(game, npc, game.world.day);
+  for (const npc of gm.npcs) {
+    upsertNpc(game, npc, game.world.day);
+    ensureNpcPersonality(game, npc);
+  }
 
   // Kampf auslösen (falls die KI einen Kampf beginnt und keiner läuft)
   if (gm.combatStart && !(game.combat && game.combat.active && !game.combat.over)) {
@@ -480,7 +494,11 @@ export function currentSceneView(game) {
     scene: game.scene,
     combat: game.combat ? combatView(game) : null,
     panel: panelFor(game), // Anime-Panel-Slot (Platzhalter-Grafik)
-    recruitable: game.recruitable,
+    recruitable: (game.recruitable || []).map((candidate) => ({
+      ...candidate,
+      displayName: game.world.npcs?.[candidate.id]?.nameKnown ? candidate.name : "Unbekannte Person",
+    })),
+    recruitment: recruitmentView(game),
     lastCheck: game.lastCheck,
     lastLevelUps: game.lastLevelUps || [],
     lastLoreUnlocks: game.lastLoreUnlocks || [],

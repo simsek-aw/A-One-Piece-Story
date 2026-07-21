@@ -102,8 +102,8 @@ app.post(
   wrap(async (req, res) => {
     const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
-    const { npcId } = req.body || {};
-    const view = await attemptRecruit(game, provider, { npcId });
+    const { npcId, approachId } = req.body || {};
+    const view = await attemptRecruit(game, provider, { npcId, approachId });
     await saveGame(game);
     res.json(view);
   }),

@@ -421,7 +421,7 @@ function renderConsequences(view) {
 }
 // Aktionen blockiert, wenn Echtzeit-Sperre ODER Erschöpfung (muss rasten) ODER Kampf.
 function actionsBlocked(view) {
-  return !!view.clock?.locked || !!view.clock?.mustRest || inCombat(view);
+  return !!view.clock?.locked || !!view.clock?.mustRest || inCombat(view) || view.recruitment?.status === "active";
 }
 
 function renderDayBar(view) {
@@ -547,12 +547,58 @@ function renderChoices(view) {
 function renderRecruit(view) {
   const rb = $("#recruitBox");
   const rl = $("#recruitList");
+  const dialogueBox = $("#recruitDialogue");
   rl.innerHTML = "";
+  dialogueBox.innerHTML = "";
+
+  const dialogue = view.recruitment;
+  if (dialogue) {
+    rb.classList.add("hidden");
+    dialogueBox.classList.remove("hidden");
+    const finished = dialogue.status !== "active";
+    const relation = dialogue.rapport >= 10 ? "starkes Vertrauen"
+      : dialogue.rapport >= 6 ? "gewonnen"
+        : dialogue.rapport >= 2 ? "interessiert"
+          : dialogue.rapport >= -2 ? "unentschlossen"
+            : "abweisend";
+    const progress = Array.from({ length: dialogue.totalSteps }, (_, i) =>
+      `<span class="recruit-step ${i < dialogue.step ? "done" : i === dialogue.step && !finished ? "current" : ""}">${i + 1}</span>`,
+    ).join("");
+    dialogueBox.innerHTML =
+      `<div class="recruit-heading"><div><small>Fünfstufiges Crewgespräch</small><h3>${escapeHtml(dialogue.displayName)}</h3></div>` +
+      `<span class="personality">${escapeHtml(dialogue.personality)}</span></div>` +
+      `<div class="recruit-progress">${progress}</div>` +
+      `<div class="recruit-stage"><b>${escapeHtml(dialogue.stageTitle)}</b>${dialogue.stagePrompt ? `<small>${escapeHtml(dialogue.stagePrompt)}</small>` : ""}</div>` +
+      `<p class="recruit-reaction">${escapeHtml(dialogue.message)}</p>` +
+      `<div class="rapport"><span>Beziehung: <b>${relation}</b></span><span>${dialogue.rapport > 0 ? "+" : ""}${dialogue.rapport}</span></div>` +
+      `<div class="rapport-track"><span style="width:${Math.max(0, Math.min(100, ((dialogue.rapport + 12) / 32) * 100))}%"></span></div>`;
+
+    if (!finished) {
+      const options = el("div", "recruit-options");
+      dialogue.options.forEach((option) => {
+        const btn = el("button", "recruit-option",
+          `<b>${escapeHtml(option.label)}</b><small>${escapeHtml(option.description)} · ${escapeHtml(option.skill)}</small>`);
+        btn.onclick = () => post("/recruit", { npcId: dialogue.npcId, approachId: option.id }, option.label);
+        options.appendChild(btn);
+      });
+      dialogueBox.appendChild(options);
+    } else {
+      const result = el("div", `recruit-result ${dialogue.joined ? "joined" : "rejected"}`,
+        dialogue.joined ? "✓ Neues Crewmitglied" : "✕ Beitritt abgelehnt");
+      const close = el("button", "primary", "Gespräch beenden");
+      close.onclick = () => post("/recruit", { npcId: dialogue.npcId, approachId: "close" }, null);
+      dialogueBox.append(result, close);
+    }
+    return;
+  }
+
+  dialogueBox.classList.add("hidden");
   if (view.recruitable?.length && !actionsBlocked(view)) {
     view.recruitable.forEach((r) => {
-      const row = el("div", "recruit-item", `<div class="r-info">${escapeHtml(r.name)} <small>${escapeHtml(r.role)} — ${escapeHtml(r.reason)}</small></div>`);
-      const btn = el("button", null, "Überzeugen");
-      btn.onclick = () => post("/recruit", { npcId: r.id }, `Ich versuche, ${r.name} zu rekrutieren.`);
+      const name = r.displayName || "Unbekannte Person";
+      const row = el("div", "recruit-item", `<div class="r-info">${escapeHtml(name)} <small>${escapeHtml(r.role)} — ${escapeHtml(r.reason)}</small></div>`);
+      const btn = el("button", null, "Gespräch beginnen");
+      btn.onclick = () => post("/recruit", { npcId: r.id }, `Ich spreche ${name} auf meine Crew an.`);
       row.appendChild(btn);
       rl.appendChild(row);
     });
