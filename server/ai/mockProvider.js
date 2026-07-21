@@ -74,7 +74,25 @@ export class MockProvider {
     if (context.kind === "activity") return this.activityScene(context);
     if (context.kind === "travel") return this.travelScene(context);
     if (context.kind === "eat_fruit") return this.eatFruitScene(context);
+    if (context.kind === "combat_end") return this.combatEndScene(context);
     return this.turnScene(context);
+  }
+
+  combatEndScene(context) {
+    const r = context.combatResult?.result;
+    const txt =
+      r === "sieg"
+        ? "Als der letzte Gegner zu Boden geht, kehrt Stille ein. Schwer atmend stehst du inmitten des Staubs — du hast gesiegt."
+        : r === "flucht"
+          ? "Mit pochendem Herzen brichst du durch und lässt die Angreifer hinter dir. Fürs Erste bist du entkommen."
+          : "Ein letzter Treffer, dann wird alles schwarz. Später erwachst du geschwächt an einem stillen Ort — am Leben, aber gezeichnet.";
+    return {
+      narration: txt + "\n\n" + context.combatResult?.summary + "\n\nWie geht es weiter?",
+      choices: this.genericChoices(context),
+      stateChanges: this.emptyChanges(),
+      npcs: [],
+      recruitable: [],
+    };
   }
 
   activityScene(context) {
@@ -208,21 +226,35 @@ export class MockProvider {
     if (chance(0.15)) changes.beriDelta = pick([-15, 10, 25, 40]);
     if (check?.success && chance(0.15)) changes.itemsAdded = [pick(["Notration", "Rostiges Messer", "Verband", "Fass Rum"])];
 
-    // --- Kopfgeld/Heat-Konsequenzen: Marine-Begegnungen ---
+    // --- Kopfgeld/Heat-Konsequenzen: Marine-Begegnungen (ggf. Kampf) ---
     const st = context.status || {};
     const troubleP = (st.marineTroubleChance || 5) / 100;
     let extra = {};
     if (chance(troubleP)) {
       const officer = { id: "npc_offizier_borrot", name: "Offizier Borrot", role: "Marine-Offizier" };
       if (st.bounty > 0 || st.heat >= 45) {
-        parts.push(`Eine Marine-Patrouille wird auf dich aufmerksam! „Das Gesicht kenne ich von einem Steckbrief …“ Es wird brenzlig.`);
-        changes.heatDelta = 6;
-        if (!check?.success) changes.hpDelta -= 5;
-        npcs.push({ id: officer.id, name: officer.name, role: officer.role, disposition: -20, note: "Hat dich als Gesuchten erkannt." });
+        parts.push(`Eine Marine-Patrouille wird auf dich aufmerksam! „Das Gesicht kenne ich von einem Steckbrief …“ Sie ziehen die Waffen.`);
+        npcs.push({ id: officer.id, name: officer.name, role: officer.role, disposition: -30, note: "Hat dich als Gesuchten gestellt." });
+        // Bei ernster Lage: Kampf!
+        const enemies = [{ name: "Marine-Soldat", kind: "marine_soldat" }];
+        if (st.heat >= 60) enemies.push({ name: "Marine-Soldat", kind: "marine_soldat" });
+        extra.combatStart = { enemies };
       } else {
         parts.push(`Eine Marine-Patrouille mustert dich kurz, findet aber nichts Verdächtiges und zieht weiter.`);
         npcs.push({ id: officer.id, name: officer.name, role: officer.role, disposition: 0, note: "Routine-Kontrolle." });
       }
+    }
+
+    // Gelegentlicher Zwischenfall: Banditen/Wildtier greifen an.
+    if (!extra.combatStart && chance(0.12)) {
+      const roll = pick([
+        [{ name: "Straßenbandit", kind: "bandit" }],
+        [{ name: "Straßenbandit", kind: "bandit" }, { name: "Straßenbandit", kind: "bandit" }],
+        [{ name: "wildes Tier", kind: "wildtier" }],
+        [{ name: "Kopfgeldjäger", kind: "kopfgeldjaeger" }],
+      ]);
+      parts.push(`Plötzlich versperren dir Angreifer den Weg — es kommt zum Kampf!`);
+      extra.combatStart = { enemies: roll };
     }
 
     // Kritischer Erfolg gegen Widerstand kann Ruhm (und Kopfgeld) bringen.

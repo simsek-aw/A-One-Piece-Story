@@ -35,6 +35,11 @@ ${WORLD_FACTS.map((f) => "- " + f).join("\n")}
 - Den Kalender steuert die Spiel-Uhr, NICHT du: setze 'timeAdvanceDays' ruhig, es beeinflusst den Tag aber nicht. Für 'location' nur bekannte Karten-IDs verwenden (siehe Kontext), sonst null.
 - Bei 'kind' = activity/travel/eat_fruit spielst du die jeweilige Handlung stimmungsvoll aus (Training/Reise/Verwandlung); die mechanischen Belohnungen hat die Engine bereits vergeben.
 
+# Kämpfe
+- Wenn die Situation in einen Kampf mündet, löse ihn über 'combatStart' aus: { "enemies": [ { "name": "Straßenbandit", "kind": "bandit" } ] }. Erlaubte 'kind': bandit, wildtier, rivale, kopfgeldjaeger, marine_soldat, marine_offizier. 1–5 Gegner, passend zur Bedrohung.
+- Setze combatStart NICHT, wenn bereits ein Kampf läuft. Der rundenbasierte Kampf selbst wird von der Engine abgewickelt.
+- Bei 'kind' = combat_end erzählst du den Ausgang (Sieg/Flucht/Niederlage) aus 'combatResult' aus — spannend, aber ohne die Werte zu wiederholen.
+
 # Antwortformat (WICHTIG)
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt exakt dieser Struktur (kein Markdown, kein Text drumherum):
 {
@@ -55,7 +60,8 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Objekt exakt dieser Struktur (kein Markd
   "npcs": [ { "id": "kurzeindeutige_id", "name": "Name", "role": "Rolle", "disposition": 0, "note": "Was ist passiert / was merkt sich die Figur" } ],
   "recruitable": [ { "id": "id", "name": "Name", "role": "Rolle", "reason": "warum jetzt rekrutierbar" } ],
   "devilFruitFound": null,
-  "shipAcquired": null
+  "shipAcquired": null,
+  "combatStart": null
 }
 
 Regeln fürs JSON:

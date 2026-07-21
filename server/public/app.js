@@ -15,6 +15,7 @@ const state = {
   gameId: null,
   view: null,
   clockTimer: null,
+  combatTarget: null,
 };
 
 async function api(path, opts = {}) {
@@ -240,6 +241,7 @@ function renderScene(view) {
   }
 
   renderDayBar(view);
+  renderCombat(view);
   renderChoices(view);
   renderRecruit(view);
   renderSidebar(view);
@@ -282,9 +284,19 @@ function renderDayBar(view) {
   }
 }
 
+function inCombat(view) {
+  return !!(view.combat && view.combat.active && !view.combat.over);
+}
+
 function renderChoices(view) {
   const choices = $("#choices");
   choices.innerHTML = "";
+  // Während eines Kampfes übernimmt die Kampf-UI; normale Auswahl ausgeblendet.
+  if (inCombat(view)) {
+    $("#freeText").disabled = true;
+    $("#freeForm").querySelector("button").disabled = true;
+    return;
+  }
   const isLocked = locked(view);
   (view.scene?.choices || []).forEach((c) => {
     const badge = c.skillCheck ? `<span class="c-check">${c.skillCheck.skill} · DC ${c.skillCheck.dc}</span>` : "";
@@ -311,6 +323,82 @@ function renderRecruit(view) {
     });
     rb.classList.remove("hidden");
   } else rb.classList.add("hidden");
+}
+
+async function combatAction(payload) {
+  $("#turnError").textContent = "";
+  try {
+    const view = await api(`/api/games/${state.gameId}/combat-action`, { method: "POST", body: JSON.stringify(payload) });
+    renderScene(view);
+  } catch (e) {
+    $("#turnError").textContent = e.message;
+  }
+}
+
+function renderCombat(view) {
+  const box = $("#combatBox");
+  if (!inCombat(view)) {
+    box.classList.add("hidden");
+    return;
+  }
+  box.classList.remove("hidden");
+  const cm = view.combat;
+  $("#combatRound").textContent = cm.round;
+
+  const alive = cm.enemies.filter((e) => e.alive);
+  if (!state.combatTarget || !alive.some((e) => e.id === state.combatTarget)) {
+    state.combatTarget = alive[0]?.id || null;
+  }
+
+  const enemyWrap = $("#combatEnemies");
+  enemyWrap.innerHTML = "";
+  cm.enemies.forEach((e) => {
+    const w = pct(e.hp, e.maxHp);
+    const node = el("div", "combat-enemy" + (e.alive ? "" : " dead") + (e.id === state.combatTarget ? " sel" : ""),
+      `<div class="ce-top"><span>${escapeHtml(e.name)}</span><span>${e.hp}/${e.maxHp}</span></div><div class="bar"><div class="bar-fill foe" style="width:${w}%"></div></div>`);
+    if (e.alive) node.onclick = () => { state.combatTarget = e.id; renderCombat(view); };
+    enemyWrap.appendChild(node);
+  });
+
+  const p = cm.player;
+  $("#combatPlayer").innerHTML =
+    `<div class="ce-top"><span>${escapeHtml(p.name)}${cm.party.length ? " + " + cm.party.length + " Crew" : ""}</span><span>❤️ ${p.hp}/${p.maxHp}</span></div>` +
+    `<div class="bar"><div class="bar-fill hp" style="width:${pct(p.hp, p.maxHp)}%"></div></div>`;
+
+  const logBox = $("#combatLog");
+  logBox.innerHTML = "";
+  cm.log.forEach((l) => logBox.appendChild(el("div", "cl-line", escapeHtml(l))));
+  logBox.scrollTop = logBox.scrollHeight;
+
+  // Zielauswahl (nur wenn mehr als ein Gegner lebt)
+  const tgt = $("#combatTargets");
+  tgt.innerHTML = alive.length > 1 ? "Ziel: " : "";
+  if (alive.length > 1) {
+    alive.forEach((e) => {
+      const b = el("button", "chip" + (e.id === state.combatTarget ? " sel" : ""), escapeHtml(e.name));
+      b.onclick = () => { state.combatTarget = e.id; renderCombat(view); };
+      tgt.appendChild(b);
+    });
+  }
+
+  const btns = $("#combatButtons");
+  btns.innerHTML = "";
+  cm.options.attackSkills.forEach((sk) => {
+    const b = el("button", "combat-btn", `⚔️ ${sk}`);
+    b.onclick = () => combatAction({ action: "attack", skill: sk, targetId: state.combatTarget });
+    btns.appendChild(b);
+  });
+  if (cm.options.special) {
+    const b = el("button", "combat-btn special", "💥 Spezial");
+    b.onclick = () => combatAction({ action: "special", targetId: state.combatTarget });
+    btns.appendChild(b);
+  }
+  const def = el("button", "combat-btn", "🛡️ Verteidigen");
+  def.onclick = () => combatAction({ action: "defend" });
+  btns.appendChild(def);
+  const flee = el("button", "combat-btn", "🏃 Fliehen");
+  flee.onclick = () => combatAction({ action: "flee" });
+  btns.appendChild(flee);
 }
 
 function renderSidebar(view) {

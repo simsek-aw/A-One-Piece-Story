@@ -117,8 +117,36 @@ export const GM_JSON_SCHEMA = {
         },
       ],
     },
+    // Optionaler Kampfbeginn: die KI kann eine Konfrontation auslösen.
+    combatStart: {
+      anyOf: [
+        { type: "null" },
+        {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            enemies: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  name: { type: "string" },
+                  kind: {
+                    type: "string",
+                    enum: ["bandit", "wildtier", "rivale", "kopfgeldjaeger", "marine_soldat", "marine_offizier"],
+                  },
+                },
+                required: ["name", "kind"],
+              },
+            },
+          },
+          required: ["enemies"],
+        },
+      ],
+    },
   },
-  required: ["narration", "choices", "stateChanges", "npcs", "recruitable", "devilFruitFound", "shipAcquired"],
+  required: ["narration", "choices", "stateChanges", "npcs", "recruitable", "devilFruitFound", "shipAcquired", "combatStart"],
 };
 
 function toInt(v, fallback = 0) {
@@ -204,7 +232,18 @@ export function validateGmResponse(raw) {
     shipAcquired = { name: toStr(sh.name) };
   }
 
-  return { narration, choices, stateChanges, npcs, recruitable, devilFruitFound, shipAcquired };
+  let combatStart = null;
+  const cs = raw.combatStart;
+  const KINDS = ["bandit", "wildtier", "rivale", "kopfgeldjaeger", "marine_soldat", "marine_offizier"];
+  if (cs && typeof cs === "object" && Array.isArray(cs.enemies)) {
+    const enemies = cs.enemies
+      .map((e) => ({ name: toStr(e?.name).trim(), kind: KINDS.includes(e?.kind) ? e.kind : "bandit" }))
+      .filter((e) => e.name)
+      .slice(0, 5);
+    if (enemies.length) combatStart = { enemies };
+  }
+
+  return { narration, choices, stateChanges, npcs, recruitable, devilFruitFound, shipAcquired, combatStart };
 }
 
 function clampInt(n, min, max) {

@@ -71,6 +71,11 @@ richtigen Format antwortet.
   verteilst.
 - **Lore-Chronik**: der „Lücke in der Geschichte"-Handlungsstrang schaltet über
   Recherche (Bücherwurm) nach und nach Fragmente frei (Void-Century-Faden).
+- **Rundenbasiertes Kampfsystem**: Angriff mit Waffen-Skills, Verteidigen,
+  Teufelsfrucht-/Haki-Spezial (Flächenschaden), Fliehen; die Crew kämpft mit;
+  Gegner mit HP-Balken; Sieg/Flucht/Niederlage wirken auf EP, Beri, Kopfgeld
+  und Heat (Niederlage ist kein permanenter Tod). Runden laufen ohne KI-Aufruf,
+  nur Beginn und Ausgang werden erzählt.
 - **Kanon-Koexistenz**: Hintergrund-Ereignisse aus der One-Piece-Timeline werden
   als Gerüchte eingestreut.
 - **Multiplayer vorbereitet**: geteilter Tages-Takt, Den-Den-Mushi- & Raum-

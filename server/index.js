@@ -10,6 +10,7 @@ import {
   doActivity,
   doTravel,
   doEatFruit,
+  doCombatAction,
   spendSkillPoint,
   currentSceneView,
 } from "./engine/turn.js";
@@ -133,6 +134,19 @@ app.post(
     const game = loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const view = await doEatFruit(game, provider, { fruitId: req.body?.fruitId });
+    saveGame(game);
+    res.json(view);
+  }),
+);
+
+// --- Kampfaktion (Runde) ---
+app.post(
+  "/api/games/:id/combat-action",
+  wrap(async (req, res) => {
+    const game = loadGame(req.params.id);
+    if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
+    const { action, targetId, skill } = req.body || {};
+    const view = await doCombatAction(game, provider, { action, targetId, skill });
     saveGame(game);
     res.json(view);
   }),

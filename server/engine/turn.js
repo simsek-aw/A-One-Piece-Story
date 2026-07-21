@@ -24,6 +24,7 @@ import { eatDevilFruit } from "./devilfruit.js";
 import { panelFor } from "../ai/artProvider.js";
 import { unlockedLore, nextLore } from "../content/loreArcs.js";
 import { SKILLS } from "./character.js";
+import { startCombat, combatTurn, combatView } from "./combat.js";
 
 const HISTORY_LIMIT = 8;
 
@@ -118,8 +119,69 @@ export async function doTravel(game, provider, { destId }) {
   return currentSceneView(game);
 }
 
+// Eine Kampfrunde ausführen. Kostet KEINE Tagesaktion; Zwischenrunden erzeugen
+// keine KI-Aufrufe. Endet der Kampf, spielt die KI den Ausgang aus.
+export async function doCombatAction(game, provider, { action, targetId, skill }) {
+  if (!game.combat || !game.combat.active || game.combat.over) {
+    throw new Error("Es läuft gerade kein Kampf.");
+  }
+  combatTurn(game, { action, targetId, skill });
+  if (game.combat.over) {
+    return resolveCombatEnd(game, provider);
+  }
+  return currentSceneView(game);
+}
+
+// Wendet Kampf-Belohnungen/-Folgen deterministisch an und lässt die KI den
+// Ausgang erzählen.
+async function resolveCombatEnd(game, provider) {
+  const cm = game.combat;
+  const c = game.character;
+  const result = cm.result;
+
+  let summary = "";
+  if (result === "sieg") {
+    let xp = 0, beri = 0, bounty = 0, heat = 0;
+    for (const e of cm.enemies) {
+      xp += e.reward.xp;
+      beri += e.reward.beri;
+      bounty += e.reward.bountyOnDefeat;
+      heat += e.reward.heatOnDefeat;
+    }
+    const levelUps = applyXp(c, xp);
+    c.beri += beri;
+    applyBounty(c, bounty);
+    applyHeat(c, heat);
+    game.lastLevelUps = levelUps;
+    const names = cm.enemies.map((e) => e.name).join(", ");
+    summary =
+      `SIEG gegen: ${names}. Belohnung: ${xp} EP, ${beri} Beri` +
+      (bounty ? `, Kopfgeld +${bounty} Ⓑ` : "") + (heat ? `, Marine-Aufmerksamkeit +${heat}` : "") + ".";
+  } else if (result === "flucht") {
+    applyXp(c, 5);
+    applyHeat(c, 2);
+    summary = "FLUCHT gelungen — du entkommst dem Kampf, das Herz rast.";
+  } else {
+    // Niederlage: kein permanenter Tod. Du erwachst geschwächt, etwas ärmer.
+    const verlust = Math.min(c.beri, Math.round(c.beri * 0.3));
+    c.beri -= verlust;
+    c.hp = 1;
+    applyHeat(c, -5);
+    summary = `NIEDERLAGE — du wirst niedergestreckt und erwachst später mit letzter Kraft (Verlust: ${verlust} Beri).`;
+  }
+
+  cm.active = false;
+  const context = buildContext(game, { kind: "combat_end", playerAction: summary, checkResult: null, combatResult: { result, summary } });
+  const gm = validateGmResponse(await provider.generateScene(context));
+  gm.combatStart = null; // kein sofortiger Folgekampf aus dem Ausgang
+  applyGmResponse(game, gm, { playerAction: summary, checkResult: null });
+  game.combat = null; // Kampf abgeschlossen
+  return currentSceneView(game);
+}
+
 // Teufelsfrucht essen (kostet keine Tagesaktion — ein dramatischer Moment).
 export async function doEatFruit(game, provider, { fruitId }) {
+  requireNoCombat(game);
   const fruit = eatDevilFruit(game, fruitId);
   const playerAction =
     `Ich beiße in die ${fruit.name}. Ein widerlicher Geschmack — dann durchströmt mich die Kraft der ${fruit.type}-Frucht. ` +
@@ -132,7 +194,14 @@ export async function doEatFruit(game, provider, { fruitId }) {
 
 // --- interne Helfer ---------------------------------------------------------
 
+function requireNoCombat(game) {
+  if (game.combat && game.combat.active && !game.combat.over) {
+    throw new Error("Du steckst mitten im Kampf! Erst kämpfen (oder fliehen).");
+  }
+}
+
 function requireAction(game) {
+  requireNoCombat(game);
   ensureNewDayIfDue(game);
   syncDailyEffects(game);
   if (!canAct(game)) {
@@ -153,7 +222,7 @@ function syncDailyEffects(game) {
   }
 }
 
-function buildContext(game, { kind, playerAction, checkResult, recruitTarget, activity, travelInfo, fruit }) {
+function buildContext(game, { kind, playerAction, checkResult, recruitTarget, activity, travelInfo, fruit, loreUnlocks, combatResult }) {
   const c = game.character;
   return {
     language: game.language,
@@ -189,6 +258,8 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
     activity: activity || null,
     travelInfo: travelInfo || null,
     fruit: fruit || null,
+    loreUnlocks: loreUnlocks || null,
+    combatResult: combatResult || null,
   };
 }
 
@@ -235,6 +306,11 @@ function applyGmResponse(game, gm, turnInfo) {
   setFlags(game, s.flagsSet);
   for (const npc of gm.npcs) upsertNpc(game, npc, game.world.day);
 
+  // Kampf auslösen (falls die KI einen Kampf beginnt und keiner läuft)
+  if (gm.combatStart && !(game.combat && game.combat.active && !game.combat.over)) {
+    startCombat(game, gm.combatStart.enemies);
+  }
+
   // Szene
   game.scene = { narration: gm.narration, choices: gm.choices };
   game.recruitable = gm.recruitable;
@@ -259,6 +335,7 @@ function applyGmResponse(game, gm, turnInfo) {
 
 // Levelaufstieg: freien Skillpunkt in einen Skill investieren (keine Tagesaktion).
 export function spendSkillPoint(game, { skillId }) {
+  requireNoCombat(game);
   const c = game.character;
   if ((c.unspentSkillPoints || 0) <= 0) throw new Error("Keine freien Skillpunkte.");
   if (!SKILLS[skillId]) throw new Error("Unbekannte Fertigkeit.");
@@ -285,6 +362,7 @@ export function currentSceneView(game) {
     locationId: game.world.location,
     travelMode: currentTravelMode(game),
     scene: game.scene,
+    combat: game.combat ? combatView(game) : null,
     panel: panelFor(game), // Anime-Panel-Slot (Platzhalter-Grafik)
     recruitable: game.recruitable,
     lastCheck: game.lastCheck,

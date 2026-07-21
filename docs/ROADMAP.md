@@ -20,15 +20,23 @@ folgenden Punkte bauen darauf auf.
 - [x] „Lücke in der Geschichte"-Handlungsstrang: lore_fortschritt-Schwellen lösen
       Chronik-Enthüllungen aus (Void-Century-Faden für Bücherwürmer)
 
+## Erledigt (Ausbaustufe 4)
+
+- [x] Rundenbasiertes Kampfsystem: Angriff/Verteidigen/Spezial/Fliehen, Crew
+      kämpft mit, Gegner-Vorlagen, Sieg/Flucht/Niederlage mit Konsequenzen
+      (EP/Beri/Kopfgeld/Heat); von der KI ausgelöst und ausgespielt, Runden
+      rein deterministisch
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen
       neuen Perk wählen dürfen.
 - [ ] **Party-Loyalität dynamisch**: Loyalität steigt/fällt mit Entscheidungen
       und schaltet eigene Begleiter-Plots frei.
-- [ ] **Haki-Ausbau**: Meditation/Willens-Pfad zu echten Haki-Fähigkeiten führen.
-- [ ] **Kampf-Substruktur**: leichtgewichtiges Runden-/Initiative-System für
-      größere Konfrontationen (aktuell abstrakt über Checks).
+- [ ] **Haki-Ausbau**: Meditation/Willens-Pfad zu echten Haki-Fähigkeiten führen
+      (auch im Kampf als eigene Spezial-Optionen).
+- [ ] **Kampf vertiefen**: Gegner können auch Begleiter angreifen; Initiative;
+      Statuseffekte; Items/Heilen im Kampf.
 - [ ] **Inventar-Nutzung**: Items im Zug einsetzen (heilen, Werkzeuge),
       Feilschen/Handel an Orten.
 - [ ] **Eigenes Schiff ausbauen**: Werft, Upgrades, Crew-Positionen an Bord.
