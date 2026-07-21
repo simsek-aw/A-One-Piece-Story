@@ -30,6 +30,7 @@ import { currentEdition, newsHeadlines } from "./news.js";
 import { syncNewsDiscoveries, syncLocationDiscoveries, discoverCrew, crewRelation, metCrewIds, heardOfCrewIds } from "./knowledge.js";
 import { CANON_CREWS } from "../content/canonCrews.js";
 import { checkHakiUnlocks } from "./haki.js";
+import { currentLocalSuspicion, resolveActionRisk } from "./eavesdropping.js";
 
 const HISTORY_LIMIT = 8;
 
@@ -48,11 +49,13 @@ export async function playTurn(game, provider, { choiceId, freeText }) {
 
   let playerAction = "";
   let checkResult = null;
+  let actionSkill = null;
   const scene = game.scene;
   if (choiceId && scene) {
     const choice = scene.choices.find((c) => c.id === choiceId);
     if (!choice) throw new Error("Unbekannte Auswahlmöglichkeit.");
     playerAction = choice.text;
+    actionSkill = choice.skillCheck?.skill || null;
     if (choice.skillCheck) checkResult = skillCheck(game.character, choice.skillCheck.skill, choice.skillCheck.dc, game.party);
   } else if (freeText && freeText.trim()) {
     playerAction = freeText.trim().slice(0, 500);
@@ -61,9 +64,11 @@ export async function playTurn(game, provider, { choiceId, freeText }) {
   }
 
   advanceTime(game, 1); // ein Gespräch/eine kleine Handlung ~1 Stunde
-  const context = buildContext(game, { kind: "turn", playerAction, checkResult });
+  const actionRisk = resolveActionRisk(game, playerAction, actionSkill, checkResult);
+  const context = buildContext(game, { kind: "turn", playerAction, checkResult, actionRisk });
   const gm = validateGmResponse(await provider.generateScene(context));
   applyGmResponse(game, gm, { playerAction, checkResult });
+  enforceEavesdroppingConsequence(game, actionRisk);
   return currentSceneView(game);
 }
 
@@ -279,7 +284,7 @@ function syncDailyEffects(game) {
   }
 }
 
-function buildContext(game, { kind, playerAction, checkResult, recruitTarget, activity, travelInfo, fruit, loreUnlocks, hakiUnlocks, combatResult, canonResult }) {
+function buildContext(game, { kind, playerAction, checkResult, recruitTarget, activity, travelInfo, fruit, loreUnlocks, hakiUnlocks, combatResult, canonResult, actionRisk }) {
   const c = game.character;
   syncNewsDiscoveries(game); // aus der Zeitung "gehörte" Crews aktualisieren
   syncLocationDiscoveries(game); // vor Ort begegnete Fraktionen (z. B. Marine-Standort)
@@ -299,6 +304,7 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
       locationName: game.world.locationName,
       locationType: LOCATIONS[game.world.location]?.type || "",
       locationBlurb: LOCATIONS[game.world.location]?.blurb || "",
+      localSuspicion: currentLocalSuspicion(game), // ortsgebundene Aufmerksamkeit durch riskante Taten
       travelMode: currentTravelMode(game),
       rumors: rumorsForDay(game.world.day).map((r) => r.rumor),
       loreProgress: game.world.flags.lore_fortschritt || 0,
@@ -325,6 +331,7 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
     history: game.history.slice(-HISTORY_LIMIT),
     playerAction,
     checkResult,
+    actionRisk: actionRisk || null,
     recruitTarget: recruitTarget || null,
     activity: activity || null,
     travelInfo: travelInfo || null,
@@ -333,6 +340,17 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
     hakiUnlocks: hakiUnlocks || null,
     combatResult: combatResult || null,
   };
+}
+
+// Ein gewürfelter Kampf darf nicht von einer beliebigen GM-Antwort "weg erzählt"
+// werden. Der Erzähler bekommt das Ergebnis im Kontext, die Engine setzt es um.
+function enforceEavesdroppingConsequence(game, actionRisk) {
+  if (!actionRisk?.discovered || actionRisk.outcome !== "kampf") return;
+  if (game.combat?.active && !game.combat.over) return;
+  const enemy = actionRisk.type === "diebstahl" || actionRisk.type === "drohung"
+    ? { name: "Wachmann", kind: "marine_soldat" }
+    : { name: "Erzürnter Wachposten", kind: "bandit" };
+  startCombat(game, [enemy]);
 }
 
 function applyGmResponse(game, gm, turnInfo) {

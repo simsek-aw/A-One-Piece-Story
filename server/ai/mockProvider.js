@@ -214,6 +214,19 @@ export class MockProvider {
   turnScene(context) {
     const check = context.checkResult;
     const parts = [];
+    const risk = context.actionRisk;
+
+    if (risk) {
+      if (!risk.discovered) {
+        parts.push(`Deine Handlung bleibt fürs Erste unbemerkt. Doch nach ${risk.attempts} Versuch(en) wirkt dein Verhalten auffällig — für ${risk.label} lag das Entdeckungsrisiko diesmal bei ${risk.chance} %. Ein weiterer Versuch wird deutlich gefährlicher.`);
+      } else if (risk.outcome === "angesprochen") {
+        parts.push(`Eine Stimme verstummt. Jemand dreht sich direkt zu dir um: „Hast du nichts Besseres zu tun?“ Deine Aktion (${risk.label}) wurde bemerkt; die Umgebung ist nun alarmiert.`);
+      } else if (risk.outcome === "verfolgt") {
+        parts.push(`Deine Aktion (${risk.label}) bleibt nicht unbemerkt. Als du dich entfernst, lösen sich zwei Gestalten aus der Menge und folgen dir mit Abstand. Deine Entscheidung hat Folgen.`);
+      } else {
+        parts.push(`Die Umgebung kippt. Ein Wachposten stellt dich: „So etwas dulden wir hier nicht.“ Deine Aktion (${risk.label}) endet in einer handfesten Konfrontation.`);
+      }
+    }
 
     if (check) {
       if (check.kritErfolg) {
