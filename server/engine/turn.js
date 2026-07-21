@@ -487,6 +487,7 @@ export function currentSceneView(game) {
       unlocked: unlockedLore(game.world.flags.lore_fortschritt || 0),
       next: nextLore(game.world.flags.lore_fortschritt || 0),
     },
+    story: storyDirectorView(game),
     character: {
       name: c.name,
       archetype: c.archetype,

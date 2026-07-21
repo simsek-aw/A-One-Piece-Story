@@ -326,6 +326,8 @@ function renderScene(view) {
   renderActivities(view);
   renderSkillAlloc(view);
   renderLore(view);
+  renderStoryThreads(view);
+  renderFactions(view);
   renderCanon(view);
   renderDenDen(view);
 
@@ -722,6 +724,33 @@ function renderLore(view) {
   } else {
     list.innerHTML = `<div class="hint">Noch nichts entschlüsselt. Werde zum Bücherwurm, um die Lücke zu erforschen.</div>`;
   }
+}
+
+function renderStoryThreads(view) {
+  const list = $("#storyThreads");
+  if (!list) return;
+  const threads = view.story?.active || [];
+  list.innerHTML = "";
+  if (!threads.length) {
+    list.innerHTML = `<div class="hint">Im Moment keine offenen Fäden.</div>`;
+    return;
+  }
+  threads.forEach((thread) => {
+    const urgency = ["erste Spuren", "angespannt", "dringend"][Math.min(thread.stage || 0, 2)];
+    list.appendChild(el("div", "li story-thread", `<b>${escapeHtml(thread.title)}</b><small>${escapeHtml(thread.hook)}<br>Spuren: ${thread.progress}/3 · Lage: ${urgency}</small>`));
+  });
+}
+
+function renderFactions(view) {
+  const list = $("#factionList");
+  if (!list) return;
+  const factions = view.factions || [];
+  list.innerHTML = "";
+  if (!factions.length) { list.innerHTML = `<div class="hint">Noch keine Gerüchte über deinen Ruf.</div>`; return; }
+  factions.forEach((faction) => {
+    const sign = faction.value > 0 ? "+" : "";
+    list.appendChild(el("div", "li faction-row", `${escapeHtml(faction.label)} <span class="disp ${faction.value >= 20 ? "friend" : faction.value <= -20 ? "foe" : "neutral"}">${sign}${faction.value}</span><small>${escapeHtml(faction.level)}</small>`));
+  });
 }
 
 function renderCanon(view) {
