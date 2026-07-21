@@ -375,6 +375,8 @@ async function refreshView() {
 function renderScene(view) {
   if (!view) return;
   const previousView = state.view;
+  const wasInCombat = inCombat(previousView);
+  const isInCombat = inCombat(view);
   const isNewNarration = !!view.scene?.narration && view.scene.narration !== state.lastFxNarration;
   state.view = view;
   if (view.aiProvider && $("#providerSelect").querySelector(`option[value="${CSS.escape(view.aiProvider)}"]`)) {
@@ -438,7 +440,10 @@ function renderScene(view) {
   storyBuffer.slice(-12).forEach((e, i, arr) => {
     log.appendChild(el("div", `entry ${e.type}${i === arr.length - 1 ? " latest" : ""}`, escapeHtml(e.text)));
   });
-  log.lastChild?.scrollIntoView({ behavior: "smooth", block: "end" });
+  // Im Kampf darf das allgemeine Story-Log nicht den sichtbaren Ausschnitt
+  // von den Kampfaktionen wegziehen. Beim Kampfbeginn führen wir stattdessen
+  // nach dem Rendern einmal gezielt zur Kampfbox.
+  if (!isInCombat) log.lastChild?.scrollIntoView({ behavior: "smooth", block: "end" });
 
   renderDayBar(view);
   renderSceneContext(view);
@@ -457,6 +462,12 @@ function renderScene(view) {
   renderFactions(view);
   renderCanon(view);
   renderDenDen(view);
+
+  if (isInCombat && !wasInCombat) {
+    requestAnimationFrame(() => {
+      $("#combatBox").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
 
   $("#shareLink").value = `${location.origin}${location.pathname}?game=${view.gameId}`;
   $("#freeText").value = "";
@@ -643,7 +654,7 @@ async function upgradePanel(imgEl, body, key) {
 }
 
 function inCombat(view) {
-  return !!(view.combat && view.combat.active && !view.combat.over);
+  return !!(view?.combat?.active && !view.combat.over);
 }
 
 function renderChoices(view) {
