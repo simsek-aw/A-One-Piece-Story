@@ -43,7 +43,7 @@ export const config = {
   },
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "",
-    model: process.env.GEMINI_MODEL || "gemini-2.0-flash",
+    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
     // Bildgenerierung über Gemini (z. B. "gemini-2.5-flash-image"). Hat oft
     // ein eigenes, kleineres Kontingent als Text — separat zuschaltbar.
     images: process.env.GEMINI_IMAGES === "1" || process.env.GEMINI_IMAGES === "true",

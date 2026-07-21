@@ -18,6 +18,7 @@ const state = {
   combatTarget: null,
 };
 const SAVE_SLOTS_KEY = "aops-save-slots";
+const PROVIDER_KEY = "aops-provider";
 const RANDOM_NAMES = ["Aren", "Bela", "Ciro", "Dena", "Elio", "Fara", "Garo", "Ilya", "Juna", "Keno", "Lira", "Miro", "Nela", "Orin", "Rava", "Sena", "Taro", "Vika", "Yaro", "Zira"];
 const RANDOM_APPEARANCES = {
   hair: ["kurzes zerzaustes schwarzes Haar", "lange kupferrote Zöpfe", "silberner Undercut", "wilde dunkelblaue Locken", "rasierter Kopf mit auffälliger Tätowierung", "strohblondes Haar unter einem Kopftuch"],
@@ -46,7 +47,7 @@ init().catch((e) => console.error(e));
 async function init() {
   state.meta = await api("/api/meta");
   $("#eraLabel").textContent = state.meta.era.label;
-  $("#providerBadge").textContent = "Spielleiter: " + state.meta.provider;
+  buildProviderPicker();
   const aHint = $("#appearanceHint");
   if (aHint) aHint.textContent = state.meta.imagesEnabled
     ? "✎ Bildgenerierung ist aktiv — dein Porträt wird beim Spielstart gezeichnet."
@@ -73,6 +74,43 @@ async function init() {
     closeDrawer();
     await refreshView();
   };
+}
+
+function buildProviderPicker() {
+  const select = $("#providerSelect");
+  const available = state.meta.providers || [{ id: state.meta.provider, label: state.meta.provider }];
+  select.innerHTML = "";
+  available.forEach((provider) => {
+    const option = document.createElement("option");
+    option.value = provider.id;
+    option.textContent = provider.label;
+    option.title = provider.model || "";
+    select.appendChild(option);
+  });
+  let preferred = state.meta.provider;
+  try { preferred = localStorage.getItem(PROVIDER_KEY) || preferred; } catch { /* optional */ }
+  select.value = available.some((provider) => provider.id === preferred) ? preferred : state.meta.provider;
+  select.disabled = available.length < 2;
+  select.onchange = changeProvider;
+}
+
+async function changeProvider() {
+  const select = $("#providerSelect");
+  const previous = state.view?.aiProvider || state.meta.provider;
+  try {
+    if (state.gameId) {
+      const view = await api(`/api/games/${state.gameId}/provider`, {
+        method: "POST",
+        body: JSON.stringify({ aiProvider: select.value }),
+      });
+      renderScene(view);
+    }
+    try { localStorage.setItem(PROVIDER_KEY, select.value); } catch { /* optional */ }
+  } catch (error) {
+    select.value = previous;
+    const target = state.gameId ? $("#turnError") : $("#createError");
+    if (target) target.textContent = error.message;
+  }
 }
 
 // ---------- Charaktererstellung ----------
@@ -212,6 +250,7 @@ async function startGame() {
       body: JSON.stringify({
         character: { name, archetype: state.sel.archetype, attributes: state.attrs, perk: state.sel.perk, appearance: $("#charAppearance")?.value.trim() || "" },
         startLocationId: state.sel.location,
+        aiProvider: $("#providerSelect").value,
       }),
     });
     enterGame(view);
@@ -332,6 +371,10 @@ async function refreshView() {
 function renderScene(view) {
   if (!view) return;
   state.view = view;
+  if (view.aiProvider && $("#providerSelect").querySelector(`option[value="${CSS.escape(view.aiProvider)}"]`)) {
+    $("#providerSelect").value = view.aiProvider;
+    try { localStorage.setItem(PROVIDER_KEY, view.aiProvider); } catch { /* optional */ }
+  }
 
   // Panel (SVG sofort; echtes KI-Bild wird bei Bedarf nachgeladen)
   if (view.panel?.src) {

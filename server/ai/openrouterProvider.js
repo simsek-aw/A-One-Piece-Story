@@ -1,8 +1,8 @@
 // Echter Spielleiter über OpenRouter — ein Gateway zu sehr vielen Modellen
 // (Claude, GPT, Gemini, Llama, DeepSeek, Mistral, …) über EINEN API-Key,
 // inklusive mehrerer kostenloser Modelle (Modell-IDs mit ":free"-Endung).
-// Aktiv, wenn AI_PROVIDER=openrouter gesetzt ist UND ein OPENROUTER_API_KEY
-// vorliegt. Freie Modellwahl über OPENROUTER_MODEL — siehe
+// Im Auswahlmenü verfügbar, sobald ein OPENROUTER_API_KEY vorliegt. Freie
+// Modellwahl über OPENROUTER_MODEL — siehe
 // https://openrouter.ai/models (Filter "Free" für aktuell kostenlose Modelle).
 //
 // OpenRouter ist API-kompatibel zur OpenAI-API (nur andere Basis-URL), darum

@@ -28,13 +28,16 @@ ohne API-Key spielbar ist.
 
 ### Echten KI-Spielleiter aktivieren
 
-Drei austauschbare Provider, per Umgebungsvariable gewählt:
+Mehrere austauschbare Provider können gleichzeitig konfiguriert werden. Jeder
+Anbieter mit hinterlegtem API-Key erscheint oben in der Web-App; `AI_PROVIDER`
+legt nur die Vorauswahl für neue bzw. ältere Spielstände fest:
 
 ```bash
 cp .env.example .env
 # Empfehlung ohne OpenAI-Guthaben — Google Gemini (kostenloses Kontingent):
 #   AI_PROVIDER=gemini
 #   GEMINI_API_KEY=...        # https://aistudio.google.com/apikey
+#   GEMINI_MODEL=gemini-2.5-flash
 #
 # Oder OpenRouter (ein Key, viele Modelle, auch kostenlose ":free"-IDs):
 #   AI_PROVIDER=openrouter

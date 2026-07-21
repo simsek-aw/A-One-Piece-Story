@@ -501,6 +501,7 @@ export function currentSceneView(game) {
   const c = game.character;
   return {
     gameId: game.id,
+    aiProvider: game.aiProvider || null,
     clock: clockView(game),
     day: game.world.day,
     location: game.world.locationName,

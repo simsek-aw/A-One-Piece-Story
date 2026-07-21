@@ -46,7 +46,7 @@ klassischer „kleiner Server" einfacher.
    Kontingent-Tarif über [Google AI Studio](https://aistudio.google.com/apikey)):
    - `AI_PROVIDER = gemini`
    - `GEMINI_API_KEY = <dein Schlüssel>` (als Secret)
-   - `GEMINI_MODEL = gemini-2.0-flash` (optional; im freien Kontingent enthalten)
+   - `GEMINI_MODEL = gemini-2.5-flash` (optional; stabiles Flash-Modell)
 
    **Oder OpenRouter** — ein Key, Zugriff auf sehr viele Modelle (Claude, GPT,
    Gemini, Llama, DeepSeek, Mistral, …), darunter mehrere komplett kostenlose
@@ -67,6 +67,10 @@ klassischer „kleiner Server" einfacher.
    - `AI_PROVIDER = openai`
    - `OPENAI_API_KEY = <dein Schlüssel>` (als Secret)
    - `OPENAI_MODEL = gpt-4o-mini` (optional; `gpt-4o` = mehr Qualität, teurer)
+
+   Alle Anbieter mit gesetztem API-Key erscheinen gleichzeitig im
+   Spielleiter-Menü der Web-App. `AI_PROVIDER` bestimmt lediglich die
+   Vorauswahl; der gewählte Anbieter wird pro Spielstand gespeichert.
 
    Alternativ mit Anthropic/Claude: `AI_PROVIDER = anthropic` +
    `ANTHROPIC_API_KEY`. Ohne diese Variablen läuft der deterministische

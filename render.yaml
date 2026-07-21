@@ -22,7 +22,7 @@ services:
       # - key: GEMINI_API_KEY
       #   sync: false        # als Secret im Dashboard eintragen, NICHT hier
       # - key: GEMINI_MODEL
-      #   value: gemini-2.0-flash # optional
+      #   value: gemini-2.5-flash # optional
       #
       # Alternativ über OpenRouter (EIN Key, viele Modelle — auch kostenlose
       # mit ":free"-Endung, siehe https://openrouter.ai/models?max_price=0):

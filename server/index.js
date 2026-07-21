@@ -16,7 +16,7 @@ import {
   spendSkillPoint,
   currentSceneView,
 } from "./engine/turn.js";
-import { createProvider, activeProviderName } from "./ai/provider.js";
+import { createProvider, activeProviderName, availableProviders } from "./ai/provider.js";
 import { getPanelImage, PANELS_DIR, imagesEnabled } from "./ai/imageProvider.js";
 import { listArchetypes, listStartLocations } from "./content/startingScenarios.js";
 import { creationRules } from "./engine/character.js";
@@ -30,8 +30,20 @@ import { clockConfig } from "./engine/clock.js";
 const app = express();
 app.use(express.json({ limit: "256kb" }));
 
-const provider = createProvider();
-console.log(`[ai] Aktiver Spielleiter-Provider: ${activeProviderName()}`);
+const providerOptions = availableProviders();
+const providers = new Map(providerOptions.map((option) => [option.id, createProvider(option.id)]));
+const defaultProviderName = providers.has(activeProviderName()) ? activeProviderName() : "mock";
+console.log(`[ai] Verfügbare Spielleiter: ${providerOptions.map((option) => option.id).join(", ")} (Standard: ${defaultProviderName})`);
+
+function providerNameForGame(game) {
+  const selected = String(game.aiProvider || defaultProviderName).toLowerCase();
+  return providers.has(selected) ? selected : defaultProviderName;
+}
+
+function providerForGame(game) {
+  game.aiProvider = providerNameForGame(game);
+  return providers.get(game.aiProvider);
+}
 
 // Kleiner Helfer: async-Route mit sauberer Fehlerbehandlung.
 const wrap = (fn) => (req, res) => {
@@ -46,7 +58,8 @@ app.get(
   "/api/meta",
   wrap(async (_req, res) => {
     res.json({
-      provider: activeProviderName(),
+      provider: defaultProviderName,
+      providers: providerOptions,
       era: ERA,
       archetypes: listArchetypes(),
       startLocations: listStartLocations(),
@@ -65,9 +78,12 @@ app.get(
 app.post(
   "/api/games",
   wrap(async (req, res) => {
-    const { character, startLocationId } = req.body || {};
+    const { character, startLocationId, aiProvider } = req.body || {};
     const game = createGame({ character, startLocationId });
-    await startScene(game, provider);
+    const selectedProvider = aiProvider ? String(aiProvider).toLowerCase() : defaultProviderName;
+    if (!providers.has(selectedProvider)) throw new Error("Dieser Spielleiter ist auf dem Server nicht konfiguriert.");
+    game.aiProvider = selectedProvider;
+    await startScene(game, providerForGame(game));
     await saveGame(game);
     res.json(currentSceneView(game));
   }),
@@ -79,6 +95,21 @@ app.get(
   wrap(async (req, res) => {
     const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
+    providerForGame(game);
+    res.json(currentSceneView(game));
+  }),
+);
+
+// --- Spielleiter für diesen Spielstand wechseln ---
+app.post(
+  "/api/games/:id/provider",
+  wrap(async (req, res) => {
+    const game = await loadGame(req.params.id);
+    if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
+    const aiProvider = String(req.body?.aiProvider || "").toLowerCase();
+    if (!providers.has(aiProvider)) throw new Error("Dieser Spielleiter ist auf dem Server nicht konfiguriert.");
+    game.aiProvider = aiProvider;
+    await saveGame(game);
     res.json(currentSceneView(game));
   }),
 );
@@ -90,7 +121,7 @@ app.post(
     const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const { choiceId, freeText } = req.body || {};
-    const view = await playTurn(game, provider, { choiceId, freeText });
+    const view = await playTurn(game, providerForGame(game), { choiceId, freeText });
     await saveGame(game);
     res.json(view);
   }),
@@ -103,7 +134,7 @@ app.post(
     const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const { npcId, approachId } = req.body || {};
-    const view = await attemptRecruit(game, provider, { npcId, approachId });
+    const view = await attemptRecruit(game, providerForGame(game), { npcId, approachId });
     await saveGame(game);
     res.json(view);
   }),
@@ -115,7 +146,7 @@ app.post(
   wrap(async (req, res) => {
     const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
-    const view = await doActivity(game, provider, { activityId: req.body?.activityId });
+    const view = await doActivity(game, providerForGame(game), { activityId: req.body?.activityId });
     await saveGame(game);
     res.json(view);
   }),
@@ -127,7 +158,7 @@ app.post(
   wrap(async (req, res) => {
     const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
-    const view = await doTravel(game, provider, { destId: req.body?.destId });
+    const view = await doTravel(game, providerForGame(game), { destId: req.body?.destId });
     await saveGame(game);
     res.json(view);
   }),
@@ -139,7 +170,7 @@ app.post(
   wrap(async (req, res) => {
     const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
-    const view = await doEatFruit(game, provider, { fruitId: req.body?.fruitId });
+    const view = await doEatFruit(game, providerForGame(game), { fruitId: req.body?.fruitId });
     await saveGame(game);
     res.json(view);
   }),
@@ -152,7 +183,7 @@ app.post(
     const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const { action, targetId, skill } = req.body || {};
-    const view = await doCombatAction(game, provider, { action, targetId, skill });
+    const view = await doCombatAction(game, providerForGame(game), { action, targetId, skill });
     await saveGame(game);
     res.json(view);
   }),
@@ -164,7 +195,7 @@ app.post(
   wrap(async (req, res) => {
     const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
-    const view = await doRest(game, provider);
+    const view = await doRest(game, providerForGame(game));
     await saveGame(game);
     res.json(view);
   }),
@@ -176,7 +207,7 @@ app.post(
   wrap(async (req, res) => {
     const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
-    const view = await doJoinCanon(game, provider, { crewId: req.body?.crewId });
+    const view = await doJoinCanon(game, providerForGame(game), { crewId: req.body?.crewId });
     await saveGame(game);
     res.json(view);
   }),
@@ -188,6 +219,7 @@ app.post(
   wrap(async (req, res) => {
     const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
+    providerForGame(game);
     const view = spendSkillPoint(game, { skillId: req.body?.skillId });
     await saveGame(game);
     res.json(view);

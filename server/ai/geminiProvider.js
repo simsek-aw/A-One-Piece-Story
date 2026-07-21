@@ -2,7 +2,7 @@
 // OpenAI/Anthropic (Gemini hat einen großzügigen kostenlosen Kontingent-Tarif
 // über Google AI Studio, siehe docs/DEPLOY.md).
 //
-// Aktiv, wenn AI_PROVIDER=gemini gesetzt ist UND ein GEMINI_API_KEY vorliegt.
+// Im Auswahlmenü verfügbar, sobald ein GEMINI_API_KEY vorliegt.
 // Das SDK ("@google/genai") wird nur bei Bedarf (lazy) geladen.
 //
 // JSON-Modus über responseMimeType statt einem vollen JSON-Schema (Gemini nutzt
@@ -10,13 +10,16 @@
 // Providern von engine/schema.js validiert/normalisiert.
 
 import { buildSystemPrompt } from "./systemPrompt.js";
+import { MockProvider } from "./mockProvider.js";
+import { jsonrepair } from "jsonrepair";
 
 export class GeminiProvider {
   constructor({ apiKey, model }) {
     this.apiKey = apiKey;
-    this.model = model || "gemini-2.0-flash";
+    this.model = model || "gemini-2.5-flash";
     this.system = buildSystemPrompt();
     this._client = null;
+    this.fallback = new MockProvider();
   }
 
   async client() {
@@ -34,22 +37,30 @@ export class GeminiProvider {
   }
 
   async generateScene(context) {
-    const client = await this.client();
-    const userMessage = this.buildUserMessage(context);
+    try {
+      const client = await this.client();
+      const userMessage = this.buildUserMessage(context);
+      const response = await client.models.generateContent({
+        model: this.model,
+        contents: userMessage,
+        config: {
+          systemInstruction: this.system,
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
 
-    const response = await client.models.generateContent({
-      model: this.model,
-      contents: userMessage,
-      config: {
-        systemInstruction: this.system,
-        responseMimeType: "application/json",
-        temperature: 0.9,
-      },
-    });
-
-    const text = response.text;
-    if (!text) throw new Error("Gemini-Antwort ohne Inhalt.");
-    return JSON.parse(text);
+      const text = response.text;
+      if (!text) throw new Error("Gemini-Antwort ohne Inhalt.");
+      try {
+        return JSON.parse(text);
+      } catch {
+        return JSON.parse(jsonrepair(text));
+      }
+    } catch (error) {
+      console.warn(`[ai] Gemini-Fallback auf Mock: ${error.message}`);
+      return this.fallback.generateScene(context);
+    }
   }
 
   buildUserMessage(context) {
