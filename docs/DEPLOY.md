@@ -63,6 +63,11 @@ klassischer „kleiner Server" einfacher.
      werden entfernt) — bei Ausfall eines Modells einfach ein anderes
      `:free`-Modell eintragen.
 
+   **Oder DeepSeek direkt:**
+   - `AI_PROVIDER = deepseek` (nur nötig, wenn DeepSeek vorausgewählt sein soll)
+   - `DEEPSEEK_API_KEY = <dein Schlüssel>` (als Secret)
+   - `DEEPSEEK_MODEL = deepseek-v4-flash` (optional)
+
    **Mit OpenAI-Key:**
    - `AI_PROVIDER = openai`
    - `OPENAI_API_KEY = <dein Schlüssel>` (als Secret)
@@ -77,7 +82,13 @@ klassischer „kleiner Server" einfacher.
    Mock-Spielleiter (kostenlos, kein Schlüssel nötig).
 
 5. Optional **echte KI-Bild-Panels** (Szenen, Schlüsselmomente, Profilbild)
-   dazuschalten. Zwei Backends, unabhängig vom Text-Spielleiter wählbar:
+   dazuschalten. Drei Backends, unabhängig vom Text-Spielleiter wählbar:
+
+   **Krea** (API-Guthaben ist vom normalen Krea-App-Abo getrennt):
+   - `KREA_API_KEY = <dein API-Token>` (als Secret)
+   - `KREA_IMAGES = 1`
+   - `KREA_IMAGE_MODEL = image/krea/krea-2/medium` (optional)
+   - `KREA_CREATIVITY = low` (optional: `raw`, `low`, `medium`, `high`)
 
    **Gemini** (`gemini-2.5-flash-image`, oft im freien Kontingent enthalten —
    Verfügbarkeit/Limits in Google AI Studio prüfen, da sich das ändern kann):
@@ -90,7 +101,7 @@ klassischer „kleiner Server" einfacher.
    - `OPENAI_IMAGE_MODEL = gpt-image-1` (optional)
    - `OPENAI_IMAGE_QUALITY = low` (optional; `medium`/`high` = teurer, schärfer)
 
-   Ist Gemini-Bildgenerierung aktiv, hat sie Vorrang vor OpenAI. Alle Panels
+   Ist Krea aktiv, hat es Vorrang vor Gemini und OpenAI. Alle Panels
    werden gecacht (Wiederholungen kosten nichts mehr). Ohne aktives Backend
    bleiben die schnellen, kostenlosen SVG-Panels aktiv.
 

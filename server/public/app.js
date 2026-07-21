@@ -50,7 +50,7 @@ async function init() {
   buildProviderPicker();
   const aHint = $("#appearanceHint");
   if (aHint) aHint.textContent = state.meta.imagesEnabled
-    ? "✎ Bildgenerierung ist aktiv — dein Porträt wird beim Spielstart gezeichnet."
+    ? `✎ Bildgenerierung über ${state.meta.imageProvider || "KI"} ist aktiv — dein Porträt wird beim Spielstart gezeichnet.`
     : "ℹ️ Bildgenerierung ist derzeit aus; die Beschreibung wird gespeichert und der Spielleiter bezieht sie ein.";
 
   const params = new URLSearchParams(location.search);

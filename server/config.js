@@ -58,6 +58,16 @@ export const config = {
     siteUrl: process.env.OPENROUTER_SITE_URL || "",
     siteName: process.env.OPENROUTER_SITE_NAME || "A One Piece Story",
   },
+  deepseek: {
+    apiKey: process.env.DEEPSEEK_API_KEY || "",
+    model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
+  },
+  krea: {
+    apiKey: process.env.KREA_API_KEY || process.env.KREA_API_TOKEN || "",
+    images: process.env.KREA_IMAGES === "1" || process.env.KREA_IMAGES === "true",
+    imageModel: process.env.KREA_IMAGE_MODEL || "image/krea/krea-2/medium",
+    creativity: process.env.KREA_CREATIVITY || "low",
+  },
   // Optional: dauerhafte Spielstände in Supabase. Der Secret-/service_role-Key
   // bleibt ausschließlich auf dem Node-Server und wird nie ans Frontend gegeben.
   supabase: {

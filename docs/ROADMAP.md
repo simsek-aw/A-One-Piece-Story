@@ -146,6 +146,10 @@ folgenden Punkte bauen darauf auf.
       Vor-/Nachrede entfernen), da nicht jedes Modell dahinter JSON-Modus
       strikt einhält. AI_PROVIDER=openrouter + OPENROUTER_API_KEY aktivieren;
       ohne Key sauberer Fallback auf Mock.
+- [x] DeepSeek als direkter fünfter Spielleiter-Provider mit JSON-Reparatur,
+      lokalem Fallback und Auswahl pro Spielstand (`DEEPSEEK_API_KEY`).
+- [x] Krea als drittes echtes Bild-Backend für Avatar- und Szenenpanels;
+      asynchrone Jobs werden serverseitig gepollt und anschließend gecacht.
 
 ## Als Nächstes (Solo vertiefen)
 

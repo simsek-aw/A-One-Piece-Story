@@ -17,7 +17,7 @@ import {
   currentSceneView,
 } from "./engine/turn.js";
 import { createProvider, activeProviderName, availableProviders } from "./ai/provider.js";
-import { getPanelImage, PANELS_DIR, imagesEnabled } from "./ai/imageProvider.js";
+import { getPanelImage, PANELS_DIR, imagesEnabled, activeImageBackendName } from "./ai/imageProvider.js";
 import { listArchetypes, listStartLocations } from "./content/startingScenarios.js";
 import { creationRules } from "./engine/character.js";
 import { ERA } from "./content/lore.js";
@@ -70,6 +70,7 @@ app.get(
       canonCrews: listCanonCrews().map((c) => ({ id: c.id, name: c.name, recruiter: c.recruiter, faction: c.faction, openness: c.openness, blurb: c.blurb })),
       clock: clockConfig(),
       imagesEnabled: imagesEnabled(),
+      imageProvider: activeImageBackendName(),
     });
   }),
 );

@@ -44,6 +44,11 @@ cp .env.example .env
 #   OPENROUTER_API_KEY=sk-or-...   # https://openrouter.ai/keys
 #   OPENROUTER_MODEL=meta-llama/llama-3.1-8b-instruct:free
 #
+# Oder DeepSeek direkt:
+#   AI_PROVIDER=deepseek
+#   DEEPSEEK_API_KEY=...
+#   DEEPSEEK_MODEL=deepseek-v4-flash
+#
 # Oder OpenAI:
 #   AI_PROVIDER=openai
 #   OPENAI_API_KEY=sk-...
@@ -55,9 +60,9 @@ npm start
 ```
 
 Der Anthropic-Provider nutzt `claude-opus-4-8` mit adaptivem Thinking und
-**strukturierter Ausgabe** (JSON-Schema); OpenAI, Gemini und OpenRouter laufen
+**strukturierter Ausgabe** (JSON-Schema); OpenAI, Gemini, DeepSeek und OpenRouter laufen
 über deren JSON-Modus (OpenRouter zusätzlich mit robustem Fallback-Parsing,
-da nicht jedes Modell dahinter JSON-Modus strikt einhält). Alle vier füllen
+da nicht jedes Modell dahinter JSON-Modus strikt einhält). Alle fünf füllen
 denselben Vertrag (`engine/schema.js`), damit der Spielleiter garantiert im
 richtigen Format antwortet — ohne Key läuft automatisch der deterministische
 Mock-Spielleiter.
@@ -181,15 +186,16 @@ server/
     schema.js           GM-Antwort-Vertrag + Validierung + JSON-Schema
     turn.js             Zug-Orchestrierung (alle Aktionstypen)
   ai/                   KI-Schicht (austauschbar)
-    provider.js         Fabrik (mock | anthropic | openai | gemini | openrouter)
+    provider.js         Fabrik (mock | anthropic | openai | gemini | openrouter | deepseek)
     systemPrompt.js     Spielleiter-Regeln (Deutsch)
     mockProvider.js     Platzhalter-Engine
     anthropicProvider.js Echter Claude-Spielleiter
     openaiProvider.js   Echter Spielleiter über OpenAI
     geminiProvider.js   Echter Spielleiter über Google Gemini (kostenlos)
     openrouterProvider.js Echter Spielleiter über OpenRouter (viele Modelle, ein Key)
+    deepseekProvider.js Echter Spielleiter über die DeepSeek API
     artProvider.js      Anime-Panel (Platzhalter-SVG) + Key-Moment-Panels
-    imageProvider.js    Echte KI-Bild-Panels (OpenAI/Gemini, gecacht)
+    imageProvider.js    Echte KI-Bild-Panels (Krea/OpenAI/Gemini, gecacht)
   public/               Frontend (Vanilla JS, kein Build-Schritt)
 docs/                   Architektur, Spieldesign, Roadmap
 ```

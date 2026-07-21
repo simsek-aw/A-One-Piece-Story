@@ -33,6 +33,20 @@ services:
       # - key: OPENROUTER_MODEL
       #   value: meta-llama/llama-3.1-8b-instruct:free # Beispiel, austauschbar
       #
+      # Direkter DeepSeek-Zugang:
+      # - key: DEEPSEEK_API_KEY
+      #   sync: false
+      # - key: DEEPSEEK_MODEL
+      #   value: deepseek-v4-flash
+      #
+      # Krea für Bilder (API-Guthaben separat aktivieren):
+      # - key: KREA_API_KEY
+      #   sync: false
+      # - key: KREA_IMAGES
+      #   value: "1"
+      # - key: KREA_IMAGE_MODEL
+      #   value: image/krea/krea-2/medium
+      #
       # Alternativ über OpenAI:
       # - key: AI_PROVIDER
       #   value: openai

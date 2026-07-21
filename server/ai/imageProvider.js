@@ -1,11 +1,12 @@
 // Echte KI-Bild-Panels — nicht-blockierend und mit Fallback: Das Spiel zeigt
 // sofort das stilisierte SVG-Panel; erst wenn hier ein echtes Bild fertig
-// (und gecacht) ist, tauscht das Frontend es aus. Zwei austauschbare Backends:
+// (und gecacht) ist, tauscht das Frontend es aus. Drei austauschbare Backends:
 // OpenAI (gpt-image-1) oder Gemini (gemini-2.5-flash-image, kostenloses
-// Kontingent über Google AI Studio) — welches aktiv ist, entscheidet die Config.
+// Kontingent über Google AI Studio) oder Krea — welches aktiv ist, entscheidet
+// die Config.
 //
 // Design:
-//   - AN nur, wenn ein Backend aktiviert ist (OPENAI_IMAGES oder GEMINI_IMAGES)
+//   - AN nur, wenn ein Backend aktiviert ist (KREA_IMAGES, OPENAI_IMAGES oder GEMINI_IMAGES)
 //     UND der passende API-Key vorliegt.
 //   - Gecacht auf Platte (data/panels/<hash>.png) und über /panels/ ausgeliefert.
 //     Wiederholte Motive kosten dann nichts mehr.
@@ -23,8 +24,10 @@ import { LOCATIONS } from "../content/map.js";
 
 export const PANELS_DIR = path.join(DATA_DIR, "panels");
 
-// Welches Bild-Backend ist aktiv? Gemini zuerst (kostenlos), sonst OpenAI.
+// Welches Bild-Backend ist aktiv? Ein explizit aktiviertes Krea-Konto zuerst,
+// danach die bisherigen Backends.
 function activeImageBackend() {
+  if (config.krea.images && config.krea.apiKey) return "krea";
   if (config.gemini.images && config.gemini.apiKey) return "gemini";
   if (config.openai.images && config.openai.apiKey) return "openai";
   return null;
@@ -32,6 +35,10 @@ function activeImageBackend() {
 
 export function imagesEnabled() {
   return !!activeImageBackend();
+}
+
+export function activeImageBackendName() {
+  return { krea: "Krea", gemini: "Gemini", openai: "OpenAI" }[activeImageBackend()] || null;
 }
 
 const STYLE =
@@ -131,6 +138,57 @@ async function generateGemini(prompt) {
   return imgPart?.inlineData?.data || null;
 }
 
+export async function generateKrea(prompt, size) {
+  const modelPath = String(config.krea.imageModel || "image/krea/krea-2/medium").replace(/^\/+/, "");
+  if (!/^image\/[a-z0-9._/-]+$/i.test(modelPath)) throw new Error("Ungültiger Krea-Modellpfad.");
+  const creativity = ["raw", "low", "medium", "high"].includes(config.krea.creativity) ? config.krea.creativity : "low";
+  const headers = { Authorization: `Bearer ${config.krea.apiKey}`, "Content-Type": "application/json" };
+  const createdResponse = await fetch(`https://api.krea.ai/generate/${modelPath}`, {
+    method: "POST",
+    headers,
+    signal: AbortSignal.timeout(30_000),
+    body: JSON.stringify({
+      prompt,
+      aspect_ratio: size === "1024x1024" ? "1:1" : "3:2",
+      resolution: "1K",
+      creativity,
+    }),
+  });
+  if (!createdResponse.ok) throw new Error(`Krea-Auftrag fehlgeschlagen (${createdResponse.status}).`);
+  const created = await createdResponse.json();
+  if (!created.job_id) throw new Error("Krea-Antwort ohne Job-ID.");
+
+  const deadline = Date.now() + 90_000;
+  let imageUrl = null;
+  while (Date.now() < deadline) {
+    const jobResponse = await fetch(`https://api.krea.ai/jobs/${encodeURIComponent(created.job_id)}`, {
+      headers: { Authorization: `Bearer ${config.krea.apiKey}` },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!jobResponse.ok) throw new Error(`Krea-Jobstatus fehlgeschlagen (${jobResponse.status}).`);
+    const job = await jobResponse.json();
+    if (job.status === "completed") {
+      imageUrl = job.result?.urls?.[0] || null;
+      break;
+    }
+    if (["failed", "canceled", "cancelled"].includes(job.status)) throw new Error(`Krea-Job ${job.status}.`);
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+  }
+  if (!imageUrl) throw new Error("Krea-Bildgenerierung hat das Zeitlimit überschritten.");
+  const parsedUrl = new URL(imageUrl);
+  if (parsedUrl.protocol !== "https:") throw new Error("Krea lieferte eine unsichere Bild-URL.");
+  if (parsedUrl.hostname !== "krea.ai" && !parsedUrl.hostname.endsWith(".krea.ai")) {
+    throw new Error("Krea lieferte eine Bild-URL außerhalb der Krea-Domain.");
+  }
+  const imageResponse = await fetch(parsedUrl, { signal: AbortSignal.timeout(30_000) });
+  if (!imageResponse.ok) throw new Error(`Krea-Bilddownload fehlgeschlagen (${imageResponse.status}).`);
+  const contentType = imageResponse.headers.get("content-type") || "";
+  if (!contentType.startsWith("image/")) throw new Error("Krea lieferte keine Bilddatei.");
+  const bytes = Buffer.from(await imageResponse.arrayBuffer());
+  if (bytes.length > 20 * 1024 * 1024) throw new Error("Das Krea-Bild ist größer als 20 MB.");
+  return bytes.toString("base64");
+}
+
 // Liefert { src } (Pfad unter /panels/...) oder { src: null } bei Aus/Fehler.
 export async function getPanelImage(game, { scope, kind } = {}) {
   const backend = activeImageBackend();
@@ -146,7 +204,11 @@ export async function getPanelImage(game, { scope, kind } = {}) {
 
   const task = (async () => {
     try {
-      const b64 = backend === "gemini" ? await generateGemini(prompt) : await generateOpenAI(prompt, spec.size);
+      const b64 = backend === "krea"
+        ? await generateKrea(prompt, spec.size)
+        : backend === "gemini"
+          ? await generateGemini(prompt)
+          : await generateOpenAI(prompt, spec.size);
       if (!b64) return null;
       fs.mkdirSync(PANELS_DIR, { recursive: true });
       fs.writeFileSync(path.join(PANELS_DIR, file), Buffer.from(b64, "base64"));

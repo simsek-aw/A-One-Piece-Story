@@ -10,11 +10,13 @@ import { AnthropicProvider } from "./anthropicProvider.js";
 import { OpenAIProvider } from "./openaiProvider.js";
 import { GeminiProvider } from "./geminiProvider.js";
 import { OpenRouterProvider } from "./openrouterProvider.js";
+import { DeepSeekProvider } from "./deepseekProvider.js";
 
 const LABELS = {
   mock: "Lokal",
   gemini: "Gemini",
   openrouter: "OpenRouter",
+  deepseek: "DeepSeek",
   openai: "OpenAI",
   anthropic: "Claude",
 };
@@ -57,6 +59,13 @@ export function createProvider(requestedProvider = config.aiProvider) {
     }
     return new OpenRouterProvider(config.openrouter);
   }
+  if (providerName === "deepseek") {
+    if (!config.deepseek.apiKey) {
+      console.warn("[ai] AI_PROVIDER=deepseek, aber DEEPSEEK_API_KEY fehlt. Fällt auf Mock zurück.");
+      return new MockProvider();
+    }
+    return new DeepSeekProvider(config.deepseek);
+  }
   return new MockProvider();
 }
 
@@ -65,6 +74,7 @@ export function activeProviderName() {
   if (config.aiProvider === "openai" && config.openai.apiKey) return "openai";
   if (config.aiProvider === "gemini" && config.gemini.apiKey) return "gemini";
   if (config.aiProvider === "openrouter" && config.openrouter.apiKey) return "openrouter";
+  if (config.aiProvider === "deepseek" && config.deepseek.apiKey) return "deepseek";
   return "mock";
 }
 
@@ -72,6 +82,7 @@ export function availableProviders() {
   const providers = [{ id: "mock", label: LABELS.mock, model: "regelbasierter Ersatz-Erzähler" }];
   if (config.gemini.apiKey) providers.push({ id: "gemini", label: LABELS.gemini, model: config.gemini.model });
   if (config.openrouter.apiKey) providers.push({ id: "openrouter", label: LABELS.openrouter, model: config.openrouter.model });
+  if (config.deepseek.apiKey) providers.push({ id: "deepseek", label: LABELS.deepseek, model: config.deepseek.model });
   if (config.openai.apiKey) providers.push({ id: "openai", label: LABELS.openai, model: config.openai.model });
   if (config.anthropic.apiKey) providers.push({ id: "anthropic", label: LABELS.anthropic, model: config.anthropic.model });
   return providers;
