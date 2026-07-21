@@ -272,6 +272,7 @@ function enterGame(view) {
   history.replaceState(null, "", `?game=${view.gameId}`);
   $("#screen-create").classList.add("hidden");
   $("#screen-game").classList.remove("hidden");
+  $("#openLogbook").classList.remove("hidden");
   storyBuffer = [];
   renderScene(view);
 }
@@ -295,6 +296,7 @@ function beginNewCharacter() {
   $("#createError").textContent = "";
   $("#characterOverlay").classList.add("hidden");
   $("#screen-game").classList.add("hidden");
+  $("#openLogbook").classList.add("hidden");
   $("#screen-create").classList.remove("hidden");
   history.replaceState(null, "", location.pathname);
   closeDrawer();
@@ -413,38 +415,38 @@ function renderScene(view) {
 
   if (view.lastLevelUps?.length) {
     const lvl = view.lastLevelUps.at(-1).level;
-    if (storyBuffer.at(-1)?.text !== `★ Levelaufstieg! Stufe ${lvl}.`)
-      storyBuffer.push({ type: "action", text: `★ Levelaufstieg! Stufe ${lvl}. Du hast einen Skillpunkt zu verteilen.` });
+    if (!storyBuffer.some((entry) => entry.text.startsWith(`★ Levelaufstieg! Stufe ${lvl}.`)))
+      storyBuffer.push({ type: "event", text: `★ Levelaufstieg! Stufe ${lvl}. Du hast einen Skillpunkt zu verteilen.` });
   }
   if (view.lastLoreUnlocks?.length) {
     view.lastLoreUnlocks.forEach((l) => {
       const note = `📜 Neue Erkenntnis: „${l.title}“`;
-      if (!storyBuffer.some((e) => e.text === note)) storyBuffer.push({ type: "action", text: note });
+      if (!storyBuffer.some((e) => e.text === note)) storyBuffer.push({ type: "event", text: note });
     });
   }
   if (view.lastHakiUnlocks?.length) {
     view.lastHakiUnlocks.forEach((h) => {
       const note = `🌀 Dein Haki erwacht: ${h.name}!`;
-      if (!storyBuffer.some((e) => e.text === note)) storyBuffer.push({ type: "action", text: note });
+      if (!storyBuffer.some((e) => e.text === note)) storyBuffer.push({ type: "event", text: note });
     });
   }
 
   if (view.news?.fresh) {
     const note = `🗞️ Die News-Möwe bringt die Tagesausgabe (Tag ${view.news.day}).`;
-    if (!storyBuffer.some((e) => e.text === note)) storyBuffer.push({ type: "action", text: note });
+    if (!storyBuffer.some((e) => e.text === note)) storyBuffer.push({ type: "event", text: note });
   }
 
   // Story-Log rendern (nachdem alle Notizen dieses Zuges eingesammelt sind)
   const log = $("#storyLog");
   log.innerHTML = "";
-  storyBuffer.slice(-12).forEach((e, i, arr) => {
-    log.appendChild(el("div", `entry ${e.type}${i === arr.length - 1 ? " latest" : ""}`, escapeHtml(e.text)));
+  const visibleEntries = storyBuffer.slice(-12);
+  const latestNarrationIndex = visibleEntries.findLastIndex((entry) => entry.type === "narration");
+  visibleEntries.forEach((e, i) => {
+    log.appendChild(el("div", `entry ${e.type}${i === latestNarrationIndex ? " latest" : ""}`, escapeHtml(e.text)));
   });
   // Im Kampf darf das allgemeine Story-Log nicht den sichtbaren Ausschnitt
   // von den Kampfaktionen wegziehen. Beim Kampfbeginn führen wir stattdessen
   // nach dem Rendern einmal gezielt zur Kampfbox.
-  if (!isInCombat) log.lastChild?.scrollIntoView({ behavior: "smooth", block: "end" });
-
   renderDayBar(view);
   renderSceneContext(view);
   renderNews(view);
@@ -469,6 +471,12 @@ function renderScene(view) {
     });
   }
 
+  // Neue Spielleitertexte beginnen wie eine neue Manga-Seite oben im
+  // sichtbaren Lesebereich. Sticky Kopf- und Ortsleisten werden eingerechnet.
+  if (isNewNarration && !isInCombat) {
+    requestAnimationFrame(() => scrollLatestNarrationToTop(log.querySelector(".entry.narration.latest")));
+  }
+
   $("#shareLink").value = `${location.origin}${location.pathname}?game=${view.gameId}`;
   $("#freeText").value = "";
 
@@ -476,6 +484,14 @@ function renderScene(view) {
     state.lastFxNarration = view.scene.narration;
     playSceneMangaFx(view, previousView);
   }
+}
+
+function scrollLatestNarrationToTop(entry) {
+  if (!entry) return;
+  const topbarHeight = $(".topbar")?.offsetHeight || 0;
+  const hudHeight = $("#sceneHud")?.offsetHeight || 0;
+  const top = window.scrollY + entry.getBoundingClientRect().top - topbarHeight - hudHeight - 12;
+  window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
 }
 
 function locked(view) {
@@ -547,7 +563,8 @@ function renderDayBar(view) {
     (c.mustRest ? ` · <span class="warn">erschöpft — du musst rasten</span>` : c.isNight ? ` · <span class="hint">es ist Nacht</span>` : ""));
   bar.innerHTML = "";
   bar.appendChild(info);
-  const rest = el("button", "rest-btn" + (c.mustRest || c.isNight ? " urgent" : ""), "🌙 Rasten / Schlafplatz");
+  const rest = el("button", "rest-btn" + (c.mustRest || c.isNight ? " urgent" : ""), "🌙 Rasten");
+  rest.title = "Schlafplatz suchen und den Tag beenden";
   rest.disabled = inCombat(view);
   rest.onclick = () => post("/rest", {}, "Ich suche einen Schlafplatz und beende den Tag.");
   bar.appendChild(rest);
@@ -1127,11 +1144,32 @@ document.addEventListener("keydown", (event) => {
 });
 
 // ---------- Mobile Drawer / PWA ----------
-function openDrawer() { document.body.classList.add("drawer-open"); }
+function closeNavMenu() {
+  document.body.classList.remove("nav-menu-open");
+  $("#menuToggle").setAttribute("aria-expanded", "false");
+}
+function openDrawer() {
+  closeNavMenu();
+  document.body.classList.add("drawer-open");
+}
 function closeDrawer() { document.body.classList.remove("drawer-open"); }
 
-$("#menuToggle").addEventListener("click", () => document.body.classList.toggle("drawer-open"));
+$("#menuToggle").addEventListener("click", () => {
+  const willOpen = !document.body.classList.contains("nav-menu-open");
+  closeDrawer();
+  document.body.classList.toggle("nav-menu-open", willOpen);
+  $("#menuToggle").setAttribute("aria-expanded", String(willOpen));
+});
+$("#openLogbook").addEventListener("click", () => {
+  if ($("#screen-game").classList.contains("hidden")) return;
+  openDrawer();
+});
 $("#drawerOverlay").addEventListener("click", closeDrawer);
+document.addEventListener("click", (event) => {
+  if (!document.body.classList.contains("nav-menu-open")) return;
+  if (event.target.closest("#navMenu, #menuToggle")) return;
+  closeNavMenu();
+});
 
 // Schwarz-Weiß invertieren (paper <-> ink), Wahl merken.
 $("#themeToggle").addEventListener("click", () => {
@@ -1141,6 +1179,7 @@ $("#themeToggle").addEventListener("click", () => {
   try { localStorage.setItem("ops-theme", next); } catch (e) {}
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute("content", next === "ink" ? "#0f0f0f" : "#e7e4dc");
+  closeNavMenu();
 });
 
 // Touch-Gesten: nach links wischen öffnet das Menü (von rechts), nach rechts schließt.

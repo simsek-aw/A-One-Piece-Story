@@ -42,15 +42,18 @@
       <strong id="mangaFxWord"></strong>
     </div>
     <header class="topbar">
-      <button id="menuToggle" class="hamburger" aria-label="Menü öffnen">☰</button>
-      <div class="brand">🏴‍☠️ <span class="brand-full">A One Piece Story</span></div>
+      <div class="brand">🏴‍☠️ <span>AOPS</span></div>
+      <button id="menuToggle" class="hamburger" aria-label="Menü öffnen" aria-expanded="false">☰</button>
+    </header>
+    <nav id="navMenu" class="nav-menu" aria-label="Schnellmenü">
       <div class="era" id="eraLabel"></div>
-      <button id="themeToggle" class="theme-toggle" aria-label="Schwarz-Weiß invertieren" title="Invertieren (Tag/Nacht)">◑</button>
       <label class="provider" for="providerSelect">
         <span>Spielleiter</span>
         <select id="providerSelect" aria-label="Spielleiter auswählen"></select>
       </label>
-    </header>
+      <button id="themeToggle" class="theme-toggle" type="button">◑ Tag / Nacht</button>
+      <button id="openLogbook" class="nav-menu-button hidden" type="button">☰ Logbuch &amp; Spielwerte</button>
+    </nav>
     <div id="drawerOverlay" class="drawer-overlay"></div>
 
     <!-- Immer zuerst: Charakter wählen oder neues Abenteuer beginnen. -->
@@ -129,10 +132,14 @@
             <figcaption id="panelCaption"></figcaption>
           </figure>
 
-          <!-- Tages-/Echtzeit-Leiste -->
-          <div id="dayBar" class="day-bar"></div>
-          <div id="sceneLocation" class="scene-location"></div>
-          <div id="sceneContext" class="scene-context" aria-live="polite"></div>
+          <!-- Sticky Szenen-HUD: Ort bleibt sichtbar, Kontext ist ausklappbar. -->
+          <section id="sceneHud" class="scene-hud">
+            <div id="dayBar" class="day-bar"></div>
+            <details class="scene-details" open>
+              <summary id="sceneLocation" class="scene-location"></summary>
+              <div id="sceneContext" class="scene-context" aria-live="polite"></div>
+            </details>
+          </section>
 
           <div id="storyLog" class="story-log"></div>
           <div id="keyPanels" class="key-panels"></div>
@@ -151,19 +158,20 @@
             </div>
           </div>
 
-          <div id="choices" class="choices"></div>
-
           <div id="recruitBox" class="recruit-box hidden">
             <h3>Rekrutierung möglich</h3>
             <div id="recruitList"></div>
           </div>
           <section id="recruitDialogue" class="recruit-dialogue hidden" aria-live="polite"></section>
 
-          <form id="freeForm" class="free-form">
-            <input id="freeText" type="text" placeholder="… oder beschreibe frei, was du tust" maxlength="500" />
-            <button type="submit" class="primary">Tun</button>
-          </form>
-          <div id="turnError" class="error"></div>
+          <section class="action-dock" aria-label="Deine nächste Handlung">
+            <div id="choices" class="choices"></div>
+            <form id="freeForm" class="free-form">
+              <input id="freeText" type="text" placeholder="… oder beschreibe frei, was du tust" maxlength="500" />
+              <button type="submit" class="primary">Tun</button>
+            </form>
+            <div id="turnError" class="error"></div>
+          </section>
         </section>
 
         <aside class="sidebar">

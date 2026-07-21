@@ -36,53 +36,36 @@ export function panelFor(game) {
 
 function buildSvg({ sky, sea, accent, night, type, name }) {
   const W = 800, H = 300;
-  const celest = night
-    ? `<circle cx="650" cy="70" r="26" fill="#e8eef7" opacity="0.9"/><circle cx="662" cy="64" r="22" fill="${sky}"/>`
-    : `<circle cx="650" cy="70" r="34" fill="${accent}" opacity="0.9"/>`;
-
-  // grobe Silhouette je nach Ortstyp
-  let silhouette = "";
+  const building = (x, y, w, h) => `<g><rect x="${x + 5}" y="${y + 6}" width="${w}" height="${h}" fill="#07101f" opacity=".35"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="#0d1a30" stroke="${accent}" stroke-width="2"/><path d="M${x + 8} ${y + h / 2}H${x + w - 8}M${x + w / 2} ${y + 7}V${y + h - 7}" stroke="${accent}" opacity=".45"/></g>`;
+  const person = (x, y, player = false) => `<g transform="translate(${x},${y})"><ellipse rx="${player ? 15 : 10}" ry="${player ? 11 : 8}" fill="#0d1a30"/><circle r="${player ? 7 : 5}" fill="${player ? accent : "#e8eef7"}" stroke="#0d1a30" stroke-width="2"/><path d="M0 -${player ? 17 : 12} 5 -${player ? 9 : 7}H-5Z" fill="${player ? accent : "#0d1a30"}"/></g>`;
+  let terrain = "";
   if (type === "hafenstadt" || type === "marinestadt") {
-    silhouette = `
-      <rect x="80" y="150" width="90" height="90" fill="#0d1a30"/>
-      <rect x="200" y="120" width="70" height="120" fill="#0d1a30"/>
-      <rect x="300" y="160" width="110" height="80" fill="#0d1a30"/>
-      <polygon points="470,240 520,120 570,240" fill="#0d1a30"/>
-      <rect x="600" y="170" width="80" height="70" fill="#0d1a30"/>`;
+    terrain = `<rect x="590" width="210" height="300" fill="url(#water)"/><path d="M584 0v300" stroke="#0d1a30" stroke-width="12"/>` +
+      `<g fill="#8a765a" stroke="#0d1a30" stroke-width="3"><rect x="548" y="45" width="155" height="20"/><rect x="548" y="205" width="190" height="20"/></g>` +
+      building(55, 34, 125, 66) + building(225, 28, 105, 78) + building(380, 45, 120, 58) + building(90, 180, 145, 70) + building(330, 178, 150, 66) +
+      `<path d="M0 140H584M285 0V300" stroke="#d6c49b" stroke-width="30" opacity=".55"/>` + person(520, 145, true) + person(430, 132) + person(548, 175);
   } else if (type === "marinevorposten") {
-    silhouette = `
-      <polygon points="120,240 160,110 200,240" fill="#0d1a30"/>
-      <rect x="300" y="150" width="120" height="90" fill="#0d1a30"/>
-      <polygon points="500,240 560,90 620,240" fill="#0d1a30"/>`;
+    terrain = `<path d="M610 0Q570 75 625 135T590 300H800V0Z" fill="url(#water)"/><path d="M610 0Q570 75 625 135T590 300" fill="none" stroke="#0d1a30" stroke-width="14"/>` +
+      building(230, 62, 210, 105) + building(80, 190, 120, 62) +
+      `<rect x="285" y="168" width="100" height="72" fill="none" stroke="#0d1a30" stroke-width="6" stroke-dasharray="10 7"/><path d="M335 300V240" stroke="#d6c49b" stroke-width="34" opacity=".55"/>` +
+      person(335, 210, true) + person(270, 195) + person(405, 195);
   } else {
-    silhouette = `
-      <polygon points="120,240 170,150 220,240" fill="#0d1a30"/>
-      <rect x="280" y="180" width="80" height="60" fill="#0d1a30"/>
-      <polygon points="430,240 480,160 530,240" fill="#0d1a30"/>
-      <rect x="600" y="190" width="70" height="50" fill="#0d1a30"/>`;
+    terrain = `<path d="M0 238Q170 215 330 245T800 220V300H0Z" fill="url(#water)"/><path d="M0 238Q170 215 330 245T800 220" fill="none" stroke="#0d1a30" stroke-width="10"/>` +
+      building(90, 42, 110, 68) + building(300, 55, 130, 74) + building(555, 35, 105, 65) +
+      `<path d="M0 155Q210 120 390 155T800 130" fill="none" stroke="#d6c49b" stroke-width="32" opacity=".6"/>` + person(390, 150, true) + person(300, 145) + person(495, 142);
   }
-
-  // kleines Schiff auf dem Wasser
-  const ship = `<g opacity="0.85"><polygon points="120,268 190,268 175,285 135,285" fill="#0d1a30"/><line x1="155" y1="240" x2="155" y2="268" stroke="#0d1a30" stroke-width="3"/><polygon points="155,244 185,262 155,262" fill="${accent}"/></g>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
-    <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${sky}"/>
-      <stop offset="100%" stop-color="${night ? "#0b1526" : sky}"/>
-    </linearGradient>
-    <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${sea}"/>
-      <stop offset="100%" stop-color="#0a1424"/>
-    </linearGradient>
+    <pattern id="ground" width="18" height="18" patternUnits="userSpaceOnUse"><rect width="18" height="18" fill="${sky}"/><circle cx="3" cy="4" r="1" fill="${accent}" opacity=".2"/></pattern>
+    <pattern id="water" width="26" height="14" patternUnits="userSpaceOnUse"><rect width="26" height="14" fill="${sea}"/><path d="M0 7Q6 2 13 7T26 7" fill="none" stroke="${accent}" opacity=".35" stroke-width="2"/></pattern>
   </defs>
-  <rect width="${W}" height="${H}" fill="url(#skyG)"/>
-  ${celest}
-  ${silhouette}
-  <rect y="250" width="${W}" height="50" fill="url(#seaG)"/>
-  ${ship}
+  <rect width="${W}" height="${H}" fill="url(#ground)"/>
+  ${terrain}
+  ${night ? `<rect width="${W}" height="${H}" fill="#07101f" opacity=".38"/>` : ""}
+  <g transform="translate(750,45)" opacity=".8"><circle r="25" fill="none" stroke="#f4f1ea" stroke-width="2"/><path d="M0-20 6 0 0 20-6 0Z" fill="#f4f1ea"/><text x="0" y="-29" text-anchor="middle" font-size="11" fill="#f4f1ea">N</text></g>
   <rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="#0a1424" stroke-width="8"/>
-  <text x="24" y="285" font-family="Georgia, serif" font-size="22" fill="#f4f1ea" opacity="0.92">${escapeXml(name)}</text>
+  <rect x="14" y="252" width="330" height="34" fill="#0d1a30" opacity=".9"/><text x="28" y="276" font-family="Arial Black, sans-serif" font-size="18" fill="#f4f1ea">DRAUFSICHT · ${escapeXml(name)}</text>
 </svg>`;
 }
 
@@ -118,7 +101,7 @@ function buildMomentSvg(kind, k, caption) {
   const W = 800, H = 280;
   let art = "";
   const fig = (x, s = 1, fill = "#0d1a30") =>
-    `<g transform="translate(${x},${140}) scale(${s})"><circle cx="0" cy="-46" r="16" fill="${fill}"/><rect x="-16" y="-30" width="32" height="60" rx="8" fill="${fill}"/></g>`;
+    `<g transform="translate(${x},${140}) scale(${s})"><ellipse rx="24" ry="17" fill="${fill}"/><circle r="12" fill="${k.fg}" stroke="${fill}" stroke-width="5"/><path d="M0-34 10-17H-10Z" fill="${fill}"/></g>`;
 
   if (kind === "explosion") {
     art = `<g transform="translate(560,120)">` +
