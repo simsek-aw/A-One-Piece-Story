@@ -35,6 +35,17 @@
     </header>
     <div id="drawerOverlay" class="drawer-overlay"></div>
 
+    <!-- Immer zuerst: Charakter wählen oder neues Abenteuer beginnen. -->
+    <div id="characterOverlay" class="character-overlay" role="dialog" aria-modal="true" aria-labelledby="characterOverlayTitle">
+      <section class="character-picker">
+        <h1 id="characterOverlayTitle">Wer sticht heute in See?</h1>
+        <p class="lead">Setze ein bestehendes Abenteuer fort oder erschaffe einen neuen Charakter.</p>
+        <div id="savedCharacterList" class="save-slots"></div>
+        <p id="noSavedCharacters" class="hint">Noch kein Charakter auf diesem Gerät gespeichert.</p>
+        <button id="newCharacterBtn" class="primary big">Neuen Charakter erstellen</button>
+      </section>
+    </div>
+
     <!-- Startbildschirm / Charaktererstellung -->
     <main id="screen-create" class="screen">
       <div class="create-wrap">
@@ -43,12 +54,6 @@
           Kurz nach der Hinrichtung des Piratenkönigs. Das große Piratenzeitalter
           bricht an. Wer wirst du sein?
         </p>
-
-        <section id="savedCharacters" class="card hidden">
-          <h2>Deine Charaktere</h2>
-          <p class="hint">Wähle einen bekannten Charakter, um sein Abenteuer fortzusetzen.</p>
-          <div id="savedCharacterList" class="save-slots"></div>
-        </section>
 
         <section class="card">
           <h2>1 · Name</h2>
@@ -85,6 +90,7 @@
 
         <div class="actions">
           <button id="startBtn" class="primary big">Abenteuer starten</button>
+          <button id="backToCharacters" type="button" class="slot-forget">Zur Charakterwahl</button>
           <span id="createError" class="error"></span>
         </div>
       </div>

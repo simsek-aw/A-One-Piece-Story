@@ -45,20 +45,22 @@ async function init() {
   if (aHint) aHint.textContent = state.meta.imagesEnabled
     ? "✎ Bildgenerierung ist aktiv — dein Porträt wird beim Spielstart gezeichnet."
     : "ℹ️ Bildgenerierung ist derzeit aus; die Beschreibung wird gespeichert und der Spielleiter bezieht sie ein.";
-  renderSavedCharacters();
 
   const params = new URLSearchParams(location.search);
   const existing = params.get("game");
   if (existing) {
     try {
-      const view = await api(`/api/games/${existing}`);
-      enterGame(view);
-      return;
+      // Ein geteilter Link landet ebenfalls erst in der Charakterauswahl.
+      // So kann man bewusst entscheiden, welches Abenteuer geöffnet wird.
+      rememberCharacter(await api(`/api/games/${existing}`));
     } catch {
-      /* fällt in die Erstellung zurück */
+      /* ungültiger Link: Auswahl bleibt trotzdem verfügbar */
     }
   }
   buildCreation();
+  renderSavedCharacters();
+  $("#newCharacterBtn").onclick = () => $("#characterOverlay").classList.add("hidden");
+  $("#backToCharacters").onclick = () => $("#characterOverlay").classList.remove("hidden");
 }
 
 // ---------- Charaktererstellung ----------
@@ -173,6 +175,7 @@ let storyBuffer = [];
 function enterGame(view) {
   state.gameId = view.gameId;
   rememberCharacter(view);
+  $("#characterOverlay").classList.add("hidden");
   history.replaceState(null, "", `?game=${view.gameId}`);
   $("#screen-create").classList.add("hidden");
   $("#screen-game").classList.remove("hidden");
@@ -203,12 +206,12 @@ function rememberCharacter(view) {
 }
 
 function renderSavedCharacters() {
-  const box = $("#savedCharacters");
   const list = $("#savedCharacterList");
-  if (!box || !list) return;
+  const empty = $("#noSavedCharacters");
+  if (!list) return;
   const slots = readSaveSlots();
   list.innerHTML = "";
-  if (!slots.length) { box.classList.add("hidden"); return; }
+  if (empty) empty.classList.toggle("hidden", slots.length > 0);
   slots.forEach((slot) => {
     const row = el("div", "save-slot", `<div><strong>${escapeHtml(slot.name)}</strong><small>${escapeHtml(slot.archetype || "Abenteurer")} · Stufe ${slot.level || 1} · ${escapeHtml(slot.location || "unbekannter Ort")}</small></div>`);
     const actions = el("div", "save-slot-actions");
@@ -227,7 +230,6 @@ function renderSavedCharacters() {
     row.appendChild(actions);
     list.appendChild(row);
   });
-  box.classList.remove("hidden");
 }
 
 async function post(path, body, actionLabel) {

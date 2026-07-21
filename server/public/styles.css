@@ -78,6 +78,12 @@ body {
 .screen { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
 .hidden { display: none !important; }
 
+.character-overlay { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px; background: rgba(20, 17, 13, 0.72); backdrop-filter: blur(5px); }
+.character-picker { width: min(680px, 100%); max-height: min(760px, calc(100vh - 40px)); overflow: auto; background: var(--panel); color: var(--ink); border: 3px solid var(--line); box-shadow: 9px 9px 0 var(--shadow); padding: 26px; }
+.character-picker h1 { margin: 0 0 8px; font-family: "Bangers", "Arial Black", Impact, system-ui, sans-serif; font-size: 2rem; letter-spacing: 1.5px; text-transform: uppercase; }
+.character-picker .save-slots { margin: 20px 0 14px; }
+.character-picker #newCharacterBtn { margin-top: 10px; }
+
 /* Erstellung */
 .create-wrap h1 { font-size: 1.9rem; margin: 8px 0; }
 .lead { color: var(--muted); max-width: 60ch; }
