@@ -4,7 +4,7 @@
   "description": "Ein CRPG-artiges Textabenteuer in der Welt von One Piece, mit Claude als Spielleiter.",
   "type": "module",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "scripts": {
     "start": "node server/index.js",

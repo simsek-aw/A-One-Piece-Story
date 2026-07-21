@@ -12,7 +12,7 @@ services:
     autoDeploy: true       # bei jedem Push auf den verbundenen Branch neu deployen
     envVars:
       - key: NODE_VERSION
-        value: "20"
+        value: "22"
       # Standard ist der Mock-Spielleiter (kein Schlüssel nötig).
       #
       # Empfehlung, wenn kein OpenAI-Guthaben vorhanden ist: Google Gemini hat

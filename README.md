@@ -14,6 +14,9 @@ Rekrutierung.
 
 ## Schnellstart
 
+Voraussetzung: **Node.js 22 oder neuer** (benötigt von der aktuellen
+Supabase-Anbindung).
+
 ```bash
 npm install
 npm start
