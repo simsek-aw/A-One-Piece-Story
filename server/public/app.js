@@ -699,6 +699,16 @@ function closeDrawer() { document.body.classList.remove("drawer-open"); }
 $("#menuToggle").addEventListener("click", () => document.body.classList.toggle("drawer-open"));
 $("#drawerOverlay").addEventListener("click", closeDrawer);
 
+// Schwarz-Weiß invertieren (paper <-> ink), Wahl merken.
+$("#themeToggle").addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme") === "ink" ? "ink" : "paper";
+  const next = cur === "ink" ? "paper" : "ink";
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem("ops-theme", next); } catch (e) {}
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", next === "ink" ? "#0f0f0f" : "#e7e4dc");
+});
+
 // Touch-Gesten: nach links wischen öffnet das Menü (von rechts), nach rechts schließt.
 let _tsx = 0, _tsy = 0;
 window.addEventListener("touchstart", (e) => { const t = e.touches[0]; _tsx = t.clientX; _tsy = t.clientY; }, { passive: true });

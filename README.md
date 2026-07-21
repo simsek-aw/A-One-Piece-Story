@@ -97,6 +97,9 @@ richtigen Format antwortet.
   nur Beginn und Ausgang werden erzählt.
 - **Kanon-Koexistenz**: Hintergrund-Ereignisse aus der One-Piece-Timeline werden
   als Gerüchte eingestreut.
+- **Manga-Panel-Look**: strenges Schwarz-Weiß mit dicken Tusche-Rahmen, harten
+  Panel-Schatten, Screentone-Raster und gotischen Versal-Überschriften.
+  Voll invertierbar per Umschalter (◑ „paper" ↔ „ink"); die Wahl wird gemerkt.
 - **Mobil & installierbar (PWA)**: touch-freundliches Layout; oben links per
   Hamburger oder per Swipe-Left öffnet sich das Menü als Off-Canvas-Drawer.
   Als Web-App installierbar (`manifest.json` + Service-Worker mit Offline-Shell,

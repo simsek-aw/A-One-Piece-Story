@@ -76,6 +76,16 @@ folgenden Punkte bauen darauf auf.
       Spielleiter-Prompt um „Perspektive & Wissen" ergänzt; UI zeigt
       „Begegnet / vor Ort" vs. „Nur vom Hörensagen".
 
+## Erledigt (Ausbaustufe 9)
+
+- [x] Manga-Panel-Look: strenges Schwarz-Weiß statt des blauen Themes. Dicke
+      Tusche-Rahmen mit harten versetzten Schatten (Panel-Kästen), Screentone-
+      Punktraster im Hintergrund, gotische Versal-Überschriften (keine
+      Comic-Schrift), monochrome Bild-Panels (grayscale-Filter), Outline-Chips,
+      Invert-Hover auf Auswahlzellen. Voll invertierbar über einen Theme-Umschalter
+      (◑, „paper" ↔ „ink", in localStorage gemerkt, flackerfrei im <head> gesetzt).
+      Rein CSS/variablenbasiert — die gesamte Palette hängt an --ink/--bg/--line.
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen

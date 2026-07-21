@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>A One Piece Story</title>
-    <meta name="theme-color" content="#0e1726" />
+    <meta name="theme-color" content="#e7e4dc" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -13,12 +13,24 @@
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="icon" href="/icon-192.png" />
     <link rel="stylesheet" href="/styles.css" />
+    <script>
+      // Theme früh setzen (kein Aufblitzen). Standard: "paper" (Manga-Seite).
+      (function () {
+        try {
+          var t = localStorage.getItem("ops-theme") || "paper";
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "paper");
+        }
+      })();
+    </script>
   </head>
   <body>
     <header class="topbar">
       <button id="menuToggle" class="hamburger" aria-label="Menü öffnen">☰</button>
       <div class="brand">🏴‍☠️ <span class="brand-full">A One Piece Story</span></div>
       <div class="era" id="eraLabel"></div>
+      <button id="themeToggle" class="theme-toggle" aria-label="Schwarz-Weiß invertieren" title="Invertieren (Tag/Nacht)">◑</button>
       <div class="provider" id="providerBadge"></div>
     </header>
     <div id="drawerOverlay" class="drawer-overlay"></div>
