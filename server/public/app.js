@@ -219,9 +219,9 @@ function renderSavedCharacters() {
     load.onclick = async () => {
       try { enterGame(await api(`/api/games/${slot.id}`)); }
       catch (error) {
-        writeSaveSlots(readSaveSlots().filter((entry) => entry.id !== slot.id));
-        renderSavedCharacters();
-        $("#createError").textContent = "Dieser Spielstand wurde nicht gefunden. Möglicherweise wurde er gelöscht oder noch nicht aus Supabase übernommen.";
+        // Nicht sofort aus der Auswahl entfernen: Ein temporärer Datenbank-
+        // oder Deploy-Fehler darf keinen bekannten Charakter verschwinden lassen.
+        $("#createError").textContent = "Dieser Spielstand ist auf dem Server derzeit nicht verfügbar. Prüfe Supabase-Konfiguration und Tabelle; alte Render-Spielstände vor Supabase können nach einem Neustart leider verloren sein.";
       }
     };
     const forget = el("button", "slot-forget", "Aus Liste entfernen");

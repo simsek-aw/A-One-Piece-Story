@@ -15,6 +15,8 @@
 // Antwort validiert/normalisiert.
 
 import { buildSystemPrompt } from "./systemPrompt.js";
+import { MockProvider } from "./mockProvider.js";
+import { jsonrepair } from "jsonrepair";
 
 export class OpenRouterProvider {
   constructor({ apiKey, model, siteUrl, siteName }) {
@@ -24,6 +26,7 @@ export class OpenRouterProvider {
     this.siteName = siteName || "";
     this.system = buildSystemPrompt();
     this._client = null;
+    this.fallback = new MockProvider();
   }
 
   async client() {
@@ -50,25 +53,28 @@ export class OpenRouterProvider {
   }
 
   async generateScene(context) {
-    const client = await this.client();
-    const userMessage = this.buildUserMessage(context);
-    const firstText = await this.requestCompletion(client, userMessage, 0.85);
     try {
-      return parseJsonLoose(firstText);
-    } catch (firstError) {
-      // Der Free-Router wechselt Modelle. Manche liefern trotz JSON-Modus
-      // gelegentlich einen fehlenden Trenner oder eine Vorrede. Ein zweiter,
-      // nüchterner Versuch verhindert, dass dadurch der ganze Zug scheitert.
-      const retryMessage =
-        userMessage +
-        `\n\nDeine vorige Antwort war kein valides JSON (${firstError.message}). ` +
-        "Erzeuge die Szene erneut. Gib ausschließlich ein valides JSON-Objekt aus: keine Markdown-Codeblöcke, keine Kommentare, keine Vorrede.";
-      const retryText = await this.requestCompletion(client, retryMessage, 0.2);
+      const client = await this.client();
+      const userMessage = this.buildUserMessage(context);
+      const firstText = await this.requestCompletion(client, userMessage, 0.85);
       try {
+        return parseJsonLoose(firstText);
+      } catch (firstError) {
+        // Der Free-Router wechselt Modelle. Manche liefern trotz JSON-Modus
+        // gelegentlich einen fehlenden Trenner oder eine Vorrede. Ein zweiter,
+        // nüchterner Versuch verhindert, dass dadurch der ganze Zug scheitert.
+        const retryMessage =
+          userMessage +
+          `\n\nDeine vorige Antwort war kein valides JSON (${firstError.message}). ` +
+          "Erzeuge die Szene erneut. Gib ausschließlich ein valides JSON-Objekt aus: keine Markdown-Codeblöcke, keine Kommentare, keine Vorrede.";
+        const retryText = await this.requestCompletion(client, retryMessage, 0.2);
         return parseJsonLoose(retryText);
-      } catch (retryError) {
-        throw new Error(`OpenRouter lieferte zweimal ungültiges JSON: ${retryError.message}`);
       }
+    } catch (error) {
+      // Ein fehlerhaftes/überlastetes Free-Modell darf nie einen kompletten
+      // Spielzug blockieren. Die Szene fällt sauber auf die lokale Engine zurück.
+      console.warn(`[ai] OpenRouter-Fallback auf Mock: ${error.message}`);
+      return this.fallback.generateScene(context);
     }
   }
 
@@ -109,18 +115,23 @@ export class OpenRouterProvider {
 // Manche Modelle hinter OpenRouter halten sich nicht strikt an den JSON-Modus
 // und betten die Antwort z. B. in ```json ... ``` oder mit Vorrede ein.
 function parseJsonLoose(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    if (fenced) {
-      try { return JSON.parse(fenced[1]); } catch { /* weiter unten versuchen */ }
-    }
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    if (start !== -1 && end !== -1 && end > start) {
-      return JSON.parse(text.slice(start, end + 1));
-    }
-    throw new Error("OpenRouter-Antwort war kein valides JSON.");
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  const extracted = start !== -1 && end > start ? text.slice(start, end + 1) : null;
+  const candidates = [text, fenced, extracted].filter(Boolean);
+  let lastError;
+  for (const candidate of candidates) {
+    try { return parseObject(candidate); } catch (error) { lastError = error; }
+    try { return parseObject(jsonrepair(candidate)); } catch (error) { lastError = error; }
   }
+  throw lastError || new Error("OpenRouter-Antwort war kein valides JSON.");
+}
+
+function parseObject(text) {
+  const value = JSON.parse(text);
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("OpenRouter-Antwort war kein JSON-Objekt.");
+  }
+  return value;
 }
