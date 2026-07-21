@@ -470,7 +470,7 @@ button.choice:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 .choice:hover .c-check { color: var(--on-accent); border-color: var(--on-accent); }
 .option.selected, .chip.sel { background: var(--ink); color: var(--on-accent); box-shadow: 1px 1px 0 var(--shadow); transform: translate(2px,2px); }
-.option.selected .o-sub { color: rgba(255,255,255,0.75); }
+.option:hover .o-sub, .option.selected .o-sub { color: var(--on-accent); }
 button.primary { background: var(--ink); color: var(--on-accent); }
 button.primary:hover { filter: none; transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--shadow); }
 .c-check { color: var(--ink); border: 1px solid var(--line) !important; }
