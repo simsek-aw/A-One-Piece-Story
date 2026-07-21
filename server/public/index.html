@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A One Piece Story</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">🏴‍☠️ A One Piece Story</div>
+      <div class="era" id="eraLabel"></div>
+      <div class="provider" id="providerBadge"></div>
+    </header>
+
+    <!-- Startbildschirm / Charaktererstellung -->
+    <main id="screen-create" class="screen">
+      <div class="create-wrap">
+        <h1>Ein neues Abenteuer beginnt</h1>
+        <p class="lead">
+          Kurz nach der Hinrichtung des Piratenkönigs. Das große Piratenzeitalter
+          bricht an. Wer wirst du sein?
+        </p>
+
+        <section class="card">
+          <h2>1 · Name</h2>
+          <input id="charName" type="text" placeholder="Wie heißt du?" maxlength="40" />
+        </section>
+
+        <section class="card">
+          <h2>2 · Herkunft (nur ein Start – keine feste Rolle)</h2>
+          <div id="archetypeList" class="option-grid"></div>
+        </section>
+
+        <section class="card">
+          <h2>3 · Attribute</h2>
+          <p class="hint" id="pointsHint"></p>
+          <div id="attributeList" class="attr-grid"></div>
+        </section>
+
+        <section class="card">
+          <h2>4 · Talent (Perk)</h2>
+          <div id="perkList" class="option-grid"></div>
+        </section>
+
+        <section class="card">
+          <h2>5 · Startort</h2>
+          <div id="locationList" class="option-grid"></div>
+        </section>
+
+        <div class="actions">
+          <button id="startBtn" class="primary big">Abenteuer starten</button>
+          <span id="createError" class="error"></span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Spielbildschirm -->
+    <main id="screen-game" class="screen hidden">
+      <div class="game-layout">
+        <section class="story">
+          <div id="storyLog" class="story-log"></div>
+
+          <div id="checkBanner" class="check-banner hidden"></div>
+
+          <div id="choices" class="choices"></div>
+
+          <div id="recruitBox" class="recruit-box hidden">
+            <h3>Rekrutierung möglich</h3>
+            <div id="recruitList"></div>
+          </div>
+
+          <form id="freeForm" class="free-form">
+            <input id="freeText" type="text" placeholder="… oder beschreibe frei, was du tust" maxlength="500" />
+            <button type="submit" class="primary">Tun</button>
+          </form>
+          <div id="turnError" class="error"></div>
+        </section>
+
+        <aside class="sidebar">
+          <div class="panel">
+            <div class="panel-head">
+              <span id="charTitle"></span>
+              <span id="charDay" class="day-badge"></span>
+            </div>
+            <div class="bars">
+              <div class="bar-row"><span>❤️ TP</span><div class="bar"><div id="hpBar" class="bar-fill hp"></div></div><span id="hpText"></span></div>
+              <div class="bar-row"><span>⭐ EP</span><div class="bar"><div id="xpBar" class="bar-fill xp"></div></div><span id="xpText"></span></div>
+            </div>
+            <div id="standing" class="standing"></div>
+            <div id="attrs" class="stat-block"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Fertigkeiten</h3>
+            <div id="skills" class="stat-block small"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Crew / Party</h3>
+            <div id="party" class="list"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Bekannte Gesichter</h3>
+            <div id="memory" class="list"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Inventar · <span id="beri"></span> Ⓑ</h3>
+            <div id="inventory" class="list"></div>
+          </div>
+
+          <div class="panel share">
+            <div class="hint">Spielstand-Link (später auch für Multiplayer):</div>
+            <input id="shareLink" type="text" readonly />
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <div id="loading" class="loading hidden"><div class="spinner"></div><span>Der Spielleiter denkt nach …</span></div>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
