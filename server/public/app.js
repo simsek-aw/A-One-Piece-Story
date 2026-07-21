@@ -65,8 +65,14 @@ async function init() {
   }
   buildCreation();
   renderSavedCharacters();
-  $("#newCharacterBtn").onclick = () => $("#characterOverlay").classList.add("hidden");
-  $("#backToCharacters").onclick = () => $("#characterOverlay").classList.remove("hidden");
+  $("#newCharacterBtn").onclick = beginNewCharacter;
+  $("#backToCharacters").onclick = showCharacterPicker;
+  $("#menuCharacterPicker").onclick = showCharacterPicker;
+  $("#menuNewCharacter").onclick = beginNewCharacter;
+  $("#menuRefreshGame").onclick = async () => {
+    closeDrawer();
+    await refreshView();
+  };
 }
 
 // ---------- Charaktererstellung ----------
@@ -226,6 +232,30 @@ function enterGame(view) {
   $("#screen-game").classList.remove("hidden");
   storyBuffer = [];
   renderScene(view);
+}
+
+function showCharacterPicker() {
+  if (state.view) rememberCharacter(state.view);
+  renderSavedCharacters();
+  closeDrawer();
+  $("#characterOverlay").classList.remove("hidden");
+}
+
+function beginNewCharacter() {
+  if (state.view) rememberCharacter(state.view);
+  state.gameId = null;
+  state.view = null;
+  state.sel = { archetype: null, perk: null, location: null };
+  buildCreation();
+  $("#charName").value = "";
+  $("#charAppearance").value = "";
+  $("#createError").textContent = "";
+  $("#characterOverlay").classList.add("hidden");
+  $("#screen-game").classList.add("hidden");
+  $("#screen-create").classList.remove("hidden");
+  history.replaceState(null, "", location.pathname);
+  closeDrawer();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function readSaveSlots() {
