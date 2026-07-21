@@ -142,6 +142,9 @@ Mock-Spielleiter.
 - **Multiplayer vorbereitet**: geteilter Tages-Takt, Den-Den-Mushi- & Raum-
   Datenmodell, UI-Slots — noch ohne Echtzeit-Vernetzung (siehe Roadmap).
 - **Persistenz**: Spielstände als JSON; Fortsetzen per `?game=<id>`-Link.
+- **Dauerhafte Spielstände & Charakterwahl**: optional über Supabase; jeder Zug
+  wird in der Datenbank gespeichert und bekannte Charaktere lassen sich am
+  Startbildschirm fortsetzen (Einrichtung: `docs/SUPABASE.md`).
 
 ## Projektstruktur
 

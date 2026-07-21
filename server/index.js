@@ -68,7 +68,7 @@ app.post(
     const { character, startLocationId } = req.body || {};
     const game = createGame({ character, startLocationId });
     await startScene(game, provider);
-    saveGame(game);
+    await saveGame(game);
     res.json(currentSceneView(game));
   }),
 );
@@ -77,7 +77,7 @@ app.post(
 app.get(
   "/api/games/:id",
   wrap(async (req, res) => {
-    const game = loadGame(req.params.id);
+    const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     res.json(currentSceneView(game));
   }),
@@ -87,11 +87,11 @@ app.get(
 app.post(
   "/api/games/:id/turn",
   wrap(async (req, res) => {
-    const game = loadGame(req.params.id);
+    const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const { choiceId, freeText } = req.body || {};
     const view = await playTurn(game, provider, { choiceId, freeText });
-    saveGame(game);
+    await saveGame(game);
     res.json(view);
   }),
 );
@@ -100,11 +100,11 @@ app.post(
 app.post(
   "/api/games/:id/recruit",
   wrap(async (req, res) => {
-    const game = loadGame(req.params.id);
+    const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const { npcId } = req.body || {};
     const view = await attemptRecruit(game, provider, { npcId });
-    saveGame(game);
+    await saveGame(game);
     res.json(view);
   }),
 );
@@ -113,10 +113,10 @@ app.post(
 app.post(
   "/api/games/:id/activity",
   wrap(async (req, res) => {
-    const game = loadGame(req.params.id);
+    const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const view = await doActivity(game, provider, { activityId: req.body?.activityId });
-    saveGame(game);
+    await saveGame(game);
     res.json(view);
   }),
 );
@@ -125,10 +125,10 @@ app.post(
 app.post(
   "/api/games/:id/travel",
   wrap(async (req, res) => {
-    const game = loadGame(req.params.id);
+    const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const view = await doTravel(game, provider, { destId: req.body?.destId });
-    saveGame(game);
+    await saveGame(game);
     res.json(view);
   }),
 );
@@ -137,10 +137,10 @@ app.post(
 app.post(
   "/api/games/:id/eat-fruit",
   wrap(async (req, res) => {
-    const game = loadGame(req.params.id);
+    const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const view = await doEatFruit(game, provider, { fruitId: req.body?.fruitId });
-    saveGame(game);
+    await saveGame(game);
     res.json(view);
   }),
 );
@@ -149,11 +149,11 @@ app.post(
 app.post(
   "/api/games/:id/combat-action",
   wrap(async (req, res) => {
-    const game = loadGame(req.params.id);
+    const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const { action, targetId, skill } = req.body || {};
     const view = await doCombatAction(game, provider, { action, targetId, skill });
-    saveGame(game);
+    await saveGame(game);
     res.json(view);
   }),
 );
@@ -162,10 +162,10 @@ app.post(
 app.post(
   "/api/games/:id/rest",
   wrap(async (req, res) => {
-    const game = loadGame(req.params.id);
+    const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const view = await doRest(game, provider);
-    saveGame(game);
+    await saveGame(game);
     res.json(view);
   }),
 );
@@ -174,10 +174,10 @@ app.post(
 app.post(
   "/api/games/:id/join-canon",
   wrap(async (req, res) => {
-    const game = loadGame(req.params.id);
+    const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const view = await doJoinCanon(game, provider, { crewId: req.body?.crewId });
-    saveGame(game);
+    await saveGame(game);
     res.json(view);
   }),
 );
@@ -186,10 +186,10 @@ app.post(
 app.post(
   "/api/games/:id/spend-skill",
   wrap(async (req, res) => {
-    const game = loadGame(req.params.id);
+    const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const view = spendSkillPoint(game, { skillId: req.body?.skillId });
-    saveGame(game);
+    await saveGame(game);
     res.json(view);
   }),
 );
@@ -199,14 +199,14 @@ app.post(
 app.post(
   "/api/games/:id/panel",
   wrap(async (req, res) => {
-    const game = loadGame(req.params.id);
+    const game = await loadGame(req.params.id);
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const { scope, kind } = req.body || {};
     const result = await getPanelImage(game, { scope, kind });
     // Profilbild dauerhaft am Charakter merken, damit es beim Laden sofort da ist.
     if (scope === "avatar" && result?.src && game.character.avatar !== result.src) {
       game.character.avatar = result.src;
-      saveGame(game);
+      await saveGame(game);
     }
     res.json(result);
   }),

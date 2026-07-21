@@ -13,7 +13,7 @@ klassischer „kleiner Server" einfacher.
 
 | Plattform | Kostenlos | Aufwand | Spielstände bleiben erhalten? |
 |-----------|-----------|---------|-------------------------------|
-| **Render** (Web Service) | ✅ | sehr gering (dieses Repo verbinden) | ❌ werden bei Redeploy/Aufwachen zurückgesetzt |
+| **Render** (Web Service) | ✅ | sehr gering (dieses Repo verbinden) | ❌ ohne Datenbank; ✅ mit Supabase |
 | **Fly.io** (+ Volume) | ✅ (Kreditkarte hinterlegen) | mittel | ✅ (Volume für `data/`) |
 | Vercel | ✅ | hoch (Umbau auf DB nötig) | nur mit externer DB |
 
@@ -25,6 +25,10 @@ klassischer „kleiner Server" einfacher.
 2. Das **Dateisystem ist flüchtig** → bei jedem Redeploy/Neustart ist der
    Ordner `data/` (die Spielstände) wieder leer. Zum gemeinsamen Ausprobieren
    meist okay; wer Spielstände dauerhaft behalten will, nimmt Fly.io (unten).
+
+   Mit der eingebauten Supabase-Anbindung bleiben Spielstände auf Render
+   dauerhaft erhalten: Tabelle und Umgebungsvariablen gemäß
+   [`SUPABASE.md`](SUPABASE.md) einrichten.
 
 ## Render einrichten (empfohlen)
 

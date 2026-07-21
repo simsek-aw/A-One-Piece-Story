@@ -17,6 +17,7 @@ const state = {
   clockTimer: null,
   combatTarget: null,
 };
+const SAVE_SLOTS_KEY = "aops-save-slots";
 
 async function api(path, opts = {}) {
   showLoading(true);
@@ -44,6 +45,7 @@ async function init() {
   if (aHint) aHint.textContent = state.meta.imagesEnabled
     ? "✎ Bildgenerierung ist aktiv — dein Porträt wird beim Spielstart gezeichnet."
     : "ℹ️ Bildgenerierung ist derzeit aus; die Beschreibung wird gespeichert und der Spielleiter bezieht sie ein.";
+  renderSavedCharacters();
 
   const params = new URLSearchParams(location.search);
   const existing = params.get("game");
@@ -170,11 +172,62 @@ let storyBuffer = [];
 
 function enterGame(view) {
   state.gameId = view.gameId;
+  rememberCharacter(view);
   history.replaceState(null, "", `?game=${view.gameId}`);
   $("#screen-create").classList.add("hidden");
   $("#screen-game").classList.remove("hidden");
   storyBuffer = [];
   renderScene(view);
+}
+
+function readSaveSlots() {
+  try {
+    const slots = JSON.parse(localStorage.getItem(SAVE_SLOTS_KEY) || "[]");
+    return Array.isArray(slots) ? slots : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSaveSlots(slots) {
+  try { localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(slots.slice(0, 12))); } catch { /* Speicher ist optional */ }
+}
+
+function rememberCharacter(view) {
+  const c = view.character;
+  if (!view.gameId || !c?.name) return;
+  const slot = { id: view.gameId, name: c.name, archetype: c.archetype, level: c.level, location: view.location, savedAt: Date.now() };
+  const slots = readSaveSlots().filter((entry) => entry.id !== slot.id);
+  slots.unshift(slot);
+  writeSaveSlots(slots);
+}
+
+function renderSavedCharacters() {
+  const box = $("#savedCharacters");
+  const list = $("#savedCharacterList");
+  if (!box || !list) return;
+  const slots = readSaveSlots();
+  list.innerHTML = "";
+  if (!slots.length) { box.classList.add("hidden"); return; }
+  slots.forEach((slot) => {
+    const row = el("div", "save-slot", `<div><strong>${escapeHtml(slot.name)}</strong><small>${escapeHtml(slot.archetype || "Abenteurer")} · Stufe ${slot.level || 1} · ${escapeHtml(slot.location || "unbekannter Ort")}</small></div>`);
+    const actions = el("div", "save-slot-actions");
+    const load = el("button", "primary", "Fortsetzen");
+    load.onclick = async () => {
+      try { enterGame(await api(`/api/games/${slot.id}`)); }
+      catch (error) {
+        writeSaveSlots(readSaveSlots().filter((entry) => entry.id !== slot.id));
+        renderSavedCharacters();
+        $("#createError").textContent = "Dieser Spielstand wurde nicht gefunden. Möglicherweise wurde er gelöscht oder noch nicht aus Supabase übernommen.";
+      }
+    };
+    const forget = el("button", "slot-forget", "Aus Liste entfernen");
+    forget.onclick = () => { writeSaveSlots(readSaveSlots().filter((entry) => entry.id !== slot.id)); renderSavedCharacters(); };
+    actions.append(load, forget);
+    row.appendChild(actions);
+    list.appendChild(row);
+  });
+  box.classList.remove("hidden");
 }
 
 async function post(path, body, actionLabel) {

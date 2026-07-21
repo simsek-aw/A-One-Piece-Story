@@ -58,4 +58,10 @@ export const config = {
     siteUrl: process.env.OPENROUTER_SITE_URL || "",
     siteName: process.env.OPENROUTER_SITE_NAME || "A One Piece Story",
   },
+  // Optional: dauerhafte Spielstände in Supabase. Der Secret-/service_role-Key
+  // bleibt ausschließlich auf dem Node-Server und wird nie ans Frontend gegeben.
+  supabase: {
+    url: process.env.SUPABASE_URL || "",
+    secretKey: process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+  },
 };

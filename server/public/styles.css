@@ -100,6 +100,13 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .option.selected { border-color: var(--accent); background: var(--panel2); box-shadow: 0 0 0 2px rgba(244,185,66,0.25); }
 .option .o-title { font-weight: 700; margin-bottom: 4px; }
 .option .o-sub { color: var(--muted); font-size: 0.85rem; }
+.save-slots { display: flex; flex-direction: column; gap: 8px; }
+.save-slot { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid var(--line); background: var(--bg2); padding: 10px 12px; }
+.save-slot small { display: block; color: var(--muted); margin-top: 2px; }
+.save-slot-actions { display: flex; gap: 6px; align-items: center; }
+.save-slot .primary { padding: 7px 10px; }
+.slot-forget { border: 0; background: transparent; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 0.75rem; }
+@media (max-width: 560px) { .save-slot { align-items: flex-start; flex-direction: column; } }
 
 .attr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
 .attr-row { display: flex; align-items: center; gap: 10px; background: var(--bg2); border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; }
