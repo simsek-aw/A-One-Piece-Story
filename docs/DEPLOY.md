@@ -36,7 +36,15 @@ klassischer „kleiner Server" einfacher.
 3. Deploy abwarten → du bekommst eine URL wie
    `https://a-one-piece-story.onrender.com`. Diese teilst du dem 2. Spieler.
 4. Optional den **echten KI-Spielleiter** aktivieren: im Render-Dashboard
-   unter *Environment* setzen. **Mit OpenAI-Key:**
+   unter *Environment* setzen.
+
+   **Empfehlung ohne OpenAI-Guthaben: Google Gemini** (kostenloser
+   Kontingent-Tarif über [Google AI Studio](https://aistudio.google.com/apikey)):
+   - `AI_PROVIDER = gemini`
+   - `GEMINI_API_KEY = <dein Schlüssel>` (als Secret)
+   - `GEMINI_MODEL = gemini-2.0-flash` (optional; im freien Kontingent enthalten)
+
+   **Mit OpenAI-Key:**
    - `AI_PROVIDER = openai`
    - `OPENAI_API_KEY = <dein Schlüssel>` (als Secret)
    - `OPENAI_MODEL = gpt-4o-mini` (optional; `gpt-4o` = mehr Qualität, teurer)
@@ -46,12 +54,22 @@ klassischer „kleiner Server" einfacher.
    Mock-Spielleiter (kostenlos, kein Schlüssel nötig).
 
 5. Optional **echte KI-Bild-Panels** (Szenen, Schlüsselmomente, Profilbild)
-   dazuschalten — kostet OpenAI-Guthaben pro generiertem Bild, ist aber
-   gecacht (Wiederholungen sind gratis):
+   dazuschalten. Zwei Backends, unabhängig vom Text-Spielleiter wählbar:
+
+   **Gemini** (`gemini-2.5-flash-image`, oft im freien Kontingent enthalten —
+   Verfügbarkeit/Limits in Google AI Studio prüfen, da sich das ändern kann):
+   - `GEMINI_IMAGES = 1`
+   - `GEMINI_API_KEY` (derselbe Schlüssel wie oben reicht)
+   - `GEMINI_IMAGE_MODEL = gemini-2.5-flash-image` (optional)
+
+   **OpenAI** (`gpt-image-1`, kostet Guthaben pro Bild):
    - `OPENAI_IMAGES = 1`
    - `OPENAI_IMAGE_MODEL = gpt-image-1` (optional)
    - `OPENAI_IMAGE_QUALITY = low` (optional; `medium`/`high` = teurer, schärfer)
-   Ohne `OPENAI_IMAGES=1` bleiben die schnellen, kostenlosen SVG-Panels aktiv.
+
+   Ist Gemini-Bildgenerierung aktiv, hat sie Vorrang vor OpenAI. Alle Panels
+   werden gecacht (Wiederholungen kosten nichts mehr). Ohne aktives Backend
+   bleiben die schnellen, kostenlosen SVG-Panels aktiv.
 
 `PORT` musst du nicht setzen — Render gibt ihn vor, die App liest ihn aus.
 

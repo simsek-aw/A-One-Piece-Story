@@ -15,11 +15,20 @@ services:
         value: "20"
       # Standard ist der Mock-Spielleiter (kein Schlüssel nötig).
       #
-      # Echter Spielleiter über OpenAI (im Render-Dashboard setzen):
+      # Empfehlung, wenn kein OpenAI-Guthaben vorhanden ist: Google Gemini hat
+      # einen kostenlosen Kontingent-Tarif (im Render-Dashboard setzen):
+      # - key: AI_PROVIDER
+      #   value: gemini
+      # - key: GEMINI_API_KEY
+      #   sync: false        # als Secret im Dashboard eintragen, NICHT hier
+      # - key: GEMINI_MODEL
+      #   value: gemini-2.0-flash # optional
+      #
+      # Alternativ über OpenAI:
       # - key: AI_PROVIDER
       #   value: openai
       # - key: OPENAI_API_KEY
-      #   sync: false        # als Secret im Dashboard eintragen, NICHT hier
+      #   sync: false
       # - key: OPENAI_MODEL
       #   value: gpt-4o-mini # optional; z. B. gpt-4o für mehr Qualität
       #

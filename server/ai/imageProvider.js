@@ -1,9 +1,12 @@
-// Echte KI-Bild-Panels über die OpenAI-Bild-API — nicht-blockierend und mit
-// Fallback: Das Spiel zeigt sofort das stilisierte SVG-Panel; erst wenn hier ein
-// echtes Bild fertig (und gecacht) ist, tauscht das Frontend es aus.
+// Echte KI-Bild-Panels — nicht-blockierend und mit Fallback: Das Spiel zeigt
+// sofort das stilisierte SVG-Panel; erst wenn hier ein echtes Bild fertig
+// (und gecacht) ist, tauscht das Frontend es aus. Zwei austauschbare Backends:
+// OpenAI (gpt-image-1) oder Gemini (gemini-2.5-flash-image, kostenloses
+// Kontingent über Google AI Studio) — welches aktiv ist, entscheidet die Config.
 //
 // Design:
-//   - AN nur, wenn OPENAI_IMAGES=1 UND ein OPENAI_API_KEY vorliegt.
+//   - AN nur, wenn ein Backend aktiviert ist (OPENAI_IMAGES oder GEMINI_IMAGES)
+//     UND der passende API-Key vorliegt.
 //   - Gecacht auf Platte (data/panels/<hash>.png) und über /panels/ ausgeliefert.
 //     Wiederholte Motive kosten dann nichts mehr.
 //   - Schlüssel bewusst grob (Szene: Ort+Tag/Nacht; Moment: nur die Art), damit
@@ -20,8 +23,15 @@ import { LOCATIONS } from "../content/map.js";
 
 export const PANELS_DIR = path.join(DATA_DIR, "panels");
 
+// Welches Bild-Backend ist aktiv? Gemini zuerst (kostenlos), sonst OpenAI.
+function activeImageBackend() {
+  if (config.gemini.images && config.gemini.apiKey) return "gemini";
+  if (config.openai.images && config.openai.apiKey) return "openai";
+  return null;
+}
+
 export function imagesEnabled() {
-  return !!(config.openai.images && config.openai.apiKey);
+  return !!activeImageBackend();
 }
 
 const STYLE =
@@ -81,22 +91,53 @@ function cachedSrc(file) {
 
 // Läuft, damit dasselbe Motiv nicht mehrfach gleichzeitig generiert wird.
 const inFlight = new Map();
-let _client = null;
+let _openaiClient = null;
+let _geminiClient = null;
 
-async function client() {
-  if (_client) return _client;
+async function openaiClient() {
+  if (_openaiClient) return _openaiClient;
   const { default: OpenAI } = await import("openai");
-  _client = new OpenAI({ apiKey: config.openai.apiKey });
-  return _client;
+  _openaiClient = new OpenAI({ apiKey: config.openai.apiKey });
+  return _openaiClient;
+}
+
+async function geminiClient() {
+  if (_geminiClient) return _geminiClient;
+  const { GoogleGenAI } = await import("@google/genai");
+  _geminiClient = new GoogleGenAI({ apiKey: config.gemini.apiKey });
+  return _geminiClient;
+}
+
+async function generateOpenAI(prompt, size) {
+  const c = await openaiClient();
+  const result = await c.images.generate({
+    model: config.openai.imageModel || "gpt-image-1",
+    prompt,
+    size: size || "1536x1024",
+    quality: config.openai.imageQuality || "low",
+    n: 1,
+  });
+  return result?.data?.[0]?.b64_json || null;
+}
+
+async function generateGemini(prompt) {
+  const c = await geminiClient();
+  const response = await c.models.generateContent({
+    model: config.gemini.imageModel || "gemini-2.5-flash-image",
+    contents: prompt,
+  });
+  const parts = response?.candidates?.[0]?.content?.parts || [];
+  const imgPart = parts.find((p) => p.inlineData?.data);
+  return imgPart?.inlineData?.data || null;
 }
 
 // Liefert { src } (Pfad unter /panels/...) oder { src: null } bei Aus/Fehler.
 export async function getPanelImage(game, { scope, kind } = {}) {
-  if (!imagesEnabled()) return { src: null };
+  const backend = activeImageBackend();
+  if (!backend) return { src: null };
   const spec = scope === "moment" ? momentPrompt(kind) : scope === "avatar" ? avatarPrompt(game) : scenePrompt(game);
   const { key, prompt } = spec;
-  const size = spec.size || "1536x1024";
-  const file = hashName(key);
+  const file = hashName(`${backend}_${key}`);
 
   const hit = cachedSrc(file);
   if (hit) return { src: hit };
@@ -105,15 +146,7 @@ export async function getPanelImage(game, { scope, kind } = {}) {
 
   const task = (async () => {
     try {
-      const c = await client();
-      const result = await c.images.generate({
-        model: config.openai.imageModel || "gpt-image-1",
-        prompt,
-        size,
-        quality: config.openai.imageQuality || "low",
-        n: 1,
-      });
-      const b64 = result?.data?.[0]?.b64_json;
+      const b64 = backend === "gemini" ? await generateGemini(prompt) : await generateOpenAI(prompt, spec.size);
       if (!b64) return null;
       fs.mkdirSync(PANELS_DIR, { recursive: true });
       fs.writeFileSync(path.join(PANELS_DIR, file), Buffer.from(b64, "base64"));

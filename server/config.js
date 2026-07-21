@@ -41,4 +41,12 @@ export const config = {
     imageModel: process.env.OPENAI_IMAGE_MODEL || "gpt-image-1",
     imageQuality: process.env.OPENAI_IMAGE_QUALITY || "low", // low|medium|high
   },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "",
+    model: process.env.GEMINI_MODEL || "gemini-2.0-flash",
+    // Bildgenerierung über Gemini (z. B. "gemini-2.5-flash-image"). Hat oft
+    // ein eigenes, kleineres Kontingent als Text — separat zuschaltbar.
+    images: process.env.GEMINI_IMAGES === "1" || process.env.GEMINI_IMAGES === "true",
+    imageModel: process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image",
+  },
 };

@@ -47,6 +47,7 @@ export function startCombat(game, enemySpecs) {
     round: 1,
     enemies,
     defending: false,
+    overwhelmUsed: false, // Haoshoku: höchstens einmal pro Kampf
     log: ["Ein Kampf beginnt!"],
     over: false,
     result: null,
@@ -64,8 +65,12 @@ export function combatOptions(game) {
   const c = game.character;
   const skills = Object.keys(COMBAT_SKILLS).filter((id) => (c.skills[id] || 0) > 0);
   if (!skills.length) skills.push("nahkampf"); // unbewaffnet immer möglich
-  const special = !!c.devilFruit || (c.skills.haki || 0) > 0;
-  return { attackSkills: skills, special, canFlee: true };
+  // Ein echter Spezialangriff braucht entweder eine Teufelsfrucht oder
+  // tatsächlich ERWACHTES Rüstungshaki (nicht schon bloß den ersten Rang).
+  const special = !!c.devilFruit || !!c.haki?.ruestung;
+  // Haoshoku: extrem selten, darum höchstens einmal pro Kampf einsetzbar.
+  const overwhelm = !!c.haki?.haoshoku && !game.combat?.overwhelmUsed;
+  return { attackSkills: skills, special, overwhelm, canFlee: true };
 }
 
 function log(game, line) {
@@ -115,7 +120,7 @@ export function combatTurn(game, { action, targetId, skill }) {
 
     if (isSpecial) {
       // Spezial: trifft alle Gegner (Flächenschaden), aber schwächer pro Ziel.
-      const label = c.devilFruit ? c.devilFruit.name : "ein Haki-Ausbruch";
+      const label = c.devilFruit ? c.devilFruit.name : "Rüstungshaki";
       if (hit) {
         const base = 8 + Math.max(0, attributeModifier(c.attributes.willenskraft ?? 5));
         enemiesAlive.forEach((e) => {
@@ -137,6 +142,27 @@ export function combatTurn(game, { action, targetId, skill }) {
         if (target.hp <= 0) { target.hp = 0; target.alive = false; log(game, `${target.name} geht zu Boden!`); }
       } else {
         log(game, `${skName}: Dein Angriff auf ${target.name} geht daneben. (${roll}+${bonus} vs ${targetNo})`);
+      }
+    }
+  } else if (action === "overwhelm") {
+    // Haoshoku: ein einziger, erschöpfender Ausbruch von Überwältigungswillen
+    // pro Kampf. Schwächere Gegner brechen sofort zusammen, der Rest wird hart
+    // getroffen und eingeschüchtert.
+    if (!combatOptions(game).overwhelm) throw new Error("Kein Überwältigungswille verfügbar (schon verbraucht oder nicht erwacht).");
+    cm.overwhelmUsed = true;
+    const bonus = attributeModifier(c.attributes.willenskraft ?? 5) + (c.skills.einschuechtern || 0) + 6;
+    log(game, "👑 Dein Wille bricht wie eine Woge über das Schlachtfeld — Überwältigungswille!");
+    for (const foe of aliveEnemies(game)) {
+      const roll = rollDie(20);
+      const targetNo = 10 + Math.round(foe.def * 1.5);
+      if (roll === 20 || (roll !== 1 && roll + bonus >= targetNo)) {
+        foe.hp = 0; foe.alive = false;
+        log(game, `${foe.name} bricht ohne einen Schlag in die Knie!`);
+      } else {
+        const dmg = 10 + Math.max(0, attributeModifier(c.attributes.willenskraft ?? 5));
+        foe.hp -= dmg;
+        if (foe.hp <= 0) { foe.hp = 0; foe.alive = false; log(game, `${foe.name} geht überwältigt zu Boden!`); }
+        else log(game, `${foe.name} taumelt eingeschüchtert zurück (${dmg} Schaden).`);
       }
     }
   } else if (action === "defend") {

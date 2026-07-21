@@ -109,6 +109,32 @@ folgenden Punkte bauen darauf auf.
       Grinsen am Galgen), 2 neue Startorte (Orangen-Hafen, Windmühlendorf).
 - [x] Deployment: render.yaml + docs/DEPLOY.md, live auf Render (Free-Tier).
 
+## Erledigt (Ausbaustufe 11)
+
+- [x] Gemini als dritter Spielleiter-Provider (server/ai/geminiProvider.js):
+      kostenlose Alternative zu OpenAI/Anthropic über Google AI Studio.
+      AI_PROVIDER=gemini + GEMINI_API_KEY aktivieren; ohne Key sauberer
+      Fallback auf Mock. imageProvider.js unterstützt zusätzlich Gemini als
+      Bild-Backend (gemini-2.5-flash-image, GEMINI_IMAGES=1) neben OpenAI —
+      austauschbar, beide gecacht.
+- [x] Haki-Ausbau (server/engine/haki.js): drei echte Stufen statt reinem
+      Flavor. Beobachtungshaki (Rang 1, passiver Bonus auf Wahrnehmung/
+      Heimlichkeit in dice.js), Rüstungshaki (Rang 3, schaltet den
+      Kampf-Spezialangriff erst jetzt echt frei statt schon ab Rang 1),
+      Haoshoku/Überwältigungswille (Rang 6 + hohe Willenskraft, kleine
+      Zufallschance pro Trainingsereignis, einmal pro Kampf einsetzbar —
+      schwächere Gegner brechen sofort zusammen). Erwachungen laufen
+      deterministisch über Meditation oder Skillpunkt-Verteilung, der
+      Spielleiter erzählt sie nur aus.
+- [x] Immersions-Fix „Crew-Beitritt aus dem Nichts": die Marine war zuvor ab
+      Spielbeginn überall sofort beitretbar (initialRelation "begegnet").
+      Jetzt kennt man die Marine nur vom Hörensagen, bis man tatsächlich einen
+      Marine-Standort (Garnisonsstadt/Vorposten) besucht — erst dann zeigt die
+      Seitenleiste "Beitreten versuchen". Zusätzlich serverseitig abgesichert:
+      doJoinCanon prüft die tatsächliche Beziehung (crewRelation) VOR dem
+      Versuch, statt sie rückwirkend zu setzen — kein Bypass über die API
+      möglich, nicht nur ein UI-Verstecken.
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen

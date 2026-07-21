@@ -27,8 +27,9 @@ import { SKILLS } from "./character.js";
 import { startCombat, combatTurn, combatView } from "./combat.js";
 import { attemptJoinCanon, perspectiveCanon } from "./canon.js";
 import { currentEdition, newsHeadlines } from "./news.js";
-import { syncNewsDiscoveries, discoverCrew, metCrewIds, heardOfCrewIds } from "./knowledge.js";
+import { syncNewsDiscoveries, syncLocationDiscoveries, discoverCrew, crewRelation, metCrewIds, heardOfCrewIds } from "./knowledge.js";
 import { CANON_CREWS } from "../content/canonCrews.js";
+import { checkHakiUnlocks } from "./haki.js";
 
 const HISTORY_LIMIT = 8;
 
@@ -97,14 +98,18 @@ export async function doActivity(game, provider, { activityId }) {
   const loreTxt = result.loreUnlocks?.length
     ? " Eine neue Erkenntnis über die Lücke in der Geschichte: " + result.loreUnlocks.map((l) => l.title).join(", ") + "."
     : "";
-  const playerAction = `Ich verbringe den Tag mit: ${result.activity.name}.${rankTxt}${loreTxt}`;
+  const hakiTxt = result.hakiUnlocks?.length
+    ? " Etwas in mir erwacht: " + result.hakiUnlocks.map((h) => h.name).join(", ") + "!"
+    : "";
+  const playerAction = `Ich verbringe den Tag mit: ${result.activity.name}.${rankTxt}${loreTxt}${hakiTxt}`;
 
   advanceTime(game, result.activity.hours || 3); // Aktivitäten kosten mehrere Stunden
-  const context = buildContext(game, { kind: "activity", playerAction, checkResult: null, activity: result.activity, loreUnlocks: result.loreUnlocks });
+  const context = buildContext(game, { kind: "activity", playerAction, checkResult: null, activity: result.activity, loreUnlocks: result.loreUnlocks, hakiUnlocks: result.hakiUnlocks });
   const gm = validateGmResponse(await provider.generateScene(context));
   applyGmResponse(game, gm, { playerAction, checkResult: null });
   game.lastLevelUps = [...(game.lastLevelUps || []), ...result.levelUps];
   game.lastLoreUnlocks = result.loreUnlocks || [];
+  game.lastHakiUnlocks = result.hakiUnlocks || [];
   return currentSceneView(game);
 }
 
@@ -188,7 +193,14 @@ async function resolveCombatEnd(game, provider) {
 // Kostet eine Tagesaktion. Erfolgschance hängt von der Offenheit der Crew ab.
 export async function doJoinCanon(game, provider, { crewId }) {
   requireAction(game);
-  discoverCrew(game, crewId, "begegnet"); // du suchst sie auf — Begegnung in Person
+  syncLocationDiscoveries(game); // ggf. gerade erst am richtigen Ort angekommen
+  // Server-seitige Immersions-Schranke: ein Beitrittsversuch setzt eine ECHTE
+  // vorherige Begegnung voraus (Ort mit Präsenz oder ein canonOffer der KI) —
+  // kein rückwirkendes "war schon immer da", nur weil die Anfrage kommt.
+  const rel = crewRelation(game, crewId);
+  if (rel !== "begegnet" && rel !== "mitglied") {
+    throw new Error("Du bist dieser Crew noch nicht in Person begegnet — dafür musst du erst den richtigen Ort finden oder ihr über die Geschichte begegnen.");
+  }
   const result = attemptJoinCanon(game, crewId); // deterministischer Check
   advanceTime(game, 2);
   const playerAction = result.success
@@ -267,9 +279,10 @@ function syncDailyEffects(game) {
   }
 }
 
-function buildContext(game, { kind, playerAction, checkResult, recruitTarget, activity, travelInfo, fruit, loreUnlocks, combatResult, canonResult }) {
+function buildContext(game, { kind, playerAction, checkResult, recruitTarget, activity, travelInfo, fruit, loreUnlocks, hakiUnlocks, combatResult, canonResult }) {
   const c = game.character;
   syncNewsDiscoveries(game); // aus der Zeitung "gehörte" Crews aktualisieren
+  syncLocationDiscoveries(game); // vor Ort begegnete Fraktionen (z. B. Marine-Standort)
   const nameOf = (id) => CANON_CREWS[id]?.name || id;
   return {
     language: game.language,
@@ -317,6 +330,7 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
     travelInfo: travelInfo || null,
     fruit: fruit || null,
     loreUnlocks: loreUnlocks || null,
+    hakiUnlocks: hakiUnlocks || null,
     combatResult: combatResult || null,
   };
 }
@@ -397,6 +411,7 @@ function applyGmResponse(game, gm, turnInfo) {
 
   game.lastLevelUps = levelUps;
   game.lastLoreUnlocks = []; // wird von doActivity danach ggf. gefüllt
+  game.lastHakiUnlocks = []; // wird von doActivity danach ggf. gefüllt
 }
 
 // Levelaufstieg: freien Skillpunkt in einen Skill investieren (keine Tagesaktion).
@@ -407,6 +422,7 @@ export function spendSkillPoint(game, { skillId }) {
   if (!SKILLS[skillId]) throw new Error("Unbekannte Fertigkeit.");
   c.skills[skillId] = (c.skills[skillId] || 0) + 1;
   c.unspentSkillPoints -= 1;
+  if (skillId === "haki") game.lastHakiUnlocks = [...(game.lastHakiUnlocks || []), ...checkHakiUnlocks(c)];
   return currentSceneView(game);
 }
 
@@ -420,6 +436,7 @@ function slug(name) {
 export function currentSceneView(game) {
   syncDailyEffects(game);
   syncNewsDiscoveries(game); // frisch gehörte Crews vor dem Rendern übernehmen
+  syncLocationDiscoveries(game);
   const c = game.character;
   return {
     gameId: game.id,
@@ -435,6 +452,7 @@ export function currentSceneView(game) {
     lastCheck: game.lastCheck,
     lastLevelUps: game.lastLevelUps || [],
     lastLoreUnlocks: game.lastLoreUnlocks || [],
+    lastHakiUnlocks: game.lastHakiUnlocks || [],
     lore: {
       progress: game.world.flags.lore_fortschritt || 0,
       unlocked: unlockedLore(game.world.flags.lore_fortschritt || 0),
@@ -464,6 +482,7 @@ export function currentSceneView(game) {
       devilFruit: c.devilFruit,
       canSwim: c.canSwim,
       ship: c.ship,
+      haki: c.haki || { beobachtung: false, ruestung: false, haoshoku: false },
       canonAffiliation: c.canonAffiliation,
     },
     party: game.party,

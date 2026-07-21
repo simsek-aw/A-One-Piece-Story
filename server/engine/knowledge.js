@@ -15,6 +15,7 @@
 
 import { CANON_CREWS } from "../content/canonCrews.js";
 import { worldEventsUpToDay } from "../content/worldEvents.js";
+import { LOCATIONS } from "../content/map.js";
 
 export const RELATIONS = ["gehört", "begegnet", "mitglied"];
 const RANK = { "gehört": 1, "begegnet": 2, "mitglied": 3 };
@@ -79,6 +80,22 @@ export function syncNewsDiscoveries(game) {
   ensureKnowledge(game);
   for (const e of worldEventsUpToDay(game.world.day)) {
     for (const crewId of e.crews || []) discoverCrew(game, crewId, "gehört");
+  }
+}
+
+// Ortsgebundene Begegnung: manche Fraktionen (aktuell die Marine) sind nur an
+// ihren tatsächlichen Standorten (Garnisonsstadt/Vorposten) in Person
+// ansprechbar — NICHT von überall per Sidebar-Klick. Erst der Besuch eines
+// solchen Ortes macht "Beitreten versuchen" verfügbar; das verhindert, dass
+// man ohne jede Reise/Story-Handlung "plötzlich da" ist.
+export function syncLocationDiscoveries(game) {
+  ensureKnowledge(game);
+  const loc = LOCATIONS[game.world.location];
+  if (!loc) return;
+  for (const crew of Object.values(CANON_CREWS)) {
+    if (crew.recruitLocationTypes?.includes(loc.type)) {
+      discoverCrew(game, crew.id, "begegnet");
+    }
   }
 }
 

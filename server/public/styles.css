@@ -381,6 +381,7 @@ button.primary:hover { filter: none; transform: translate(2px,2px); box-shadow: 
 .c-check { color: var(--ink); border: 1px solid var(--line) !important; }
 .mini { background: var(--ink); color: var(--on-accent); border-radius: 2px; }
 .combat-btn.special:hover { background: var(--ink); color: var(--on-accent); }
+.combat-btn.haoshoku { border-style: double; border-width: 4px; }
 
 /* Eingaben */
 input[type="text"] { border: 2px solid var(--line); border-radius: var(--radius); background: var(--bg2); }

@@ -5,6 +5,7 @@
 
 import { SKILLS } from "./character.js";
 import { partyBonusForSkill } from "./party.js";
+import { hakiSkillBonus } from "./haki.js";
 
 // Attribut-Modifikator: Wert 5 = 0, jeder Punkt darüber/darunter ±1 (grob D&D-artig).
 export function attributeModifier(value) {
@@ -42,7 +43,9 @@ export function skillCheck(character, skillId, dc, party = []) {
   const dfBonus = character.devilFruit?.bonusSkills?.includes(skillId) ? 2 : 0;
   // Crew-Bonus je nach Rolle der Begleiter.
   const partyBonus = partyBonusForSkill(party, skillId);
-  const total = roll + attrMod + rank + dfBonus + partyBonus;
+  // Erwachtes Haki gibt einen kleinen, passiven Bonus auf passende Checks.
+  const hakiBonus = hakiSkillBonus(character, skillId);
+  const total = roll + attrMod + rank + dfBonus + partyBonus + hakiBonus;
 
   const kritErfolg = roll === 20;
   const kritFehler = roll === 1;
@@ -51,6 +54,7 @@ export function skillCheck(character, skillId, dc, party = []) {
   return {
     dfBonus,
     partyBonus,
+    hakiBonus,
     skillId,
     skillName: skill ? skill.name : skillId,
     attribut: attrId,

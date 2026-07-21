@@ -63,6 +63,9 @@ export function characterDigest(game) {
     kopfgeld: `${c.bounty} Ⓑ (${bountyTier(c.bounty).label})`,
     marineAufmerksamkeit: `${c.heat}/100 (${heatLevel(c.heat).label})`,
     teufelsfrucht: c.devilFruit ? `${c.devilFruit.name} [${c.devilFruit.abilityTag}] — kann nicht schwimmen` : "keine",
+    haki: c.haki && (c.haki.beobachtung || c.haki.ruestung || c.haki.haoshoku)
+      ? Object.entries(c.haki).filter(([, v]) => v).map(([k]) => k).join(", ")
+      : "noch nicht erwacht",
     schiff: c.ship ? c.ship.name : "keins",
     topSkills: Object.entries(c.skills)
       .filter(([, v]) => v > 0)

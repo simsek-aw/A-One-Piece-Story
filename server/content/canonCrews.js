@@ -55,7 +55,13 @@ export const CANON_CREWS = {
   marine: {
     id: "marine", name: "Die Marine", recruiter: "ein Rekrutierungsoffizier",
     faction: "marine", canonical: true, openness: 75, prestige: 60, eraFromDay: 1, requirements: { maxBounty: 0 },
-    initialRelation: "begegnet", // Die Marine hat überall Rekrutierungsbüros — jederzeit ansprechbar.
+    // Jeder KENNT die Marine (initialRelation "gehört") — aber ein Beitritt
+    // braucht eine echte Begegnung mit einem Rekrutierungsoffizier. Die gibt
+    // es nur an tatsächlichen Marine-Standorten (siehe knowledge.js
+    // syncLocationDiscoveries) oder wenn der Spielleiter einen Offizier
+    // vorbeischickt (canonOffer). Kein Sofort-Beitritt vom Sofa aus.
+    initialRelation: "gehört",
+    recruitLocationTypes: ["marinestadt", "marinevorposten"],
     effects: { marineFriendly: true, rank: "Rekrut", note: "Als Marine wird man kaum von Patrouillen behelligt — solange die Weste sauber bleibt." },
     blurb: "Die Streitkräfte der Weltregierung nehmen gern Freiwillige mit sauberer Weste. Ein Kopfgeld schließt dich aus.",
     joinable: true,

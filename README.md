@@ -23,19 +23,31 @@ npm start
 Standardmäßig läuft der **Mock-Spielleiter** (`AI_PROVIDER=mock`), damit alles
 ohne API-Key spielbar ist.
 
-### Claude als echten Spielleiter aktivieren
+### Echten KI-Spielleiter aktivieren
+
+Drei austauschbare Provider, per Umgebungsvariable gewählt:
 
 ```bash
 cp .env.example .env
-# in .env setzen:
+# Empfehlung ohne OpenAI-Guthaben — Google Gemini (kostenloses Kontingent):
+#   AI_PROVIDER=gemini
+#   GEMINI_API_KEY=...        # https://aistudio.google.com/apikey
+#
+# Oder OpenAI:
+#   AI_PROVIDER=openai
+#   OPENAI_API_KEY=sk-...
+#
+# Oder Claude/Anthropic:
 #   AI_PROVIDER=anthropic
 #   ANTHROPIC_API_KEY=sk-ant-...
 npm start
 ```
 
-Der Provider nutzt das Modell `claude-opus-4-8` mit adaptivem Thinking und
-**strukturierter Ausgabe** (JSON-Schema), damit der Spielleiter garantiert im
-richtigen Format antwortet.
+Der Anthropic-Provider nutzt `claude-opus-4-8` mit adaptivem Thinking und
+**strukturierter Ausgabe** (JSON-Schema); OpenAI und Gemini laufen über deren
+JSON-Modus. Alle drei füllen denselben Vertrag (`engine/schema.js`), damit der
+Spielleiter garantiert im richtigen Format antwortet — ohne Key läuft
+automatisch der deterministische Mock-Spielleiter.
 
 ## Was schon funktioniert
 
@@ -90,6 +102,12 @@ richtigen Format antwortet.
   "Sammlern" Big Mom/Kaido (leicht). Riesen & Strohhüte sind sehr schwer bzw.
   in dieser frühen Ära noch gar nicht beitretbar. Die Marine lehnt Gesuchte ab.
   Mitgliedschaft bringt Schutz (weniger Marine-Ärger) bzw. einen Rang.
+- **Perspektiven-/Wissenssystem**: du siehst nur, wem du begegnet bist oder von
+  wem du gehört hast (Zeitung/Gerücht) — Einbahn-Wissen: du weißt von Kaido/Big
+  Mom & Co., sie wissen nicht von dir, solange keine echte Begegnung stattfand.
+  Ein Beitritt (auch bei der Marine) braucht deshalb eine echte Begegnung —
+  den richtigen Ort aufsuchen oder eine Story-Begegnung — kein Sofort-Beitritt
+  per Klick ohne jede Vorgeschichte.
 - **Weltgeschehen & News-Möwe**: eine Tageszeitung ("Die Windrose") berichtet,
   was außerhalb deiner Bubble im Kanon passiert (Kaiser, Marine, Riesen, das
   "fehlende Jahrhundert") — plus dein eigenes Kopfgeld und deine Crew. Der
@@ -101,6 +119,12 @@ richtigen Format antwortet.
   nur Beginn und Ausgang werden erzählt.
 - **Kanon-Koexistenz**: Hintergrund-Ereignisse aus der One-Piece-Timeline werden
   als Gerüchte eingestreut.
+- **Haki-Ausbau**: der Willenskraft-/Meditations-Pfad führt zu echten
+  Fähigkeiten — Beobachtungshaki (Rang 1, passiver Bonus auf Wahrnehmung/
+  Heimlichkeit), Rüstungshaki (Rang 3, echter Kampf-Spezialangriff statt
+  bloßer Flavor), Haoshoku/Überwältigungswille (extrem selten, kleine Chance
+  bei Rang 6 + hoher Willenskraft — einmal pro Kampf einsetzbar, schwächere
+  Gegner brechen sofort zusammen).
 - **Manga-Panel-Look**: strenges Schwarz-Weiß mit dicken Tusche-Rahmen, harten
   Panel-Schatten, Screentone-Raster und gotischen Versal-Überschriften.
   Voll invertierbar per Umschalter (◑ „paper" ↔ „ink"); die Wahl wird gemerkt.
@@ -133,16 +157,22 @@ server/
     progression.js      Aktivitäten anwenden (Skill-Aufstieg)
     travel.js           Reisen zwischen Orten (Schiff/Passage)
     devilfruit.js       Teufelsfrucht essen + Nachteile
+    haki.js             Haki-Erwachungen (Beobachtung/Rüstung/Haoshoku)
+    knowledge.js         Perspektiven-/Wissenssystem (wer kennt wen)
+    canon.js            Kanon-Crew-Beitritt (DC, Verfügbarkeit)
     gameState.js        Aufbau des Spielzustands
     memory.js           NPC-Gedächtnis + Flags
     schema.js           GM-Antwort-Vertrag + Validierung + JSON-Schema
     turn.js             Zug-Orchestrierung (alle Aktionstypen)
   ai/                   KI-Schicht (austauschbar)
-    provider.js         Fabrik (mock | anthropic)
+    provider.js         Fabrik (mock | anthropic | openai | gemini)
     systemPrompt.js     Spielleiter-Regeln (Deutsch)
     mockProvider.js     Platzhalter-Engine
     anthropicProvider.js Echter Claude-Spielleiter
-    artProvider.js      Anime-Panel (Platzhalter-SVG, echte Bilder später)
+    openaiProvider.js   Echter Spielleiter über OpenAI
+    geminiProvider.js   Echter Spielleiter über Google Gemini (kostenlos)
+    artProvider.js      Anime-Panel (Platzhalter-SVG) + Key-Moment-Panels
+    imageProvider.js    Echte KI-Bild-Panels (OpenAI/Gemini, gecacht)
   public/               Frontend (Vanilla JS, kein Build-Schritt)
 docs/                   Architektur, Spieldesign, Roadmap
 ```

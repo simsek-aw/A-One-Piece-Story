@@ -7,6 +7,7 @@ import { applyHeat } from "./bounty.js";
 import { LOCATIONS } from "../content/map.js";
 import { newlyUnlocked } from "../content/loreArcs.js";
 import { phaseId, phaseFor } from "./clock.js";
+import { checkHakiUnlocks } from "./haki.js";
 
 // Führt eine Aktivität aus (deterministisch) und liefert eine Zusammenfassung,
 // die der Spielleiter als Kontext ausspielt.
@@ -49,6 +50,7 @@ export function runActivity(game, activityId) {
   }
 
   const levelUps = applyXp(c, act.xp || 0);
+  const hakiUnlocks = rankUps.some((r) => r.skill === "haki") ? checkHakiUnlocks(c) : [];
 
-  return { activity: act, rankUps, levelUps, effects: eff, loreUnlocks };
+  return { activity: act, rankUps, levelUps, effects: eff, loreUnlocks, hakiUnlocks };
 }

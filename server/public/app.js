@@ -223,7 +223,7 @@ function renderScene(view) {
     cb.className = "check-banner " + (k.success ? "ok" : "bad");
     cb.textContent = k.teufelsfruchtSchwaeche
       ? `🌀 Teufelsfrucht-Schwäche: Du kannst nicht schwimmen — der Versuch scheitert katastrophal.`
-      : `🎲 ${k.skillName}: ${k.roll} + Attr ${signed(k.attrMod)} + Rang ${k.rank}${k.dfBonus ? " + Frucht " + k.dfBonus : ""}${k.partyBonus ? " + Crew " + k.partyBonus : ""} = ${k.total} vs DC ${k.dc} → ` +
+      : `🎲 ${k.skillName}: ${k.roll} + Attr ${signed(k.attrMod)} + Rang ${k.rank}${k.dfBonus ? " + Frucht " + k.dfBonus : ""}${k.partyBonus ? " + Crew " + k.partyBonus : ""}${k.hakiBonus ? " + Haki " + k.hakiBonus : ""} = ${k.total} vs DC ${k.dc} → ` +
         (k.kritErfolg ? "KRITISCHER ERFOLG!" : k.kritFehler ? "KRITISCHER PATZER!" : k.success ? "Erfolg" : "Misserfolg");
     cb.classList.remove("hidden");
   } else cb.classList.add("hidden");
@@ -236,6 +236,12 @@ function renderScene(view) {
   if (view.lastLoreUnlocks?.length) {
     view.lastLoreUnlocks.forEach((l) => {
       const note = `📜 Neue Erkenntnis: „${l.title}“`;
+      if (!storyBuffer.some((e) => e.text === note)) storyBuffer.push({ type: "action", text: note });
+    });
+  }
+  if (view.lastHakiUnlocks?.length) {
+    view.lastHakiUnlocks.forEach((h) => {
+      const note = `🌀 Dein Haki erwacht: ${h.name}!`;
       if (!storyBuffer.some((e) => e.text === note)) storyBuffer.push({ type: "action", text: note });
     });
   }
@@ -484,6 +490,12 @@ function renderCombat(view) {
     b.onclick = () => combatAction({ action: "special", targetId: state.combatTarget });
     btns.appendChild(b);
   }
+  if (cm.options.overwhelm) {
+    const b = el("button", "combat-btn special haoshoku", "👑 Überwältigen");
+    b.title = "Haoshoku — nur einmal pro Kampf";
+    b.onclick = () => combatAction({ action: "overwhelm" });
+    btns.appendChild(b);
+  }
   const def = el("button", "combat-btn", "🛡️ Verteidigen");
   def.onclick = () => combatAction({ action: "defend" });
   btns.appendChild(def);
@@ -516,6 +528,11 @@ function renderSidebar(view) {
     ? `🍇 Teufelsfrucht: <b>${escapeHtml(c.devilFruit.name)}</b> (${c.devilFruit.type}) — <span class="warn">kann nicht schwimmen</span>`
     : "";
   $("#shipLine").innerHTML = c.ship ? `⛵ Schiff: <b>${escapeHtml(c.ship.name)}</b>` : "";
+  const hakiOn = ["beobachtung", "ruestung", "haoshoku"].filter((k) => c.haki?.[k]);
+  const HAKI_LABEL = { beobachtung: "Beobachtungshaki", ruestung: "Rüstungshaki", haoshoku: "Haoshoku" };
+  $("#hakiLine").innerHTML = hakiOn.length
+    ? `🌀 Haki: <b>${hakiOn.map((k) => escapeHtml(HAKI_LABEL[k])).join(", ")}</b>`
+    : "";
 
   const attrs = $("#attrs");
   attrs.innerHTML = "";
