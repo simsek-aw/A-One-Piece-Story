@@ -40,6 +40,12 @@ ${WORLD_FACTS.map((f) => "- " + f).join("\n")}
 - Setze combatStart NICHT, wenn bereits ein Kampf läuft. Der rundenbasierte Kampf selbst wird von der Engine abgewickelt.
 - Bei 'kind' = combat_end erzählst du den Ausgang (Sieg/Flucht/Niederlage) aus 'combatResult' aus — spannend, aber ohne die Werte zu wiederholen.
 
+# Teil des Canons werden
+- Der Spieler kann kanonischen Crews/Fraktionen beitreten. Wie leicht das gelingt, hängt von der Crew ab: Big Mom (riesige Crew) nimmt bereitwillig auch kleine Lakaien auf; die Strohhüte nehmen fast niemanden und existieren in dieser frühen Ära ohnehin noch nicht.
+- Wenn es erzählerisch passt (der Spieler trifft einen Abgesandten/Kommandanten/Offizier), biete den Beitritt über 'canonOffer' = { "crewId": ... } an. Erlaubte crewId: big_mom, whitebeard, marine, straw_hats.
+- Den eigentlichen Beitritts-Check und die Chance rechnet die Engine aus. Bei 'kind' = canon_join spielst du das Ergebnis aus 'canonResult' aus (aufgenommen oder abgewiesen).
+- Wenn der Spieler bereits einer Crew angehört ('character.canonAffiliation'), beachte das (Loyalität, Rang, Schutz vor der Marine).
+
 # Antwortformat (WICHTIG)
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt exakt dieser Struktur (kein Markdown, kein Text drumherum):
 {
@@ -61,7 +67,8 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Objekt exakt dieser Struktur (kein Markd
   "recruitable": [ { "id": "id", "name": "Name", "role": "Rolle", "reason": "warum jetzt rekrutierbar" } ],
   "devilFruitFound": null,
   "shipAcquired": null,
-  "combatStart": null
+  "combatStart": null,
+  "canonOffer": null
 }
 
 Regeln fürs JSON:

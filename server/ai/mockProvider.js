@@ -75,7 +75,25 @@ export class MockProvider {
     if (context.kind === "travel") return this.travelScene(context);
     if (context.kind === "eat_fruit") return this.eatFruitScene(context);
     if (context.kind === "combat_end") return this.combatEndScene(context);
+    if (context.kind === "canon_join") return this.canonJoinScene(context);
     return this.turnScene(context);
+  }
+
+  canonJoinScene(context) {
+    const r = context.canonResult || {};
+    const txt = r.success
+      ? `Man mustert dich prüfend — dann ein Nicken. Du gehörst nun zu ${r.crew}! ` +
+        (r.faction === "marine"
+          ? "Man drückt dir eine Uniform in die Hand; die Patrouillen werden dich fortan in Ruhe lassen."
+          : "Die Crew nimmt dich auf; unter diesem Banner reist es sich sicherer — aber die Erwartungen sind hoch.")
+      : `Man lässt dich abblitzen. „${r.crew} nimmt nicht jeden.“ Der Beitritt bleibt dir (vorerst) verwehrt.`;
+    return {
+      narration: txt + "\n\nWie geht es weiter?",
+      choices: this.genericChoices(context),
+      stateChanges: this.emptyChanges(),
+      npcs: [],
+      recruitable: [],
+    };
   }
 
   combatEndScene(context) {
@@ -269,8 +287,16 @@ export class MockProvider {
       parts.push(`In einer alten Truhe entdeckst du eine seltsame, spiralig gemusterte Frucht: eine ${fruit.name}!`);
       extra.devilFruitFound = { id: fruit.id, name: fruit.name, type: fruit.type };
     }
+    // Gelegentliches Angebot, Teil einer kanonischen Crew zu werden.
+    if (!extra.combatStart && !context.canonAffiliation && !context.canonOffer && chance(0.08)) {
+      const crewId = pick(["big_mom", "whitebeard", "marine"]);
+      const who = { big_mom: "ein Abgesandter der Big-Mom-Piraten", whitebeard: "ein Kommandant der Whitebeard-Piraten", marine: "ein Marine-Rekrutierungsoffizier" }[crewId];
+      parts.push(`${who} spricht dich an — man könnte sich einer größeren Sache anschließen.`);
+      extra.canonOffer = { crewId };
+    }
+
     // Sehr seltenes Schiff (nur wenn man keins hat).
-    if (!st.hasShip && chance(0.04)) {
+    if (!extra.combatStart && !context.canonAffiliation && chance(0.04)) {
       const shipName = pick(["Möwenschwinge", "Roter Anker", "Sturmkind", "Alte Dame"]);
       parts.push(`Am Kai liegt ein herrenloses kleines Schiff — mit etwas Mühe könnte es deins werden: die '${shipName}'.`);
       extra.shipAcquired = { name: shipName };

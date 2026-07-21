@@ -250,6 +250,7 @@ function renderScene(view) {
   renderActivities(view);
   renderSkillAlloc(view);
   renderLore(view);
+  renderCanon(view);
   renderDenDen(view);
 
   $("#shareLink").value = `${location.origin}${location.pathname}?game=${view.gameId}`;
@@ -558,6 +559,51 @@ function renderLore(view) {
   } else {
     list.innerHTML = `<div class="hint">Noch nichts entschlüsselt. Werde zum Bücherwurm, um die Lücke zu erforschen.</div>`;
   }
+}
+
+function renderCanon(view) {
+  const affEl = $("#canonAffil");
+  const offerEl = $("#canonOffer");
+  const listEl = $("#canonList");
+  const aff = view.character.canonAffiliation;
+  const disabled = locked(view) || inCombat(view);
+
+  affEl.innerHTML = aff
+    ? `✅ Mitglied: <b>${escapeHtml(aff.name)}</b> (${escapeHtml(aff.rank)})${aff.marineFriendly ? " · Marine-Schutz" : aff.protection ? " · Schutz der Crew" : ""}`
+    : `<span class="hint">Noch ungebunden — du kannst versuchen, einer kanonischen Crew beizutreten.</span>`;
+
+  // Aktives Angebot hervorheben
+  if (view.canonOffer && !aff) {
+    const crew = (view.canon || []).find((c) => c.id === view.canonOffer.crewId);
+    if (crew) {
+      offerEl.classList.remove("hidden");
+      offerEl.innerHTML = `<b>Angebot:</b> ${escapeHtml(crew.name)} `;
+      const btn = el("button", "chip sel", crew.available ? `Beitreten (Ziel-DC ${crew.effectiveDc})` : "nicht möglich");
+      btn.disabled = disabled || !crew.available;
+      if (!crew.available) btn.title = crew.reason;
+      btn.onclick = () => post("/join-canon", { crewId: crew.id }, `Ich bitte ${crew.name} um Aufnahme.`);
+      offerEl.appendChild(btn);
+    } else offerEl.classList.add("hidden");
+  } else offerEl.classList.add("hidden");
+
+  // Liste aller Crews mit Offenheit + Status
+  listEl.innerHTML = "";
+  (view.canon || []).forEach((crew) => {
+    const openTxt = crew.openness >= 80 ? "sehr offen" : crew.openness >= 55 ? "offen" : crew.openness >= 25 ? "wählerisch" : "extrem wählerisch";
+    const row = el("div", "li");
+    let status;
+    if (crew.affiliated) status = `<span class="disp friend">Mitglied</span>`;
+    else if (crew.available) status = `<span class="hint">Ziel-DC ${crew.effectiveDc}</span>`;
+    else status = `<span class="hint">${escapeHtml(crew.reason)}</span>`;
+    row.innerHTML = `<b>${escapeHtml(crew.name)}</b> <span class="tier t1">${openTxt}</span><small>${escapeHtml(crew.blurb)}</small><div class="canon-row-status">${status}</div>`;
+    if (!aff && crew.available && !crew.affiliated) {
+      const btn = el("button", "chip", "Beitreten versuchen");
+      btn.disabled = disabled;
+      btn.onclick = () => post("/join-canon", { crewId: crew.id }, `Ich suche ${crew.name} auf und bitte um Aufnahme.`);
+      row.appendChild(btn);
+    }
+    listEl.appendChild(row);
+  });
 }
 
 function renderDenDen(view) {

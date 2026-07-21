@@ -71,6 +71,12 @@ richtigen Format antwortet.
   verteilst.
 - **Lore-Chronik**: der „Lücke in der Geschichte"-Handlungsstrang schaltet über
   Recherche (Bücherwurm) nach und nach Fragmente frei (Void-Century-Faden).
+- **Teil des Canons werden**: kanonischen Crews/Fraktionen beitreten. Die
+  Aufnahme-Chance hängt von der Offenheit der Crew ab — Big Mom (riesige Crew)
+  nimmt bereitwillig Lakaien (leicht), die Strohhüte nehmen fast niemanden und
+  existieren in dieser frühen Ära noch gar nicht (praktisch unmöglich). Die
+  Marine lehnt Gesuchte ab. Mitgliedschaft bringt Schutz (weniger Marine-Ärger)
+  bzw. einen Rang.
 - **Rundenbasiertes Kampfsystem**: Angriff mit Waffen-Skills, Verteidigen,
   Teufelsfrucht-/Haki-Spezial (Flächenschaden), Fliehen; die Crew kämpft mit;
   Gegner mit HP-Balken; Sieg/Flucht/Niederlage wirken auf EP, Beri, Kopfgeld

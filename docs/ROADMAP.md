@@ -27,6 +27,14 @@ folgenden Punkte bauen darauf auf.
       (EP/Beri/Kopfgeld/Heat); von der KI ausgelöst und ausgespielt, Runden
       rein deterministisch
 
+## Erledigt (Ausbaustufe 5)
+
+- [x] "Teil des Canons werden": Beitritt zu kanonischen Crews/Fraktionen
+      (content/canonCrews.js, engine/canon.js). Aufnahme-Chance aus der
+      Offenheit der Crew (Big Mom leicht ↔ Strohhüte extrem wählerisch +
+      Ära-Gate), Voraussetzungen (Level, kein Kopfgeld für die Marine),
+      Mitgliedschafts-Effekte (Marine-Schutz/Rang); UI-Panel + /join-canon
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen

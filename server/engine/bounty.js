@@ -49,7 +49,13 @@ export function heatLevel(heat) {
 export function marineTroubleChance(character) {
   const h = heatLevel(character.heat || 0).level;
   const b = bountyTier(character.bounty || 0).level;
-  return clamp(0.05 + h * 0.18 + b * 0.08, 0, 0.85);
+  let p = 0.05 + h * 0.18 + b * 0.08;
+  // Zugehörigkeit wirkt: Marine-Mitglieder werden kaum behelligt; der Schutz
+  // einer mächtigen Piratencrew reduziert zufälligen Ärger.
+  const aff = character.canonAffiliation;
+  if (aff?.marineFriendly) p *= 0.1;
+  else if (aff?.protection) p *= 0.5;
+  return clamp(p, 0, 0.85);
 }
 
 function clamp(n, min, max) {

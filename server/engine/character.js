@@ -128,6 +128,8 @@ export function createCharacter({ name, archetype, attributes, perk }) {
     canSwim: true,
     // Eigenes Schiff (null = keins)
     ship: null,
+    // Zugehörigkeit zu einer kanonischen Crew/Fraktion (null = keine)
+    canonAffiliation: null,
     // Trainingsfortschritt pro Skill (für Rang-Aufstiege via Aktivitäten)
     skillProgress: {},
     // Freie Skillpunkte aus Levelaufstiegen (verteilbar)

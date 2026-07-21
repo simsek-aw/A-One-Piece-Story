@@ -145,8 +145,22 @@ export const GM_JSON_SCHEMA = {
         },
       ],
     },
+    // Optionales Angebot, einer kanonischen Crew beizutreten (crewId aus canonCrews).
+    canonOffer: {
+      anyOf: [
+        { type: "null" },
+        {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            crewId: { type: "string", enum: ["big_mom", "whitebeard", "marine", "straw_hats"] },
+          },
+          required: ["crewId"],
+        },
+      ],
+    },
   },
-  required: ["narration", "choices", "stateChanges", "npcs", "recruitable", "devilFruitFound", "shipAcquired", "combatStart"],
+  required: ["narration", "choices", "stateChanges", "npcs", "recruitable", "devilFruitFound", "shipAcquired", "combatStart", "canonOffer"],
 };
 
 function toInt(v, fallback = 0) {
@@ -243,7 +257,14 @@ export function validateGmResponse(raw) {
     if (enemies.length) combatStart = { enemies };
   }
 
-  return { narration, choices, stateChanges, npcs, recruitable, devilFruitFound, shipAcquired, combatStart };
+  let canonOffer = null;
+  const co = raw.canonOffer;
+  const CREWS = ["big_mom", "whitebeard", "marine", "straw_hats"];
+  if (co && typeof co === "object" && CREWS.includes(co.crewId)) {
+    canonOffer = { crewId: co.crewId };
+  }
+
+  return { narration, choices, stateChanges, npcs, recruitable, devilFruitFound, shipAcquired, combatStart, canonOffer };
 }
 
 function clampInt(n, min, max) {

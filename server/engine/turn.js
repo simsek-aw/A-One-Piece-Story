@@ -25,6 +25,7 @@ import { panelFor } from "../ai/artProvider.js";
 import { unlockedLore, nextLore } from "../content/loreArcs.js";
 import { SKILLS } from "./character.js";
 import { startCombat, combatTurn, combatView } from "./combat.js";
+import { attemptJoinCanon, listCanonStatus } from "./canon.js";
 
 const HISTORY_LIMIT = 8;
 
@@ -179,6 +180,22 @@ async function resolveCombatEnd(game, provider) {
   return currentSceneView(game);
 }
 
+// Versuch, einer kanonischen Crew/Fraktion beizutreten ("Teil des Canons werden").
+// Kostet eine Tagesaktion. Erfolgschance hängt von der Offenheit der Crew ab.
+export async function doJoinCanon(game, provider, { crewId }) {
+  requireAction(game);
+  const result = attemptJoinCanon(game, crewId); // deterministischer Check
+  consumeAction(game);
+  const playerAction = result.success
+    ? `Ich schließe mich an: ${result.crew.name}. (Überzeugen ${result.check.total} gegen DC ${result.dc} — aufgenommen!)`
+    : `Ich bitte um Aufnahme bei ${result.crew.name} — werde aber abgewiesen. (Überzeugen ${result.check.total} gegen DC ${result.dc}.)`;
+  const context = buildContext(game, { kind: "canon_join", playerAction, checkResult: result.check, canonResult: { crew: result.crew.name, faction: result.crew.faction, success: result.success } });
+  const gm = validateGmResponse(await provider.generateScene(context));
+  applyGmResponse(game, gm, { playerAction, checkResult: result.check });
+  game.world.canonOffer = null; // Angebot verbraucht
+  return currentSceneView(game);
+}
+
 // Teufelsfrucht essen (kostet keine Tagesaktion — ein dramatischer Moment).
 export async function doEatFruit(game, provider, { fruitId }) {
   requireNoCombat(game);
@@ -222,11 +239,14 @@ function syncDailyEffects(game) {
   }
 }
 
-function buildContext(game, { kind, playerAction, checkResult, recruitTarget, activity, travelInfo, fruit, loreUnlocks, combatResult }) {
+function buildContext(game, { kind, playerAction, checkResult, recruitTarget, activity, travelInfo, fruit, loreUnlocks, combatResult, canonResult }) {
   const c = game.character;
   return {
     language: game.language,
     kind,
+    canonResult: canonResult || null,
+    canonAffiliation: c.canonAffiliation || null,
+    canonOffer: game.world.canonOffer || null,
     world: {
       day: game.world.day,
       location: game.world.location,
@@ -310,6 +330,9 @@ function applyGmResponse(game, gm, turnInfo) {
   if (gm.combatStart && !(game.combat && game.combat.active && !game.combat.over)) {
     startCombat(game, gm.combatStart.enemies);
   }
+
+  // Angebot, einer kanonischen Crew beizutreten (von der KI eingestreut)
+  if (gm.canonOffer) game.world.canonOffer = gm.canonOffer;
 
   // Szene
   game.scene = { narration: gm.narration, choices: gm.choices };
@@ -395,11 +418,14 @@ export function currentSceneView(game) {
       devilFruit: c.devilFruit,
       canSwim: c.canSwim,
       ship: c.ship,
+      canonAffiliation: c.canonAffiliation,
     },
     party: game.party,
     memory: memorySummary(game, 20),
     travelOptions: travelOptions(game),
     activities: listActivities(),
+    canon: listCanonStatus(game),
+    canonOffer: game.world.canonOffer || null,
     denDen: game.denDen,
   };
 }

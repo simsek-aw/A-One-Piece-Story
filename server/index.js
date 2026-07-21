@@ -11,6 +11,7 @@ import {
   doTravel,
   doEatFruit,
   doCombatAction,
+  doJoinCanon,
   spendSkillPoint,
   currentSceneView,
 } from "./engine/turn.js";
@@ -21,6 +22,7 @@ import { ERA } from "./content/lore.js";
 import { locationsForMap, mapEdges } from "./content/map.js";
 import { listActivities } from "./content/activities.js";
 import { listDevilFruits } from "./content/devilFruits.js";
+import { listCanonCrews } from "./content/canonCrews.js";
 import { clockConfig } from "./engine/clock.js";
 
 const app = express();
@@ -50,6 +52,7 @@ app.get(
       map: { locations: locationsForMap(), edges: mapEdges() },
       activities: listActivities(),
       devilFruits: listDevilFruits(),
+      canonCrews: listCanonCrews().map((c) => ({ id: c.id, name: c.name, recruiter: c.recruiter, faction: c.faction, openness: c.openness, blurb: c.blurb })),
       clock: clockConfig(),
     });
   }),
@@ -147,6 +150,18 @@ app.post(
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const { action, targetId, skill } = req.body || {};
     const view = await doCombatAction(game, provider, { action, targetId, skill });
+    saveGame(game);
+    res.json(view);
+  }),
+);
+
+// --- Einer kanonischen Crew beitreten ("Teil des Canons werden") ---
+app.post(
+  "/api/games/:id/join-canon",
+  wrap(async (req, res) => {
+    const game = loadGame(req.params.id);
+    if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
+    const view = await doJoinCanon(game, provider, { crewId: req.body?.crewId });
     saveGame(game);
     res.json(view);
   }),

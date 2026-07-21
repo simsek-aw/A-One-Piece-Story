@@ -188,6 +188,13 @@ button.choice:disabled { opacity: 0.45; cursor: not-allowed; }
 #loreList .li b { color: var(--accent); }
 #loreList .li small { display: block; margin-top: 3px; line-height: 1.4; }
 
+/* Canon-Zugehörigkeit */
+.canon-affil { font-size: 0.85rem; margin-bottom: 8px; }
+.canon-offer { background: rgba(244,185,66,0.12); border: 1px dashed var(--accent); border-radius: 9px; padding: 8px 10px; margin-bottom: 10px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.canon-row-status { margin-top: 4px; }
+#canonList .li { display: flex; flex-direction: column; gap: 4px; }
+#canonList .li button { align-self: flex-start; margin-top: 4px; }
+
 /* Kampf-Overlay */
 .combat-box { background: linear-gradient(180deg, rgba(226,96,63,0.12), var(--panel)); border: 2px solid var(--accent2); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
 .combat-head { font-weight: 800; color: var(--accent2); margin-bottom: 10px; font-size: 1.05rem; }
