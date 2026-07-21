@@ -26,6 +26,21 @@
     </script>
   </head>
   <body>
+    <div id="mangaFx" class="manga-fx" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+        <g class="fx-speed-lines">
+          <path d="M-8 18 L45 44 M-4 36 L42 49 M1 55 L45 55 M-5 78 L44 62 M108 12 L57 43 M104 32 L59 49 M109 55 L58 55 M105 82 L57 63" />
+        </g>
+        <g class="fx-impact-burst">
+          <path d="M50 4 56 34 72 10 66 39 94 25 70 45 99 50 70 55 94 76 65 62 74 94 57 66 50 99 44 66 27 94 35 62 5 77 31 56 1 50 31 44 5 24 36 39 27 7 44 34Z" />
+          <circle cx="50" cy="50" r="16" />
+        </g>
+        <g class="fx-ink-drops">
+          <circle cx="18" cy="25" r="3"/><circle cx="82" cy="18" r="2"/><circle cx="88" cy="73" r="4"/><circle cx="14" cy="82" r="2"/>
+        </g>
+      </svg>
+      <strong id="mangaFxWord"></strong>
+    </div>
     <header class="topbar">
       <button id="menuToggle" class="hamburger" aria-label="Menü öffnen">☰</button>
       <div class="brand">🏴‍☠️ <span class="brand-full">A One Piece Story</span></div>
@@ -117,6 +132,7 @@
           <!-- Tages-/Echtzeit-Leiste -->
           <div id="dayBar" class="day-bar"></div>
           <div id="sceneLocation" class="scene-location"></div>
+          <div id="sceneContext" class="scene-context" aria-live="polite"></div>
 
           <div id="storyLog" class="story-log"></div>
           <div id="keyPanels" class="key-panels"></div>

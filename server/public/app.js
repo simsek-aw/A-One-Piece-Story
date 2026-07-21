@@ -16,6 +16,8 @@ const state = {
   view: null,
   clockTimer: null,
   combatTarget: null,
+  lastFxNarration: null,
+  fxTimer: null,
 };
 const SAVE_SLOTS_KEY = "aops-save-slots";
 const PROVIDER_KEY = "aops-provider";
@@ -264,6 +266,7 @@ let storyBuffer = [];
 
 function enterGame(view) {
   state.gameId = view.gameId;
+  state.lastFxNarration = null;
   rememberCharacter(view);
   $("#characterOverlay").classList.add("hidden");
   history.replaceState(null, "", `?game=${view.gameId}`);
@@ -284,6 +287,7 @@ function beginNewCharacter() {
   if (state.view) rememberCharacter(state.view);
   state.gameId = null;
   state.view = null;
+  state.lastFxNarration = null;
   state.sel = { archetype: null, perk: null, location: null };
   buildCreation();
   $("#charName").value = "";
@@ -370,6 +374,8 @@ async function refreshView() {
 
 function renderScene(view) {
   if (!view) return;
+  const previousView = state.view;
+  const isNewNarration = !!view.scene?.narration && view.scene.narration !== state.lastFxNarration;
   state.view = view;
   if (view.aiProvider && $("#providerSelect").querySelector(`option[value="${CSS.escape(view.aiProvider)}"]`)) {
     $("#providerSelect").value = view.aiProvider;
@@ -435,6 +441,7 @@ function renderScene(view) {
   log.lastChild?.scrollIntoView({ behavior: "smooth", block: "end" });
 
   renderDayBar(view);
+  renderSceneContext(view);
   renderNews(view);
   renderKeyPanels(view);
   renderCombat(view);
@@ -453,6 +460,11 @@ function renderScene(view) {
 
   $("#shareLink").value = `${location.origin}${location.pathname}?game=${view.gameId}`;
   $("#freeText").value = "";
+
+  if (isNewNarration) {
+    state.lastFxNarration = view.scene.narration;
+    playSceneMangaFx(view, previousView);
+  }
 }
 
 function locked(view) {
@@ -528,6 +540,42 @@ function renderDayBar(view) {
   rest.disabled = inCombat(view);
   rest.onclick = () => post("/rest", {}, "Ich suche einen Schlafplatz und beende den Tag.");
   bar.appendChild(rest);
+}
+
+function renderSceneContext(view) {
+  const box = $("#sceneContext");
+  const npcs = view.presentNpcs || [];
+  const localThread = (view.story?.active || []).find((thread) => thread.location === view.locationId);
+  const people = npcs.length
+    ? npcs.map((npc) => `<span class="scene-chip" title="${escapeHtml(npc.role || "Anwesend")}">${escapeHtml(npc.displayName)}${npc.role ? `<small>${escapeHtml(npc.role)}</small>` : ""}</span>`).join("")
+    : `<span class="scene-empty">Niemand Handlungsrelevantes in unmittelbarer Nähe</span>`;
+  box.innerHTML =
+    `<div class="scene-context-row"><b>◉ Vor Ort</b><div class="scene-chips">${people}</div></div>` +
+    `<div class="scene-context-row"><b>⌁ Lokale Spur</b><div>${localThread ? `<strong>${escapeHtml(localThread.title)}</strong><small>${escapeHtml(localThread.hook)}</small>` : `<span class="scene-empty">Keine aktive Spur an diesem Ort</span>`}</div></div>`;
+}
+
+function playSceneMangaFx(view, previousView) {
+  const panelKind = view.scene?.panels?.at(-1)?.kind;
+  const risk = view.consequences?.actionRisk;
+  const storyEvent = view.consequences?.storyEvent;
+  const placeChanged = previousView && previousView.sceneLocation !== view.sceneLocation;
+  let effect = null;
+  if (inCombat(view) || panelKind === "duell" || panelKind === "explosion") effect = ["impact", "DON!!"];
+  else if (view.lastCheck?.kritErfolg || panelKind === "sieg") effect = ["impact", "KRAK!"];
+  else if (view.lastCheck?.kritFehler || risk?.discovered) effect = ["danger", "GASP!"];
+  else if (panelKind === "enthuellung" || storyEvent?.type === "geloest") effect = ["reveal", "ENTHÜLLT!"];
+  else if (storyEvent?.type === "fortschritt") effect = ["reveal", "SPUR!"];
+  else if (placeChanged || panelKind === "ankunft") effect = ["speed", "NEUER ORT"];
+  if (!effect) return;
+
+  const [kind, word] = effect;
+  const overlay = $("#mangaFx");
+  clearTimeout(state.fxTimer);
+  overlay.className = `manga-fx fx-${kind}`;
+  $("#mangaFxWord").textContent = word;
+  // Erneutes Setzen in einem neuen Frame startet die CSS-Animation zuverlässig.
+  requestAnimationFrame(() => overlay.classList.add("active"));
+  state.fxTimer = setTimeout(() => overlay.classList.remove("active"), 1050);
 }
 
 function renderKeyPanels(view) {
@@ -608,9 +656,12 @@ function renderChoices(view) {
     return;
   }
   const isLocked = actionsBlocked(view);
-  (view.scene?.choices || []).forEach((c) => {
+  (view.scene?.choices || []).forEach((c, index) => {
     const badge = c.skillCheck ? `<span class="c-check">${c.skillCheck.skill} · DC ${c.skillCheck.dc}</span>` : "";
-    const node = el("button", "choice", escapeHtml(c.text) + badge);
+    const node = el("button", "choice", `<kbd>${index + 1}</kbd><span class="choice-text">${escapeHtml(c.text)}${badge}</span>`);
+    node.type = "button";
+    node.setAttribute("aria-keyshortcuts", String(index + 1));
+    node.title = `Taste ${index + 1}`;
     node.disabled = isLocked;
     node.onclick = () => post("/turn", { choiceId: c.id }, c.text);
     choices.appendChild(node);
@@ -1049,6 +1100,19 @@ $("#freeForm").addEventListener("submit", (e) => {
   const text = $("#freeText").value.trim();
   if (!text || actionsBlocked(state.view)) return;
   post("/turn", { freeText: text }, text);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+  if (!["1", "2", "3", "4"].includes(event.key)) return;
+  const target = event.target;
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target?.isContentEditable) return;
+  if ($("#screen-game").classList.contains("hidden") || !$("#characterOverlay").classList.contains("hidden")) return;
+  const buttons = [...document.querySelectorAll("#choices .choice:not(:disabled)")];
+  const button = buttons[Number(event.key) - 1];
+  if (!button) return;
+  event.preventDefault();
+  button.click();
 });
 
 // ---------- Mobile Drawer / PWA ----------

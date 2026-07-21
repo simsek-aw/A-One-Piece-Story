@@ -511,6 +511,16 @@ export function currentSceneView(game) {
     scene: game.scene,
     combat: game.combat ? combatView(game) : null,
     panel: panelFor(game), // Anime-Panel-Slot (Platzhalter-Grafik)
+    presentNpcs: (game.scene?.presentNpcIds || []).map((id) => {
+      const npc = game.world.npcs?.[id];
+      return npc ? {
+        id,
+        displayName: npc.nameKnown ? npc.name : "Unbekannte Person",
+        role: npc.role || "",
+        personality: npc.personality || null,
+        disposition: npc.disposition || 0,
+      } : { id, displayName: "Unbekannte Person", role: "", personality: null, disposition: 0 };
+    }),
     recruitable: (game.recruitable || []).map((candidate) => ({
       ...candidate,
       displayName: game.world.npcs?.[candidate.id]?.nameKnown ? candidate.name : "Unbekannte Person",
