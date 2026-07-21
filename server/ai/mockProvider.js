@@ -287,10 +287,23 @@ export class MockProvider {
       parts.push(`In einer alten Truhe entdeckst du eine seltsame, spiralig gemusterte Frucht: eine ${fruit.name}!`);
       extra.devilFruitFound = { id: fruit.id, name: fruit.name, type: fruit.type };
     }
-    // Gelegentliches Angebot, Teil einer kanonischen Crew zu werden.
-    if (!extra.combatStart && !context.canonAffiliation && !context.canonOffer && chance(0.08)) {
-      const crewId = pick(["big_mom", "whitebeard", "marine"]);
-      const who = { big_mom: "ein Abgesandter der Big-Mom-Piraten", whitebeard: "ein Kommandant der Whitebeard-Piraten", marine: "ein Marine-Rekrutierungsoffizier" }[crewId];
+    // Gelegentliches Angebot, Teil einer Crew zu werden (kleine Crews häufiger).
+    if (!extra.combatStart && !context.canonAffiliation && !context.canonOffer && chance(0.1)) {
+      const crewId = pick([
+        "freibeuter_rookies", "freibeuter_rookies", "schmuggler", "wirte_gilde", "kopfgeldjaeger_gilde",
+        "big_mom", "kaido", "whitebeard", "marine", "giants",
+      ]);
+      const who = {
+        big_mom: "ein Abgesandter der Big-Mom-Piraten",
+        kaido: "ein finsterer Handlanger Kaidos",
+        whitebeard: "ein Kommandant der Whitebeard-Piraten",
+        marine: "ein Marine-Rekrutierungsoffizier",
+        giants: "ein hünenhafter Krieger aus Elbaf",
+        freibeuter_rookies: "ein aufgeregter Rookie-Kapitän",
+        schmuggler: "ein zwielichtiger Bootsmann",
+        wirte_gilde: "eine resolute Hafenwirtin",
+        kopfgeldjaeger_gilde: "ein narbengesichtiger Kopfgeldjäger",
+      }[crewId];
       parts.push(`${who} spricht dich an — man könnte sich einer größeren Sache anschließen.`);
       extra.canonOffer = { crewId };
     }

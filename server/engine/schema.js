@@ -6,6 +6,8 @@
 // (output_config.format), damit der echte Spielleiter garantiert passendes
 // JSON liefert. Siehe ai/anthropicProvider.js.
 
+import { CANON_CREW_IDS } from "../content/canonCrews.js";
+
 export const GM_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -153,7 +155,7 @@ export const GM_JSON_SCHEMA = {
           type: "object",
           additionalProperties: false,
           properties: {
-            crewId: { type: "string", enum: ["big_mom", "whitebeard", "marine", "straw_hats"] },
+            crewId: { type: "string", enum: CANON_CREW_IDS },
           },
           required: ["crewId"],
         },
@@ -259,8 +261,7 @@ export function validateGmResponse(raw) {
 
   let canonOffer = null;
   const co = raw.canonOffer;
-  const CREWS = ["big_mom", "whitebeard", "marine", "straw_hats"];
-  if (co && typeof co === "object" && CREWS.includes(co.crewId)) {
+  if (co && typeof co === "object" && CANON_CREW_IDS.includes(co.crewId)) {
     canonOffer = { crewId: co.crewId };
   }
 

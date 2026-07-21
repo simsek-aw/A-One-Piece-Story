@@ -26,6 +26,7 @@ import { unlockedLore, nextLore } from "../content/loreArcs.js";
 import { SKILLS } from "./character.js";
 import { startCombat, combatTurn, combatView } from "./combat.js";
 import { attemptJoinCanon, listCanonStatus } from "./canon.js";
+import { currentEdition, newsHeadlines } from "./news.js";
 
 const HISTORY_LIMIT = 8;
 
@@ -257,6 +258,8 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
       rumors: rumorsForDay(game.world.day).map((r) => r.rumor),
       loreProgress: game.world.flags.lore_fortschritt || 0,
       loreUnlocked: unlockedLore(game.world.flags.lore_fortschritt || 0).map((l) => l.title),
+      // Schlagzeilen aus der Welt (auch außerhalb der Spieler-Bubble)
+      news: newsHeadlines(game),
     },
     character: characterDigest(game),
     // Rohwerte für Konsequenz-Logik (Mock nutzt sie, Claude sieht sie als Kontext).
@@ -426,6 +429,15 @@ export function currentSceneView(game) {
     activities: listActivities(),
     canon: listCanonStatus(game),
     canonOffer: game.world.canonOffer || null,
+    news: newsEdition(game),
     denDen: game.denDen,
   };
+}
+
+// Aktuelle Zeitungsausgabe + Kennzeichnung, ob sie frisch ist (neuer Tag).
+function newsEdition(game) {
+  const edition = currentEdition(game);
+  const fresh = (game.world._lastNewsDay || 0) !== game.world.day;
+  game.world._lastNewsDay = game.world.day;
+  return { ...edition, fresh };
 }

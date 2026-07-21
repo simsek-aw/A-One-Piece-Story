@@ -35,10 +35,22 @@ folgenden Punkte bauen darauf auf.
       Ära-Gate), Voraussetzungen (Level, kein Kopfgeld für die Marine),
       Mitgliedschafts-Effekte (Marine-Schutz/Rang); UI-Panel + /join-canon
 
+## Erledigt (Ausbaustufe 6)
+
+- [x] Viele weitere Crews: große Kanon-Crews (Kaido/Beasts, Buggy, Riesen/Elbaf)
+      und kleinere no-name-Gruppen (Rookies, Schmuggler, Kopfgeldjäger, Wirte).
+      Kanon generell schwerer beizutreten (DC-Aufschlag) als kleine Gruppen,
+      abgestuft nach Crew-Persönlichkeit.
+- [x] Weltgeschehen/Zeitung ("News-Möwe"): Tagesausgabe mit Ereignissen
+      außerhalb der Spieler-Bubble + eigenem Kopfgeld/Crew; als Kontext an den
+      Spielleiter übergeben, damit er die große Welt einwebt.
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen
       neuen Perk wählen dürfen.
+- [ ] **Crew-Aufträge & Aufstieg**: als Mitglied Missionen der eigenen Crew
+      (Big Mom/Kaido/…) erhalten, Rang steigen, Crew verlassen.
 - [ ] **Party-Loyalität dynamisch**: Loyalität steigt/fällt mit Entscheidungen
       und schaltet eigene Begleiter-Plots frei.
 - [ ] **Haki-Ausbau**: Meditation/Willens-Pfad zu echten Haki-Fähigkeiten führen

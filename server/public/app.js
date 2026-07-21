@@ -205,16 +205,10 @@ function renderScene(view) {
     $("#panelCaption").textContent = view.panel.caption || "";
   }
 
-  // Story-Log (nur bei neuer Erzählung anhängen)
+  // Story-Log (nur bei neuer Erzählung anhängen; Rendering weiter unten)
   if (view.scene?.narration && storyBuffer[storyBuffer.length - 1]?.text !== view.scene.narration) {
     storyBuffer.push({ type: "narration", text: view.scene.narration });
   }
-  const log = $("#storyLog");
-  log.innerHTML = "";
-  storyBuffer.slice(-12).forEach((e, i, arr) => {
-    log.appendChild(el("div", `entry ${e.type}${i === arr.length - 1 ? " latest" : ""}`, escapeHtml(e.text)));
-  });
-  log.lastChild?.scrollIntoView({ behavior: "smooth", block: "end" });
 
   // Check-Banner
   const cb = $("#checkBanner");
@@ -240,7 +234,21 @@ function renderScene(view) {
     });
   }
 
+  if (view.news?.fresh) {
+    const note = `🗞️ Die News-Möwe bringt die Tagesausgabe (Tag ${view.news.day}).`;
+    if (!storyBuffer.some((e) => e.text === note)) storyBuffer.push({ type: "action", text: note });
+  }
+
+  // Story-Log rendern (nachdem alle Notizen dieses Zuges eingesammelt sind)
+  const log = $("#storyLog");
+  log.innerHTML = "";
+  storyBuffer.slice(-12).forEach((e, i, arr) => {
+    log.appendChild(el("div", `entry ${e.type}${i === arr.length - 1 ? " latest" : ""}`, escapeHtml(e.text)));
+  });
+  log.lastChild?.scrollIntoView({ behavior: "smooth", block: "end" });
+
   renderDayBar(view);
+  renderNews(view);
   renderCombat(view);
   renderChoices(view);
   renderRecruit(view);
@@ -590,12 +598,13 @@ function renderCanon(view) {
   listEl.innerHTML = "";
   (view.canon || []).forEach((crew) => {
     const openTxt = crew.openness >= 80 ? "sehr offen" : crew.openness >= 55 ? "offen" : crew.openness >= 25 ? "wählerisch" : "extrem wählerisch";
+    const canonTag = crew.canonical ? `<span class="tier t3">Canon</span>` : `<span class="tier t0">kleine Crew</span>`;
     const row = el("div", "li");
     let status;
     if (crew.affiliated) status = `<span class="disp friend">Mitglied</span>`;
     else if (crew.available) status = `<span class="hint">Ziel-DC ${crew.effectiveDc}</span>`;
     else status = `<span class="hint">${escapeHtml(crew.reason)}</span>`;
-    row.innerHTML = `<b>${escapeHtml(crew.name)}</b> <span class="tier t1">${openTxt}</span><small>${escapeHtml(crew.blurb)}</small><div class="canon-row-status">${status}</div>`;
+    row.innerHTML = `<b>${escapeHtml(crew.name)}</b> ${canonTag} <span class="tier t1">${openTxt}</span><small>${escapeHtml(crew.blurb)}</small><div class="canon-row-status">${status}</div>`;
     if (!aff && crew.available && !crew.affiliated) {
       const btn = el("button", "chip", "Beitreten versuchen");
       btn.disabled = disabled;
@@ -603,6 +612,22 @@ function renderCanon(view) {
       row.appendChild(btn);
     }
     listEl.appendChild(row);
+  });
+}
+
+function renderNews(view) {
+  const list = $("#newsList");
+  const fresh = $("#newsFresh");
+  list.innerHTML = "";
+  const news = view.news;
+  if (!news) { list.textContent = "—"; fresh.classList.add("hidden"); return; }
+  fresh.classList.toggle("hidden", !news.fresh);
+  const scopeLabel = { weltweit: "WELT", grand_line: "GRAND LINE", east_blue: "EAST BLUE", fahndung: "FAHNDUNG", "gerücht": "GERÜCHT", regional: "REGION" };
+  news.items.forEach((it) => {
+    list.appendChild(el("div", "news-item",
+      `<div class="news-scope">${escapeHtml(scopeLabel[it.scope] || it.scope.toUpperCase())}</div>` +
+      `<div class="news-head">${escapeHtml(it.headline)}</div>` +
+      `<div class="news-body">${escapeHtml(it.body)}</div>`));
   });
 }
 

@@ -71,12 +71,18 @@ richtigen Format antwortet.
   verteilst.
 - **Lore-Chronik**: der „Lücke in der Geschichte"-Handlungsstrang schaltet über
   Recherche (Bücherwurm) nach und nach Fragmente frei (Void-Century-Faden).
-- **Teil des Canons werden**: kanonischen Crews/Fraktionen beitreten. Die
-  Aufnahme-Chance hängt von der Offenheit der Crew ab — Big Mom (riesige Crew)
-  nimmt bereitwillig Lakaien (leicht), die Strohhüte nehmen fast niemanden und
-  existieren in dieser frühen Ära noch gar nicht (praktisch unmöglich). Die
-  Marine lehnt Gesuchte ab. Mitgliedschaft bringt Schutz (weniger Marine-Ärger)
-  bzw. einen Rang.
+- **Teil des Canons werden**: vielen Crews/Fraktionen beitreten — große
+  Kanon-Crews (Big Mom, Kaido, Whitebeard, Riesen, Buggy, Marine, …) und
+  kleinere/no-name-Gruppen (Rookies, Schmuggler, Kopfgeldjäger, Wirte-Gilde).
+  Die Aufnahme-Chance hängt von der Offenheit der Crew ab und ist bei den
+  berühmten Kanon-Crews generell schwerer als bei den kleinen — außer bei den
+  "Sammlern" Big Mom/Kaido (leicht). Riesen & Strohhüte sind sehr schwer bzw.
+  in dieser frühen Ära noch gar nicht beitretbar. Die Marine lehnt Gesuchte ab.
+  Mitgliedschaft bringt Schutz (weniger Marine-Ärger) bzw. einen Rang.
+- **Weltgeschehen & News-Möwe**: eine Tageszeitung ("Die Windrose") berichtet,
+  was außerhalb deiner Bubble im Kanon passiert (Kaiser, Marine, Riesen, das
+  "fehlende Jahrhundert") — plus dein eigenes Kopfgeld und deine Crew. Der
+  Spielleiter webt dieses Weltgeschehen in die Erzählung ein.
 - **Rundenbasiertes Kampfsystem**: Angriff mit Waffen-Skills, Verteidigen,
   Teufelsfrucht-/Haki-Spezial (Flächenschaden), Fliehen; die Crew kämpft mit;
   Gegner mit HP-Balken; Sieg/Flucht/Niederlage wirken auf EP, Beri, Kopfgeld

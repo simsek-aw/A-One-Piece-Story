@@ -36,27 +36,37 @@ function fameBonus(crew, character) {
   return crew.faction === "pirat" ? bountyTier(character.bounty || 0).level : 0;
 }
 
-// Status aller Crews fürs UI.
+// Berühmte Kanon-Crews sind GENERELL schwerer beizutreten als kleine Gruppen.
+const CANON_PENALTY = 3;
+
+// Effektiver Beitritts-DC: Offenheit -> Basis, + Kanon-Aufschlag, - Ruf.
+export function effectiveJoinDC(crew, character) {
+  const base = joinDC(crew.openness) + (crew.canonical ? CANON_PENALTY : 0);
+  return Math.max(3, base - fameBonus(crew, character));
+}
+
+// Status aller Crews fürs UI (canonical zuerst, dann kleinere Gruppen).
 export function listCanonStatus(game) {
-  return Object.values(CANON_CREWS).map((crew) => {
-    const av = joinAvailability(game, crew);
-    const dc = joinDC(crew.openness);
-    return {
-      id: crew.id,
-      name: crew.name,
-      recruiter: crew.recruiter,
-      faction: crew.faction,
-      openness: crew.openness,
-      prestige: crew.prestige,
-      blurb: crew.blurb,
-      joinable: crew.joinable,
-      available: av.available,
-      reason: av.reason,
-      dc,
-      effectiveDc: Math.max(3, dc - fameBonus(crew, game.character)),
-      affiliated: game.character.canonAffiliation?.crewId === crew.id,
-    };
-  });
+  return Object.values(CANON_CREWS)
+    .map((crew) => {
+      const av = joinAvailability(game, crew);
+      return {
+        id: crew.id,
+        name: crew.name,
+        recruiter: crew.recruiter,
+        faction: crew.faction,
+        canonical: !!crew.canonical,
+        openness: crew.openness,
+        prestige: crew.prestige,
+        blurb: crew.blurb,
+        joinable: crew.joinable,
+        available: av.available,
+        reason: av.reason,
+        effectiveDc: effectiveJoinDC(crew, game.character),
+        affiliated: game.character.canonAffiliation?.crewId === crew.id,
+      };
+    })
+    .sort((a, b) => (b.canonical - a.canonical) || (b.prestige - a.prestige));
 }
 
 // Beitrittsversuch (deterministischer Überzeugen-Check gegen den crew-abhängigen DC).
@@ -67,7 +77,7 @@ export function attemptJoinCanon(game, crewId) {
   if (!av.available) throw new Error(av.reason);
 
   const c = game.character;
-  const dc = Math.max(3, joinDC(crew.openness) - fameBonus(crew, c));
+  const dc = effectiveJoinDC(crew, c);
   const check = skillCheck(c, "ueberzeugen", dc, game.party);
 
   if (check.success) {
