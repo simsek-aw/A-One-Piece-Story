@@ -75,6 +75,7 @@ export async function playTurn(game, provider, { choiceId, freeText }) {
   const gm = validateGmResponse(await provider.generateScene(context));
   applyGmResponse(game, gm, { playerAction, checkResult });
   enforceEavesdroppingConsequence(game, actionRisk);
+  game.lastConsequences = { actionRisk, storyEvent, factionChanges };
   return currentSceneView(game);
 }
 
@@ -197,6 +198,7 @@ async function resolveCombatEnd(game, provider) {
   const gm = validateGmResponse(await provider.generateScene(context));
   gm.combatStart = null; // kein sofortiger Folgekampf aus dem Ausgang
   applyGmResponse(game, gm, { playerAction: summary, checkResult: null });
+  game.lastConsequences = { actionRisk: null, storyEvent: null, factionChanges };
   game.combat = null; // Kampf abgeschlossen
   return currentSceneView(game);
 }
@@ -367,6 +369,7 @@ function enforceEavesdroppingConsequence(game, actionRisk) {
 function applyGmResponse(game, gm, turnInfo) {
   const s = gm.stateChanges;
   const c = game.character;
+  game.lastConsequences = null;
 
   // Ort (die KI darf den Ort nur zu einem bekannten Karten-Ort ändern).
   if (s.location && s.location !== game.world.location && LOCATIONS[s.location]) {
@@ -482,6 +485,7 @@ export function currentSceneView(game) {
     lastLevelUps: game.lastLevelUps || [],
     lastLoreUnlocks: game.lastLoreUnlocks || [],
     lastHakiUnlocks: game.lastHakiUnlocks || [],
+    consequences: game.lastConsequences || null,
     lore: {
       progress: game.world.flags.lore_fortschritt || 0,
       unlocked: unlockedLore(game.world.flags.lore_fortschritt || 0),

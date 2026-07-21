@@ -143,6 +143,10 @@ button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .check-banner { border-radius: 9px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.92rem; }
 .check-banner.ok { background: rgba(79,209,139,0.13); border: 1px solid var(--ok); }
 .check-banner.bad { background: rgba(226,96,63,0.13); border: 1px solid var(--bad); }
+.consequence-banner { margin: 0 0 14px; padding: 11px 14px; border: 2px solid var(--line); background: var(--panel); box-shadow: 4px 4px 0 var(--shadow); font-size: 0.88rem; line-height: 1.5; }
+.consequence-banner.safe { border-style: dashed; }
+.consequence-banner.danger { background: var(--ink); color: var(--on-accent); }
+.consequence-title { font-family: "Bangers", "Arial Black", Impact, system-ui, sans-serif; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
 
 .choices { display: flex; flex-direction: column; gap: 10px; }
 .choice { text-align: left; cursor: pointer; padding: 13px 15px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); transition: 0.12s; }

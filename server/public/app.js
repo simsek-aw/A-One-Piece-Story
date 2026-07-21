@@ -283,6 +283,8 @@ function renderScene(view) {
     cb.classList.remove("hidden");
   } else cb.classList.add("hidden");
 
+  renderConsequences(view);
+
   if (view.lastLevelUps?.length) {
     const lvl = view.lastLevelUps.at(-1).level;
     if (storyBuffer.at(-1)?.text !== `★ Levelaufstieg! Stufe ${lvl}.`)
@@ -337,6 +339,40 @@ function renderScene(view) {
 
 function locked(view) {
   return !!view.clock?.locked;
+}
+
+function renderConsequences(view) {
+  const box = $("#consequenceBanner");
+  if (!box) return;
+  const data = view.consequences;
+  const lines = [];
+  let dangerous = false;
+
+  if (data?.actionRisk) {
+    const risk = data.actionRisk;
+    dangerous ||= risk.discovered;
+    lines.push(
+      `<b>🎲 ${escapeHtml(risk.label)}</b>: Risiko ${risk.chance}% · Wurf ${risk.roll} → ` +
+      (risk.discovered ? `<strong>entdeckt (${escapeHtml(risk.outcome)})</strong>` : "unbemerkt"),
+    );
+  }
+  if (data?.storyEvent) {
+    const event = data.storyEvent;
+    const labels = { fortschritt: "Spur gefunden", eskaliert: "Lage eskaliert", geloest: "Faden gelöst", verpasst: "Gelegenheit verpasst" };
+    dangerous ||= event.type === "eskaliert" || event.type === "verpasst";
+    lines.push(`<b>🧭 ${escapeHtml(labels[event.type] || event.type)}</b>${event.title ? `: ${escapeHtml(event.title)}` : ""}`);
+  }
+  (data?.factionChanges || []).forEach((change) => {
+    dangerous ||= change.delta < 0;
+    lines.push(`<b>⚖️ ${escapeHtml(change.label)}</b>: ${change.delta > 0 ? "+" : ""}${change.delta} · jetzt ${change.value}`);
+  });
+
+  if (!lines.length) {
+    box.classList.add("hidden");
+    return;
+  }
+  box.className = `consequence-banner ${dangerous ? "danger" : "safe"}`;
+  box.innerHTML = `<div class="consequence-title">Folgen deiner Handlung</div>${lines.map((line) => `<div>${line}</div>`).join("")}`;
 }
 // Aktionen blockiert, wenn Echtzeit-Sperre ODER Erschöpfung (muss rasten) ODER Kampf.
 function actionsBlocked(view) {
