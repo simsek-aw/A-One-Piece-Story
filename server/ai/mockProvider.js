@@ -87,7 +87,10 @@ export class MockProvider {
         `Die Nacht senkt sich über ${context.world.locationName}. Für einen Moment ist die Welt still — ` +
         `dann bricht ein neuer ${context.world.tageszeit || "Morgen"} an.`,
       choices: this.genericChoices(context),
-      stateChanges: { ...this.emptyChanges(), sceneLocation: this.defaultSceneLocation(context) },
+      stateChanges: {
+        ...this.emptyChanges(),
+        sceneLocation: `${context.world.locationName} – ${/zimmer|gasthaus/i.test(context.playerAction || "") ? "Gasthaus" : "Notlager"}`,
+      },
       npcs: [],
       recruitable: [],
       panels: [{ kind: "nacht", caption: `Nachtruhe in ${context.world.locationName}` }],

@@ -28,6 +28,9 @@ provider.generateScene(context)   ← Mock ODER Claude
 schema.validateGmResponse(...)     ← normalisiert/säubert
    │
    ▼
+continuityDirector                ← prüft Ort, Anwesende, Wege und Kampfursache
+   │     bei Bruch: ein Korrekturversuch, danach sicherer lokaler Fallback
+   ▼
 turn.applyGmResponse(...)          ← wendet Zustandsänderungen deterministisch an
    │     (HP/Beri/XP/Level clampen, Inventar, Flags, NPC-Gedächtnis, Historie)
    ▼
@@ -44,7 +47,8 @@ Jeder Provider liefert dasselbe Objekt:
   "choices": [ { "id": "a", "text": "…", "skillCheck": null | { "skill": "…", "dc": 12 } } ],
   "stateChanges": {
     "timeAdvanceDays": 1, "hpDelta": 0, "beriDelta": 0, "xpDelta": 20,
-    "location": null, "itemsAdded": [], "itemsRemoved": [], "flagsSet": {}
+    "location": null, "sceneLocation": null,
+    "itemsAdded": [], "itemsRemoved": [], "flagsSet": {}
   },
   "npcs": [ { "id": "…", "name": "…", "role": "…", "disposition": 0, "note": "…" } ],
   "recruitable": [ { "id": "…", "name": "…", "role": "…", "reason": "…" } ]
@@ -56,6 +60,19 @@ Jeder Provider liefert dasselbe Objekt:
 - Dasselbe Objekt existiert als **JSON-Schema** (`GM_JSON_SCHEMA`) und wird an
   die Claude-API als `output_config.format` übergeben. Damit liefert der echte
   Spielleiter garantiert passendes JSON.
+
+## Continuity Director (`engine/continuityDirector.js`)
+
+Vor dem Anwenden einer Szene vergleicht der Continuity Director den KI-Entwurf
+mit der verbindlichen Bühne der vorherigen Szene: konkreter Teilort, anwesende
+NPCs, Crew, letzte Erzählung und Spieleraktion. Er verwirft insbesondere
+unerklärte Ortswechsel, teleportierende oder verschwindende Figuren sowie
+Kämpfe ohne Auslöser, Motiv oder plausiblen Zugang zum Schauplatz.
+
+Ein verworfener Entwurf wird mit konkreten Befunden genau einmal neu angefordert.
+Bleibt auch die Korrektur widersprüchlich, erzeugt die Engine eine konservative
+lokale Fortsetzung ohne neue Figuren oder Kampf. Inkonsistenter Text wird somit
+nicht in den Spielzustand übernommen.
 
 ## Warum die Skill-Checks in der Engine liegen
 

@@ -12,7 +12,6 @@ import { skillCheck } from "./dice.js";
 import { applyXp, recomputeMaxHp } from "./character.js";
 import { upsertNpc, setFlags, memorySummary } from "./memory.js";
 import { characterDigest } from "./gameState.js";
-import { validateGmResponse } from "./schema.js";
 import { rumorsForDay } from "../content/lore.js";
 import { LOCATIONS } from "../content/map.js";
 import { listActivities } from "../content/activities.js";
@@ -34,6 +33,7 @@ import { currentLocalSuspicion, resolveActionRisk } from "./eavesdropping.js";
 import { advanceStoryDirector, ensureStoryDirector, storyDirectorView } from "./storyDirector.js";
 import { applyActionReputation, applyCombatReputation, ensureFactions, factionValue, factionView } from "./factions.js";
 import { ensureNpcPersonality, startRecruitment, advanceRecruitment, closeRecruitment, recruitmentView } from "./recruitment.js";
+import { continuityContext, generateCoherentScene } from "./continuityDirector.js";
 
 const HISTORY_LIMIT = 8;
 
@@ -44,7 +44,7 @@ export async function startScene(game, provider) {
   ensureStoryDirector(game);
   ensureFactions(game);
   const context = buildContext(game, { kind: "start", playerAction: "(Spielbeginn)", checkResult: null });
-  const gm = validateGmResponse(await provider.generateScene(context));
+  const gm = await generateCoherentScene(game, provider, context);
   applyGmResponse(game, gm, null);
   return currentSceneView(game);
 }
@@ -73,7 +73,7 @@ export async function playTurn(game, provider, { choiceId, freeText }) {
   const storyEvent = advanceStoryDirector(game, playerAction);
   const factionChanges = applyActionReputation(game, { actionRisk, playerAction });
   const context = buildContext(game, { kind: "turn", playerAction, checkResult, actionRisk, storyEvent, factionChanges });
-  const gm = validateGmResponse(await provider.generateScene(context));
+  const gm = await generateCoherentScene(game, provider, context);
   applyGmResponse(game, gm, { playerAction, checkResult });
   enforceEavesdroppingConsequence(game, actionRisk);
   game.lastConsequences = { actionRisk, storyEvent, factionChanges };
@@ -128,7 +128,7 @@ export async function doActivity(game, provider, { activityId }) {
 
   advanceTime(game, result.activity.hours || 3); // Aktivitäten kosten mehrere Stunden
   const context = buildContext(game, { kind: "activity", playerAction, checkResult: null, activity: result.activity, loreUnlocks: result.loreUnlocks, hakiUnlocks: result.hakiUnlocks });
-  const gm = validateGmResponse(await provider.generateScene(context));
+  const gm = await generateCoherentScene(game, provider, context);
   applyGmResponse(game, gm, { playerAction, checkResult: null });
   game.lastLevelUps = [...(game.lastLevelUps || []), ...result.levelUps];
   game.lastLoreUnlocks = result.loreUnlocks || [];
@@ -147,7 +147,7 @@ export async function doTravel(game, provider, { destId }) {
   setMorning(game); // Ankunft am nächsten Morgen
   syncDailyEffects(game); // Reisetage: Heat klingt ab
   const context = buildContext(game, { kind: "travel", playerAction, checkResult: null, travelInfo: info });
-  const gm = validateGmResponse(await provider.generateScene(context));
+  const gm = await generateCoherentScene(game, provider, context);
   applyGmResponse(game, gm, { playerAction, checkResult: null });
   return currentSceneView(game);
 }
@@ -207,7 +207,7 @@ async function resolveCombatEnd(game, provider) {
   const factionChanges = applyCombatReputation(game, cm.enemies, result);
   advanceTime(game, 1); // ein Kampf kostet etwa eine Stunde
   const context = buildContext(game, { kind: "combat_end", playerAction: summary, checkResult: null, combatResult: { result, summary }, factionChanges });
-  const gm = validateGmResponse(await provider.generateScene(context));
+  const gm = await generateCoherentScene(game, provider, context);
   gm.combatStart = null; // kein sofortiger Folgekampf aus dem Ausgang
   applyGmResponse(game, gm, { playerAction: summary, checkResult: null });
   game.lastConsequences = { actionRisk: null, storyEvent: null, factionChanges };
@@ -233,7 +233,7 @@ export async function doJoinCanon(game, provider, { crewId }) {
     ? `Ich schließe mich an: ${result.crew.name}. (Überzeugen ${result.check.total} gegen DC ${result.dc} — aufgenommen!)`
     : `Ich bitte um Aufnahme bei ${result.crew.name} — werde aber abgewiesen. (Überzeugen ${result.check.total} gegen DC ${result.dc}.)`;
   const context = buildContext(game, { kind: "canon_join", playerAction, checkResult: result.check, canonResult: { crew: result.crew.name, faction: result.crew.faction, success: result.success } });
-  const gm = validateGmResponse(await provider.generateScene(context));
+  const gm = await generateCoherentScene(game, provider, context);
   applyGmResponse(game, gm, { playerAction, checkResult: result.check });
   game.world.canonOffer = null; // Angebot verbraucht
   return currentSceneView(game);
@@ -258,7 +258,7 @@ export async function doRest(game, provider) {
   startNewDay(game);
   syncDailyEffects(game);
   const context = buildContext(game, { kind: "rest", playerAction, checkResult: null });
-  const gm = validateGmResponse(await provider.generateScene(context));
+  const gm = await generateCoherentScene(game, provider, context);
   applyGmResponse(game, gm, { playerAction, checkResult: null });
   return currentSceneView(game);
 }
@@ -271,7 +271,7 @@ export async function doEatFruit(game, provider, { fruitId }) {
     `Ich beiße in die ${fruit.name}. Ein widerlicher Geschmack — dann durchströmt mich die Kraft der ${fruit.type}-Frucht. ` +
     `Von nun an werde ich niemals wieder schwimmen können.`;
   const context = buildContext(game, { kind: "eat_fruit", playerAction, checkResult: null, fruit });
-  const gm = validateGmResponse(await provider.generateScene(context));
+  const gm = await generateCoherentScene(game, provider, context);
   applyGmResponse(game, gm, { playerAction, checkResult: null });
   return currentSceneView(game);
 }
@@ -354,6 +354,7 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
     },
     memory: memorySummary(game),
     history: game.history.slice(-HISTORY_LIMIT),
+    continuity: continuityContext(game),
     story: storyDirectorView(game),
     factions: factionView(game),
     playerAction,
