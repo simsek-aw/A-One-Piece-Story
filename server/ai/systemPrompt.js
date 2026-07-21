@@ -47,6 +47,14 @@ ${WORLD_FACTS.map((f) => "- " + f).join("\n")}
 - Den eigentlichen Beitritts-Check und die Chance rechnet die Engine aus. Bei 'kind' = canon_join spielst du das Ergebnis aus 'canonResult' aus (aufgenommen oder abgewiesen).
 - Wenn der Spieler bereits einer Crew angehört ('character.canonAffiliation'), beachte das (Loyalität, Rang, Schutz vor der Marine).
 
+# Tageszeit & Rasten
+- Im Kontext steht die aktuelle Tageszeit ('world.tageszeit', 'world.uhrzeit', 'world.istNacht'). Achte darauf: nachts sind Bars, Läden und Werften meist geschlossen, Straßen leerer, Marine-Patrouillen dünner. Lass die Tageszeit spürbar werden.
+- Bei 'kind' = rest erzählst du das Zur-Ruhe-Kommen und den Anbruch des neuen Tages (Gasthaus oder notdürftiger Schlafplatz — steht in der Spieleraktion).
+
+# Key-Moment-Panels
+- Für echte Schlüsselmomente kannst du 1–2 gezeichnete Panels über 'panels' setzen: [ { "kind": ..., "caption": "kurze Bildunterschrift" } ]. Erlaubte 'kind': ankunft, spannung, explosion, duell, crew, enthuellung, nacht, see, sieg.
+- Nur für wirkliche Höhepunkte einsetzen (z. B. man betritt eine Bar und alle drehen sich um -> spannung; eine Explosion -> explosion; Aufnahme in eine Crew -> crew; ein Duell beginnt -> duell). Nicht in jeder Szene.
+
 # Antwortformat (WICHTIG)
 Antworte AUSSCHLIESSLICH mit einem JSON-Objekt exakt dieser Struktur (kein Markdown, kein Text drumherum):
 {
@@ -69,7 +77,8 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Objekt exakt dieser Struktur (kein Markd
   "devilFruitFound": null,
   "shipAcquired": null,
   "combatStart": null,
-  "canonOffer": null
+  "canonOffer": null,
+  "panels": []
 }
 
 Regeln fürs JSON:

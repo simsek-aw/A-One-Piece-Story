@@ -7,6 +7,7 @@
 // JSON liefert. Siehe ai/anthropicProvider.js.
 
 import { CANON_CREW_IDS } from "../content/canonCrews.js";
+import { MOMENT_KIND_IDS } from "../ai/artProvider.js";
 
 export const GM_JSON_SCHEMA = {
   type: "object",
@@ -147,6 +148,19 @@ export const GM_JSON_SCHEMA = {
         },
       ],
     },
+    // Key-Moment-Panels (0–2 gezeichnete Panels für Schlüsselmomente).
+    panels: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          kind: { type: "string", enum: MOMENT_KIND_IDS },
+          caption: { type: "string" },
+        },
+        required: ["kind", "caption"],
+      },
+    },
     // Optionales Angebot, einer kanonischen Crew beizutreten (crewId aus canonCrews).
     canonOffer: {
       anyOf: [
@@ -162,7 +176,7 @@ export const GM_JSON_SCHEMA = {
       ],
     },
   },
-  required: ["narration", "choices", "stateChanges", "npcs", "recruitable", "devilFruitFound", "shipAcquired", "combatStart", "canonOffer"],
+  required: ["narration", "choices", "stateChanges", "npcs", "recruitable", "devilFruitFound", "shipAcquired", "combatStart", "canonOffer", "panels"],
 };
 
 function toInt(v, fallback = 0) {
@@ -265,7 +279,12 @@ export function validateGmResponse(raw) {
     canonOffer = { crewId: co.crewId };
   }
 
-  return { narration, choices, stateChanges, npcs, recruitable, devilFruitFound, shipAcquired, combatStart, canonOffer };
+  const panels = toArr(raw.panels)
+    .map((p) => ({ kind: MOMENT_KIND_IDS.includes(p?.kind) ? p.kind : "spannung", caption: toStr(p?.caption).trim() }))
+    .filter((p) => p.caption)
+    .slice(0, 2);
+
+  return { narration, choices, stateChanges, npcs, recruitable, devilFruitFound, shipAcquired, combatStart, canonOffer, panels };
 }
 
 function clampInt(n, min, max) {

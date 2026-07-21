@@ -16,12 +16,12 @@ import { validateGmResponse } from "./schema.js";
 import { rumorsForDay } from "../content/lore.js";
 import { LOCATIONS } from "../content/map.js";
 import { listActivities } from "../content/activities.js";
-import { clockView, canAct, consumeAction, ensureNewDayIfDue } from "./clock.js";
+import { clockView, canAct, advanceTime, mustRest, isLocked, startNewDay, setMorning, phaseFor } from "./clock.js";
 import { applyBounty, applyHeat, decayHeat, bountyTier, heatLevel, marineTroubleChance } from "./bounty.js";
 import { runActivity } from "./progression.js";
 import { travelOptions, travelTo, currentTravelMode } from "./travel.js";
 import { eatDevilFruit } from "./devilfruit.js";
-import { panelFor } from "../ai/artProvider.js";
+import { panelFor, momentPanel } from "../ai/artProvider.js";
 import { unlockedLore, nextLore } from "../content/loreArcs.js";
 import { SKILLS } from "./character.js";
 import { startCombat, combatTurn, combatView } from "./combat.js";
@@ -57,7 +57,7 @@ export async function playTurn(game, provider, { choiceId, freeText }) {
     throw new Error("Weder Auswahl noch Freitext angegeben.");
   }
 
-  consumeAction(game);
+  advanceTime(game, 1); // ein Gespräch/eine kleine Handlung ~1 Stunde
   const context = buildContext(game, { kind: "turn", playerAction, checkResult });
   const gm = validateGmResponse(await provider.generateScene(context));
   applyGmResponse(game, gm, { playerAction, checkResult });
@@ -74,7 +74,7 @@ export async function attemptRecruit(game, provider, { npcId }) {
     `Ich versuche, ${target.name} (${target.role}) für meine Sache zu gewinnen. ` +
     (check.success ? "Meine Worte treffen — die Person ist überzeugt." : "Meine Worte verfehlen ihre Wirkung.");
 
-  consumeAction(game);
+  advanceTime(game, 1);
   const context = buildContext(game, { kind: "recruit", playerAction, checkResult: check, recruitTarget: target });
   const gm = validateGmResponse(await provider.generateScene(context));
 
@@ -97,7 +97,7 @@ export async function doActivity(game, provider, { activityId }) {
     : "";
   const playerAction = `Ich verbringe den Tag mit: ${result.activity.name}.${rankTxt}${loreTxt}`;
 
-  consumeAction(game);
+  advanceTime(game, result.activity.hours || 3); // Aktivitäten kosten mehrere Stunden
   const context = buildContext(game, { kind: "activity", playerAction, checkResult: null, activity: result.activity, loreUnlocks: result.loreUnlocks });
   const gm = validateGmResponse(await provider.generateScene(context));
   applyGmResponse(game, gm, { playerAction, checkResult: null });
@@ -113,7 +113,7 @@ export async function doTravel(game, provider, { destId }) {
   const modeTxt = info.mode === "eigenes_schiff" ? "mit meinem eigenen Schiff" : "als Passagier auf einem fremden Schiff";
   const playerAction = `Ich reise ${modeTxt} nach ${game.world.locationName} (${info.days} Tage auf See).`;
 
-  consumeAction(game);
+  setMorning(game); // Ankunft am nächsten Morgen
   syncDailyEffects(game); // Reisetage: Heat klingt ab
   const context = buildContext(game, { kind: "travel", playerAction, checkResult: null, travelInfo: info });
   const gm = validateGmResponse(await provider.generateScene(context));
@@ -173,6 +173,7 @@ async function resolveCombatEnd(game, provider) {
   }
 
   cm.active = false;
+  advanceTime(game, 1); // ein Kampf kostet etwa eine Stunde
   const context = buildContext(game, { kind: "combat_end", playerAction: summary, checkResult: null, combatResult: { result, summary } });
   const gm = validateGmResponse(await provider.generateScene(context));
   gm.combatStart = null; // kein sofortiger Folgekampf aus dem Ausgang
@@ -186,7 +187,7 @@ async function resolveCombatEnd(game, provider) {
 export async function doJoinCanon(game, provider, { crewId }) {
   requireAction(game);
   const result = attemptJoinCanon(game, crewId); // deterministischer Check
-  consumeAction(game);
+  advanceTime(game, 2);
   const playerAction = result.success
     ? `Ich schließe mich an: ${result.crew.name}. (Überzeugen ${result.check.total} gegen DC ${result.dc} — aufgenommen!)`
     : `Ich bitte um Aufnahme bei ${result.crew.name} — werde aber abgewiesen. (Überzeugen ${result.check.total} gegen DC ${result.dc}.)`;
@@ -194,6 +195,30 @@ export async function doJoinCanon(game, provider, { crewId }) {
   const gm = validateGmResponse(await provider.generateScene(context));
   applyGmResponse(game, gm, { playerAction, checkResult: result.check });
   game.world.canonOffer = null; // Angebot verbraucht
+  return currentSceneView(game);
+}
+
+// Rasten / Schlafplatz suchen -> beendet den Tag und startet den nächsten Morgen.
+export async function doRest(game, provider) {
+  requireNoCombat(game);
+  if (isLocked(game)) throw new Error(`Der neue Tag beginnt in ${clockView(game).secondsRemaining}s.`);
+  const c = game.character;
+  const INN_COST = 15;
+  let playerAction;
+  if (c.beri >= INN_COST) {
+    c.beri -= INN_COST;
+    c.hp = c.maxHp;
+    playerAction = `Ich nehme mir ein Zimmer in einem Gasthaus (−${INN_COST} Ⓑ) und schlafe bis zum Morgen — frisch erholt.`;
+  } else {
+    c.hp = Math.min(c.maxHp, c.hp + Math.round(c.maxHp * 0.4));
+    applyHeat(c, 2);
+    playerAction = "Ohne Geld für eine Bleibe suchst du dir einen notdürftigen Schlafplatz und döst unruhig bis zum Morgen.";
+  }
+  startNewDay(game);
+  syncDailyEffects(game);
+  const context = buildContext(game, { kind: "rest", playerAction, checkResult: null });
+  const gm = validateGmResponse(await provider.generateScene(context));
+  applyGmResponse(game, gm, { playerAction, checkResult: null });
   return currentSceneView(game);
 }
 
@@ -220,13 +245,12 @@ function requireNoCombat(game) {
 
 function requireAction(game) {
   requireNoCombat(game);
-  ensureNewDayIfDue(game);
   syncDailyEffects(game);
-  if (!canAct(game)) {
-    const cv = clockView(game);
-    throw new Error(
-      `Für heute ist Schluss (Tag ${cv.day}). Der nächste Tag beginnt in ${cv.secondsRemaining}s.`,
-    );
+  if (isLocked(game)) {
+    throw new Error(`Der neue Tag beginnt in ${clockView(game).secondsRemaining}s — ruh dich noch aus.`);
+  }
+  if (mustRest(game)) {
+    throw new Error("Es ist tief in der Nacht — du bist erschöpft. Suche einen Schlafplatz (Rasten), um den Tag zu beenden.");
   }
 }
 
@@ -250,6 +274,9 @@ function buildContext(game, { kind, playerAction, checkResult, recruitTarget, ac
     canonOffer: game.world.canonOffer || null,
     world: {
       day: game.world.day,
+      tageszeit: phaseFor(game.world.clock.hour).label,
+      uhrzeit: clockView(game).hourLabel,
+      istNacht: phaseFor(game.world.clock.hour).id === "nacht",
       location: game.world.location,
       locationName: game.world.locationName,
       locationType: LOCATIONS[game.world.location]?.type || "",
@@ -337,8 +364,9 @@ function applyGmResponse(game, gm, turnInfo) {
   // Angebot, einer kanonischen Crew beizutreten (von der KI eingestreut)
   if (gm.canonOffer) game.world.canonOffer = gm.canonOffer;
 
-  // Szene
-  game.scene = { narration: gm.narration, choices: gm.choices };
+  // Szene (inkl. Key-Moment-Panels)
+  const keyPanels = (gm.panels || []).map((p) => momentPanel(p.kind, p.caption));
+  game.scene = { narration: gm.narration, choices: gm.choices, panels: keyPanels };
   game.recruitable = gm.recruitable;
   game.lastCheck = turnInfo?.checkResult || null;
 

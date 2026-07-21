@@ -2,16 +2,26 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>A One Piece Story</title>
+    <meta name="theme-color" content="#0e1726" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="One Piece Story" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="icon" href="/icon-192.png" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="topbar">
-      <div class="brand">🏴‍☠️ A One Piece Story</div>
+      <button id="menuToggle" class="hamburger" aria-label="Menü öffnen">☰</button>
+      <div class="brand">🏴‍☠️ <span class="brand-full">A One Piece Story</span></div>
       <div class="era" id="eraLabel"></div>
       <div class="provider" id="providerBadge"></div>
     </header>
+    <div id="drawerOverlay" class="drawer-overlay"></div>
 
     <!-- Startbildschirm / Charaktererstellung -->
     <main id="screen-create" class="screen">
@@ -69,6 +79,7 @@
           <div id="dayBar" class="day-bar"></div>
 
           <div id="storyLog" class="story-log"></div>
+          <div id="keyPanels" class="key-panels"></div>
           <div id="checkBanner" class="check-banner hidden"></div>
 
           <!-- Kampf-Overlay (nur während eines Kampfes sichtbar) -->

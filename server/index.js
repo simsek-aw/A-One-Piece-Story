@@ -12,6 +12,7 @@ import {
   doEatFruit,
   doCombatAction,
   doJoinCanon,
+  doRest,
   spendSkillPoint,
   currentSceneView,
 } from "./engine/turn.js";
@@ -150,6 +151,18 @@ app.post(
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const { action, targetId, skill } = req.body || {};
     const view = await doCombatAction(game, provider, { action, targetId, skill });
+    saveGame(game);
+    res.json(view);
+  }),
+);
+
+// --- Rasten / Schlafplatz suchen (beendet den Tag) ---
+app.post(
+  "/api/games/:id/rest",
+  wrap(async (req, res) => {
+    const game = loadGame(req.params.id);
+    if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
+    const view = await doRest(game, provider);
     saveGame(game);
     res.json(view);
   }),

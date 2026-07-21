@@ -76,7 +76,22 @@ export class MockProvider {
     if (context.kind === "eat_fruit") return this.eatFruitScene(context);
     if (context.kind === "combat_end") return this.combatEndScene(context);
     if (context.kind === "canon_join") return this.canonJoinScene(context);
+    if (context.kind === "rest") return this.restScene(context);
     return this.turnScene(context);
+  }
+
+  restScene(context) {
+    return {
+      narration:
+        `${context.playerAction}\n\n` +
+        `Die Nacht senkt sich über ${context.world.locationName}. Für einen Moment ist die Welt still — ` +
+        `dann bricht ein neuer ${context.world.tageszeit || "Morgen"} an.`,
+      choices: this.genericChoices(context),
+      stateChanges: this.emptyChanges(),
+      npcs: [],
+      recruitable: [],
+      panels: [{ kind: "nacht", caption: `Nachtruhe in ${context.world.locationName}` }],
+    };
   }
 
   canonJoinScene(context) {
@@ -93,6 +108,7 @@ export class MockProvider {
       stateChanges: this.emptyChanges(),
       npcs: [],
       recruitable: [],
+      panels: r.success ? [{ kind: "crew", caption: `Aufnahme bei ${r.crew}` }] : [],
     };
   }
 
@@ -104,12 +120,14 @@ export class MockProvider {
         : r === "flucht"
           ? "Mit pochendem Herzen brichst du durch und lässt die Angreifer hinter dir. Fürs Erste bist du entkommen."
           : "Ein letzter Treffer, dann wird alles schwarz. Später erwachst du geschwächt an einem stillen Ort — am Leben, aber gezeichnet.";
+    const panels = r === "sieg" ? [{ kind: "sieg", caption: "Sieg!" }] : [];
     return {
       narration: txt + "\n\n" + context.combatResult?.summary + "\n\nWie geht es weiter?",
       choices: this.genericChoices(context),
       stateChanges: this.emptyChanges(),
       npcs: [],
       recruitable: [],
+      panels,
     };
   }
 
@@ -189,6 +207,7 @@ export class MockProvider {
       stateChanges: this.emptyChanges(),
       npcs: [{ id: npc.id, name: npc.name, role: npc.role, disposition: 0, note: "Zum ersten Mal getroffen." }],
       recruitable: [],
+      panels: [{ kind: "ankunft", caption: `${context.world.locationName} — ein neuer Anfang` }],
     };
   }
 
@@ -315,12 +334,19 @@ export class MockProvider {
       extra.shipAcquired = { name: shipName };
     }
 
+    // Key-Moment-Panel für Schlüsselmomente
+    let panels = [];
+    if (extra.combatStart) panels = [{ kind: "duell", caption: "Es kommt zum Kampf!" }];
+    else if (extra.devilFruitFound) panels = [{ kind: "enthuellung", caption: "Eine geheimnisvolle Frucht" }];
+    else if (chance(0.12)) panels = [{ kind: "spannung", caption: "Alle Blicke richten sich auf dich." }];
+
     return {
       narration: parts.join("\n\n") + "\n\nWie gehst du vor?",
       choices: this.genericChoices(context),
       stateChanges: changes,
       npcs,
       recruitable,
+      panels,
       ...extra,
     };
   }
@@ -334,6 +360,7 @@ export class MockProvider {
         : `${t.name} schüttelt den Kopf. „Schöne Worte. Aber die reichen mir nicht. Vielleicht ein andermal.“`,
       choices: this.genericChoices(context),
       stateChanges: { ...this.emptyChanges(), xpDelta: ok ? 25 : 5 },
+      panels: [],
       npcs: [
         {
           id: t.id,

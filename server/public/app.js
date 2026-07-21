@@ -175,6 +175,7 @@ function enterGame(view) {
 
 async function post(path, body, actionLabel) {
   $("#turnError").textContent = "";
+  closeDrawer(); // auf Mobil: Menü schließen, damit man die Szene sieht
   if (actionLabel) storyBuffer.push({ type: "action", text: "› " + actionLabel });
   try {
     const view = await api(`/api/games/${state.gameId}${path}`, { method: "POST", body: JSON.stringify(body) });
@@ -249,6 +250,7 @@ function renderScene(view) {
 
   renderDayBar(view);
   renderNews(view);
+  renderKeyPanels(view);
   renderCombat(view);
   renderChoices(view);
   renderRecruit(view);
@@ -268,29 +270,54 @@ function renderScene(view) {
 function locked(view) {
   return !!view.clock?.locked;
 }
+// Aktionen blockiert, wenn Echtzeit-Sperre ODER Erschöpfung (muss rasten) ODER Kampf.
+function actionsBlocked(view) {
+  return !!view.clock?.locked || !!view.clock?.mustRest || inCombat(view);
+}
 
 function renderDayBar(view) {
   const bar = $("#dayBar");
   const c = view.clock;
   clearInterval(state.clockTimer);
+
   if (c.locked) {
+    // Optionaler Echtzeit-Takt zwischen Tagen (Multiplayer): Countdown.
     bar.className = "day-bar locked";
     let remaining = c.secondsRemaining;
-    const paint = () => {
-      bar.innerHTML = `🌙 <b>Tag ${c.day} vorbei.</b> Ruh dich aus, Käpt'n — der neue Tag beginnt in <b>${remaining}s</b>.`;
-    };
+    const paint = () => { bar.innerHTML = `🌙 <b>Neuer Tag in ${remaining}s</b> — ruh dich aus, Käpt'n.`; };
     paint();
     state.clockTimer = setInterval(() => {
       remaining -= 1;
-      if (remaining <= 0) {
-        clearInterval(state.clockTimer);
-        refreshView(); // Server startet beim Laden den neuen Tag
-      } else paint();
+      if (remaining <= 0) { clearInterval(state.clockTimer); refreshView(); }
+      else paint();
     }, 1000);
-  } else {
-    bar.className = "day-bar";
-    bar.innerHTML = `☀️ <b>Tag ${c.day}</b> · Aktionen heute: <b>${c.actionsRemaining}/${c.actionsPerDay}</b>`;
+    return;
   }
+
+  bar.className = "day-bar" + (c.mustRest ? " locked" : "");
+  const info = el("span", null,
+    `${c.phaseEmoji} <b>Tag ${c.day}</b> · ${c.phaseLabel} <span class="uhr">${c.hourLabel}</span>` +
+    (c.mustRest ? ` · <span class="warn">erschöpft — du musst rasten</span>` : c.isNight ? ` · <span class="hint">es ist Nacht</span>` : ""));
+  bar.innerHTML = "";
+  bar.appendChild(info);
+  const rest = el("button", "rest-btn" + (c.mustRest || c.isNight ? " urgent" : ""), "🌙 Rasten / Schlafplatz");
+  rest.disabled = inCombat(view);
+  rest.onclick = () => post("/rest", {}, "Ich suche einen Schlafplatz und beende den Tag.");
+  bar.appendChild(rest);
+}
+
+function renderKeyPanels(view) {
+  const wrap = $("#keyPanels");
+  wrap.innerHTML = "";
+  const panels = view.scene?.panels || [];
+  panels.forEach((p) => {
+    const fig = el("figure", "key-panel");
+    const img = el("img");
+    img.src = p.src; img.alt = p.caption || "";
+    fig.appendChild(img);
+    if (p.caption) fig.appendChild(el("figcaption", null, escapeHtml(p.caption)));
+    wrap.appendChild(fig);
+  });
 }
 
 function inCombat(view) {
@@ -306,7 +333,7 @@ function renderChoices(view) {
     $("#freeForm").querySelector("button").disabled = true;
     return;
   }
-  const isLocked = locked(view);
+  const isLocked = actionsBlocked(view);
   (view.scene?.choices || []).forEach((c) => {
     const badge = c.skillCheck ? `<span class="c-check">${c.skillCheck.skill} · DC ${c.skillCheck.dc}</span>` : "";
     const node = el("button", "choice", escapeHtml(c.text) + badge);
@@ -322,7 +349,7 @@ function renderRecruit(view) {
   const rb = $("#recruitBox");
   const rl = $("#recruitList");
   rl.innerHTML = "";
-  if (view.recruitable?.length && !locked(view)) {
+  if (view.recruitable?.length && !actionsBlocked(view)) {
     view.recruitable.forEach((r) => {
       const row = el("div", "recruit-item", `<div class="r-info">${escapeHtml(r.name)} <small>${escapeHtml(r.role)} — ${escapeHtml(r.reason)}</small></div>`);
       const btn = el("button", null, "Überzeugen");
@@ -468,7 +495,7 @@ function renderSidebar(view) {
   if (c.inventory?.length) {
     c.inventory.forEach((it) => {
       const row = el("div", "li", `${escapeHtml(it.name)}${it.anzahl > 1 ? " ×" + it.anzahl : ""}`);
-      if (it.kind === "teufelsfrucht" && !c.devilFruit && !locked(view)) {
+      if (it.kind === "teufelsfrucht" && !c.devilFruit && !inCombat(view)) {
         const eat = el("button", "mini", "Essen");
         eat.title = "Achtung: unumkehrbar, du kannst danach nicht mehr schwimmen!";
         eat.onclick = () => post("/eat-fruit", { fruitId: it.fruitId }, `Ich esse die ${it.name}.`);
@@ -508,7 +535,7 @@ function renderMap(view) {
 function renderTravel(view) {
   const list = $("#travelList");
   list.innerHTML = "";
-  const isLocked = locked(view);
+  const isLocked = actionsBlocked(view);
   (view.travelOptions || []).forEach((o) => {
     const cost = o.hasShip ? "eigenes Schiff" : `${o.passageCost} Ⓑ`;
     const btn = el("button", "chip", `${escapeHtml(o.name)} · ${o.days}T · ${cost}`);
@@ -523,7 +550,7 @@ function renderTravel(view) {
 function renderActivities(view) {
   const list = $("#activityList");
   list.innerHTML = "";
-  const isLocked = locked(view);
+  const isLocked = actionsBlocked(view);
   state.meta.activities.forEach((a) => {
     const btn = el("button", "chip", escapeHtml(a.name));
     btn.title = a.desc + (a.requiresLocationType ? ` (nur an: ${a.requiresLocationType.join("/")})` : "");
@@ -538,7 +565,7 @@ function renderSkillAlloc(view) {
   const alloc = $("#skillAlloc");
   const points = view.character.unspentSkillPoints || 0;
   alloc.innerHTML = "";
-  if (points > 0 && !locked(view)) {
+  if (points > 0 && !actionsBlocked(view)) {
     hint.textContent = `★ ${points} freie(r) Skillpunkt(e) — wähle eine Fertigkeit:`;
     hint.classList.remove("hidden");
     state.meta.creation.skills.forEach((s) => {
@@ -574,7 +601,7 @@ function renderCanon(view) {
   const offerEl = $("#canonOffer");
   const listEl = $("#canonList");
   const aff = view.character.canonAffiliation;
-  const disabled = locked(view) || inCombat(view);
+  const disabled = actionsBlocked(view);
 
   affEl.innerHTML = aff
     ? `✅ Mitglied: <b>${escapeHtml(aff.name)}</b> (${escapeHtml(aff.rank)})${aff.marineFriendly ? " · Marine-Schutz" : aff.protection ? " · Schutz der Crew" : ""}`
@@ -642,9 +669,32 @@ function renderDenDen(view) {
 $("#freeForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const text = $("#freeText").value.trim();
-  if (!text || locked(state.view)) return;
+  if (!text || actionsBlocked(state.view)) return;
   post("/turn", { freeText: text }, text);
 });
+
+// ---------- Mobile Drawer / PWA ----------
+function openDrawer() { document.body.classList.add("drawer-open"); }
+function closeDrawer() { document.body.classList.remove("drawer-open"); }
+
+$("#menuToggle").addEventListener("click", () => document.body.classList.toggle("drawer-open"));
+$("#drawerOverlay").addEventListener("click", closeDrawer);
+
+// Touch-Gesten: nach links wischen öffnet das Menü (von rechts), nach rechts schließt.
+let _tsx = 0, _tsy = 0;
+window.addEventListener("touchstart", (e) => { const t = e.touches[0]; _tsx = t.clientX; _tsy = t.clientY; }, { passive: true });
+window.addEventListener("touchend", (e) => {
+  const t = e.changedTouches[0];
+  const dx = t.clientX - _tsx, dy = t.clientY - _tsy;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    if (dx < 0) openDrawer(); else closeDrawer();
+  }
+}, { passive: true });
+
+// Service-Worker (installierbare Web-App / Offline-Shell)
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}
 
 // ---------- Helfer ----------
 function pct(a, b) { return Math.max(0, Math.min(100, Math.round((a / (b || 1)) * 100))); }

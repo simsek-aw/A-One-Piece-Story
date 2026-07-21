@@ -6,6 +6,7 @@ import { SKILLS, applyXp } from "./character.js";
 import { applyHeat } from "./bounty.js";
 import { LOCATIONS } from "../content/map.js";
 import { newlyUnlocked } from "../content/loreArcs.js";
+import { phaseId, phaseFor } from "./clock.js";
 
 // Führt eine Aktivität aus (deterministisch) und liefert eine Zusammenfassung,
 // die der Spielleiter als Kontext ausspielt.
@@ -17,6 +18,10 @@ export function runActivity(game, activityId) {
   const loc = LOCATIONS[game.world.location];
   if (act.requiresLocationType && !act.requiresLocationType.includes(loc?.type)) {
     throw new Error(`'${act.name}' ist hier nicht möglich (falscher Ort).`);
+  }
+  if (act.phases && !act.phases.includes(phaseId(game))) {
+    const now = phaseFor(game.world.clock.hour).label;
+    throw new Error(`'${act.name}' geht jetzt (${now}) nicht — versuch es zu einer anderen Tageszeit.`);
   }
 
   c.skillProgress = c.skillProgress || {};

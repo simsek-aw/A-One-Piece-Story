@@ -45,6 +45,24 @@ folgenden Punkte bauen darauf auf.
       außerhalb der Spieler-Bubble + eigenem Kopfgeld/Crew; als Kontext an den
       Spielleiter übergeben, damit er die große Welt einwebt.
 
+## Erledigt (Ausbaustufe 7)
+
+- [x] Immersiver Tagesablauf mit Tageszeit-System statt „1 Aktion/Tag":
+      Stunden-Uhr mit Phasen (Morgen/Mittag/Nachmittag/Abend/Nacht), mehrere
+      Aktionen pro Tag, zeitkostende Handlungen. Zeitfenster für Aktivitäten
+      (Dojo/Marine-Drill/Bücherwurm tagsüber, Unterwelt abends/nachts,
+      Arbeiten mittags–abends). Nachts erzwungenes Rasten; „Rasten"-Aktion
+      (Gasthaus gegen Beri = volle Heilung, oder Freiluft = Teilheilung + Heat)
+      startet den nächsten Morgen.
+- [x] Key-Moment-Panels: gezeichnete Manga/Anime-Panels für Schlüsselmomente
+      (Ankunft, Spannung, Explosion, Duell, Crew, Enthüllung, Nacht, See, Sieg),
+      1–2 Panels mitten im oder am Ende des Textes; vom Spielleiter über das
+      JSON-Feld `panels` gesetzt, deterministisch als stilisiertes SVG gerendert.
+- [x] Mobile-UI + installierbare PWA: touch-freundliches Layout, Hamburger
+      oben links / Swipe-Left öffnet das Menü als Off-Canvas-Drawer,
+      `manifest.json` + Service-Worker (Offline-Shell, /api network-first),
+      App-Icons — Grundlage für späteres 2-Spieler-Handy-Multiplayer.
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen

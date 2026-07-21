@@ -45,9 +45,12 @@ richtigen Format antwortet.
   Skill-Ränge, Perks.
 - **Skill-Checks**: 1W20 + Attribut-Modifikator + Skill-Rang gegen DC,
   deterministisch von der Engine gewürfelt (nicht von der KI).
-- **Echtzeit-Tagestakt**: begrenzte Aktionen pro In-Game-Tag; der nächste Tag
-  schaltet erst nach einem echten Cooldown frei (konfigurierbar). Multiplayer-
-  freundlich, weil sich später alle denselben Takt teilen können.
+- **Tageszeit-Ablauf**: statt „1 Aktion pro Tag" hast du einen realistischen
+  Tag mit Uhr und Phasen (Morgen/Mittag/Nachmittag/Abend/Nacht). Jede Handlung
+  kostet Zeit, du machst mehrere pro Tag. Aktivitäten haben Öffnungszeiten
+  (Dojo tagsüber, Unterwelt nachts, …). Nachts musst du **rasten** — im
+  Gasthaus (Beri → volle Heilung) oder unter freiem Himmel (Teilheilung +
+  etwas Heat) — und startest in den nächsten Morgen.
 - **Kopfgeld & Marine-„Heat"**: Aktionen heben/senken beides; hohes Kopfgeld/Heat
   = mehr Ärger (häufigere, härtere Marine-Begegnungen), niedrig = ruhiger.
 - **Teufelsfrüchte**: findbar & essbar. Geben eine Fähigkeit (+Bonus auf passende
@@ -60,6 +63,10 @@ richtigen Format antwortet.
   Schiff oder bezahlte Passage. UI zeigt Position, Fortbewegungsart und Crew.
 - **Anime-Panel pro Szene**: ortsabhängige Platzhalter-Grafik (inline SVG);
   echte KI-Bild-Generierung ist als Provider-Slot vorbereitet.
+- **Key-Moment-Panels**: für Schlüsselmomente (Ankunft, Duell, Explosion,
+  Enthüllung, Crew, Sieg …) blendet der Spielleiter 1–2 gezeichnete
+  Manga/Anime-Panels mitten im oder am Ende des Textes ein — stilisiertes SVG,
+  vom Spielleiter über ein JSON-Feld gesetzt.
 - **Story-Loop**: Szene → Auswahl (mit optionalen Checks) oder Freitext →
   Fortsetzung.
 - **NPC-Gedächtnis**: Figuren merken sich Begegnungen und Entscheidungen; ihre
@@ -90,6 +97,10 @@ richtigen Format antwortet.
   nur Beginn und Ausgang werden erzählt.
 - **Kanon-Koexistenz**: Hintergrund-Ereignisse aus der One-Piece-Timeline werden
   als Gerüchte eingestreut.
+- **Mobil & installierbar (PWA)**: touch-freundliches Layout; oben links per
+  Hamburger oder per Swipe-Left öffnet sich das Menü als Off-Canvas-Drawer.
+  Als Web-App installierbar (`manifest.json` + Service-Worker mit Offline-Shell,
+  App-Icons) — Grundlage für späteres 2-Spieler-Handy-Multiplayer.
 - **Multiplayer vorbereitet**: geteilter Tages-Takt, Den-Den-Mushi- & Raum-
   Datenmodell, UI-Slots — noch ohne Echtzeit-Vernetzung (siehe Roadmap).
 - **Persistenz**: Spielstände als JSON; Fortsetzen per `?game=<id>`-Link.
