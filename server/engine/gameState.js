@@ -6,6 +6,8 @@ import { nanoid } from "nanoid";
 import { createCharacter } from "./character.js";
 import { START_LOCATIONS } from "../content/startingScenarios.js";
 import { ensureMemory } from "./memory.js";
+import { initClock } from "./clock.js";
+import { bountyTier, heatLevel } from "./bounty.js";
 
 export function createGame({ character, startLocationId, language = "de" }) {
   const location = START_LOCATIONS[startLocationId];
@@ -24,6 +26,8 @@ export function createGame({ character, startLocationId, language = "de" }) {
       day: 1, // Tage seit Rogers Hinrichtung
       location: location.id,
       locationName: location.name,
+      travelMode: "zu_fuss", // zu_fuss | passage | eigenes_schiff
+      clock: initClock(), // Echtzeit-Tagestakt (Aktionen + Cooldown)
       npcs: {},
       flags: {},
     },
@@ -38,6 +42,8 @@ export function createGame({ character, startLocationId, language = "de" }) {
     // Multiplayer-Vorbereitung: Spielstände können später an einen "room"
     // gebunden werden. Vorerst Single-Player.
     roomCode: null,
+    // Den-Den-Mushi-Nachrichten (Multiplayer mitgedacht). calls: [{from,text,day}]
+    denDen: { contacts: [], calls: [] },
   };
   ensureMemory(game);
   return game;
@@ -53,6 +59,10 @@ export function characterDigest(game) {
     hp: `${c.hp}/${c.maxHp}`,
     beri: c.beri,
     stellung: c.standing,
+    kopfgeld: `${c.bounty} Ⓑ (${bountyTier(c.bounty).label})`,
+    marineAufmerksamkeit: `${c.heat}/100 (${heatLevel(c.heat).label})`,
+    teufelsfrucht: c.devilFruit ? `${c.devilFruit.name} [${c.devilFruit.abilityTag}] — kann nicht schwimmen` : "keine",
+    schiff: c.ship ? c.ship.name : "keins",
     topSkills: Object.entries(c.skills)
       .filter(([, v]) => v > 0)
       .sort((a, b) => b[1] - a[1])

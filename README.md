@@ -45,14 +45,30 @@ richtigen Format antwortet.
   Skill-Ränge, Perks.
 - **Skill-Checks**: 1W20 + Attribut-Modifikator + Skill-Rang gegen DC,
   deterministisch von der Engine gewürfelt (nicht von der KI).
+- **Echtzeit-Tagestakt**: begrenzte Aktionen pro In-Game-Tag; der nächste Tag
+  schaltet erst nach einem echten Cooldown frei (konfigurierbar). Multiplayer-
+  freundlich, weil sich später alle denselben Takt teilen können.
+- **Kopfgeld & Marine-„Heat"**: Aktionen heben/senken beides; hohes Kopfgeld/Heat
+  = mehr Ärger (häufigere, härtere Marine-Begegnungen), niedrig = ruhiger.
+- **Teufelsfrüchte**: findbar & essbar. Geben eine Fähigkeit (+Bonus auf passende
+  Checks) und den klassischen Nachteil: nie wieder schwimmen (Schwimm-Proben
+  scheitern katastrophal).
+- **Ausbildungspfade**: Dojo, Marine-Drill, Bücherwurm (Recherche zur „Lücke in
+  der Geschichte"), Unterwelt, Arbeiten, Meditation — kosten eine Tagesaktion,
+  trainieren Skills bis zum Rang-Aufstieg, mit Nebeneffekten (Beri/Heat/Lore).
+- **Karte & Reisen**: Ortsnetz mit Koordinaten; Seereisen brauchen ein eigenes
+  Schiff oder bezahlte Passage. UI zeigt Position, Fortbewegungsart und Crew.
+- **Anime-Panel pro Szene**: ortsabhängige Platzhalter-Grafik (inline SVG);
+  echte KI-Bild-Generierung ist als Provider-Slot vorbereitet.
 - **Story-Loop**: Szene → Auswahl (mit optionalen Checks) oder Freitext →
-  Fortsetzung. Zeit vergeht in Tagen ("Episoden-Pacing").
+  Fortsetzung.
 - **NPC-Gedächtnis**: Figuren merken sich Begegnungen und Entscheidungen; ihre
   Gesinnung entwickelt sich und beeinflusst spätere Szenen.
-- **Rekrutierung**: Begleiter über einen Überzeugen-Check gewinnen; sie
-  erscheinen in deiner Crew/Party.
+- **Rekrutierung**: Begleiter über einen Überzeugen-Check gewinnen (Crew/Party).
 - **Kanon-Koexistenz**: Hintergrund-Ereignisse aus der One-Piece-Timeline werden
   als Gerüchte eingestreut.
+- **Multiplayer vorbereitet**: geteilter Tages-Takt, Den-Den-Mushi- & Raum-
+  Datenmodell, UI-Slots — noch ohne Echtzeit-Vernetzung (siehe Roadmap).
 - **Persistenz**: Spielstände als JSON; Fortsetzen per `?game=<id>`-Link.
 
 ## Projektstruktur
@@ -64,19 +80,28 @@ server/
   store.js              Persistenz (JSON-Dateien)
   content/
     lore.js             Weltwissen + Kanon-Timeline
-    startingScenarios.js Archetypen + Startorte
+    map.js              Weltkarte: Orte (Koordinaten) + Reisewege
+    startingScenarios.js Archetypen + Startorte (aus der Karte)
+    activities.js       Ausbildungs-/Fortschritts-Aktivitäten
+    devilFruits.js      Teufelsfrucht-Katalog
   engine/               Deterministischer Spielkern
     character.js        Attribute, Skills, Perks, Erstellung, Level
-    dice.js             Skill-Check-System
+    dice.js             Skill-Check-System (inkl. Schwimm-Schwäche)
+    clock.js            Echtzeit-Tagestakt (Aktionen + Cooldown)
+    bounty.js           Kopfgeld & Marine-Heat + Konsequenzen
+    progression.js      Aktivitäten anwenden (Skill-Aufstieg)
+    travel.js           Reisen zwischen Orten (Schiff/Passage)
+    devilfruit.js       Teufelsfrucht essen + Nachteile
     gameState.js        Aufbau des Spielzustands
     memory.js           NPC-Gedächtnis + Flags
     schema.js           GM-Antwort-Vertrag + Validierung + JSON-Schema
-    turn.js             Zug-Orchestrierung
+    turn.js             Zug-Orchestrierung (alle Aktionstypen)
   ai/                   KI-Schicht (austauschbar)
     provider.js         Fabrik (mock | anthropic)
     systemPrompt.js     Spielleiter-Regeln (Deutsch)
     mockProvider.js     Platzhalter-Engine
     anthropicProvider.js Echter Claude-Spielleiter
+    artProvider.js      Anime-Panel (Platzhalter-SVG, echte Bilder später)
   public/               Frontend (Vanilla JS, kein Build-Schritt)
 docs/                   Architektur, Spieldesign, Roadmap
 ```

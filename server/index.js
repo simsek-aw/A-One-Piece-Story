@@ -3,11 +3,23 @@ import express from "express";
 import { config, PUBLIC_DIR } from "./config.js";
 import { loadGame, saveGame } from "./store.js";
 import { createGame } from "./engine/gameState.js";
-import { startScene, playTurn, attemptRecruit, currentSceneView } from "./engine/turn.js";
+import {
+  startScene,
+  playTurn,
+  attemptRecruit,
+  doActivity,
+  doTravel,
+  doEatFruit,
+  currentSceneView,
+} from "./engine/turn.js";
 import { createProvider, activeProviderName } from "./ai/provider.js";
 import { listArchetypes, listStartLocations } from "./content/startingScenarios.js";
 import { creationRules } from "./engine/character.js";
 import { ERA } from "./content/lore.js";
+import { locationsForMap, mapEdges } from "./content/map.js";
+import { listActivities } from "./content/activities.js";
+import { listDevilFruits } from "./content/devilFruits.js";
+import { clockConfig } from "./engine/clock.js";
 
 const app = express();
 app.use(express.json({ limit: "256kb" }));
@@ -33,6 +45,10 @@ app.get(
       archetypes: listArchetypes(),
       startLocations: listStartLocations(),
       creation: creationRules(),
+      map: { locations: locationsForMap(), edges: mapEdges() },
+      activities: listActivities(),
+      devilFruits: listDevilFruits(),
+      clock: clockConfig(),
     });
   }),
 );
@@ -80,6 +96,42 @@ app.post(
     if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
     const { npcId } = req.body || {};
     const view = await attemptRecruit(game, provider, { npcId });
+    saveGame(game);
+    res.json(view);
+  }),
+);
+
+// --- Ausbildungs-/Fortschritts-Aktivität ---
+app.post(
+  "/api/games/:id/activity",
+  wrap(async (req, res) => {
+    const game = loadGame(req.params.id);
+    if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
+    const view = await doActivity(game, provider, { activityId: req.body?.activityId });
+    saveGame(game);
+    res.json(view);
+  }),
+);
+
+// --- Reise zu einem verbundenen Ort ---
+app.post(
+  "/api/games/:id/travel",
+  wrap(async (req, res) => {
+    const game = loadGame(req.params.id);
+    if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
+    const view = await doTravel(game, provider, { destId: req.body?.destId });
+    saveGame(game);
+    res.json(view);
+  }),
+);
+
+// --- Teufelsfrucht essen ---
+app.post(
+  "/api/games/:id/eat-fruit",
+  wrap(async (req, res) => {
+    const game = loadGame(req.params.id);
+    if (!game) return res.status(404).json({ error: "Spielstand nicht gefunden." });
+    const view = await doEatFruit(game, provider, { fruitId: req.body?.fruitId });
     saveGame(game);
     res.json(view);
   }),

@@ -1,5 +1,4 @@
-// Frontend-Logik (Vanilla JS, ES-Module). Redet nur über /api mit dem Server;
-// jegliche Spiellogik liegt serverseitig.
+// Frontend-Logik (Vanilla JS, ES-Module). Redet nur über /api mit dem Server.
 
 const $ = (sel) => document.querySelector(sel);
 const el = (tag, cls, html) => {
@@ -14,15 +13,14 @@ const state = {
   sel: { archetype: null, perk: null, location: null },
   attrs: {},
   gameId: null,
+  view: null,
+  clockTimer: null,
 };
 
 async function api(path, opts = {}) {
   showLoading(true);
   try {
-    const res = await fetch(path, {
-      headers: { "Content-Type": "application/json" },
-      ...opts,
-    });
+    const res = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Serverfehler");
     return data;
@@ -30,7 +28,6 @@ async function api(path, opts = {}) {
     showLoading(false);
   }
 }
-
 function showLoading(on) {
   $("#loading").classList.toggle("hidden", !on);
 }
@@ -43,7 +40,6 @@ async function init() {
   $("#eraLabel").textContent = state.meta.era.label;
   $("#providerBadge").textContent = "Spielleiter: " + state.meta.provider;
 
-  // Fortsetzen, falls ?game=... in der URL steht.
   const params = new URLSearchParams(location.search);
   const existing = params.get("game");
   if (existing) {
@@ -60,21 +56,15 @@ async function init() {
 
 // ---------- Charaktererstellung ----------
 function buildCreation() {
-  // Archetypen
   const aList = $("#archetypeList");
   aList.innerHTML = "";
   state.meta.archetypes.forEach((a) => {
     const bonus = Object.entries(a.attributeBonus).map(([k, v]) => `+${v} ${k}`).join(", ");
-    const node = el(
-      "button",
-      "option",
-      `<div class="o-title">${a.name}</div><div class="o-sub">${a.tagline}<br><em>${bonus}</em></div>`,
-    );
+    const node = el("button", "option", `<div class="o-title">${a.name}</div><div class="o-sub">${a.tagline}<br><em>${bonus}</em></div>`);
     node.onclick = () => select("archetype", a.id, aList, node);
     aList.appendChild(node);
   });
 
-  // Attribute (Point-Buy)
   const c = state.meta.creation;
   state.attrs = {};
   c.attributes.forEach((attr) => (state.attrs[attr.id] = c.baseAttribute));
@@ -96,7 +86,6 @@ function buildCreation() {
   });
   updateAttrUI();
 
-  // Perks
   const pList = $("#perkList");
   pList.innerHTML = "";
   const none = el("button", "option", `<div class="o-title">Keiner</div><div class="o-sub">Ohne Talent starten.</div>`);
@@ -108,7 +97,6 @@ function buildCreation() {
     pList.appendChild(node);
   });
 
-  // Startorte
   const lList = $("#locationList");
   lList.innerHTML = "";
   state.meta.startLocations.forEach((loc) => {
@@ -125,12 +113,10 @@ function select(key, value, container, node) {
   [...container.children].forEach((c) => c.classList.remove("selected"));
   node.classList.add("selected");
 }
-
 function spentPoints() {
   const c = state.meta.creation;
   return Object.values(state.attrs).reduce((s, v) => s + (v - c.baseAttribute), 0);
 }
-
 function changeAttr(id, delta) {
   const c = state.meta.creation;
   const next = state.attrs[id] + delta;
@@ -139,7 +125,6 @@ function changeAttr(id, delta) {
   state.attrs[id] = next;
   updateAttrUI();
 }
-
 function updateAttrUI() {
   const c = state.meta.creation;
   const remaining = c.pointsToDistribute - spentPoints();
@@ -160,19 +145,12 @@ async function startGame() {
   if (!name) return (err.textContent = "Bitte einen Namen eingeben.");
   if (!state.sel.archetype) return (err.textContent = "Bitte eine Herkunft wählen.");
   if (!state.sel.location) return (err.textContent = "Bitte einen Startort wählen.");
-  if (spentPoints() !== state.meta.creation.pointsToDistribute)
-    return (err.textContent = "Bitte alle Attributpunkte verteilen.");
-
+  if (spentPoints() !== state.meta.creation.pointsToDistribute) return (err.textContent = "Bitte alle Attributpunkte verteilen.");
   try {
     const view = await api("/api/games", {
       method: "POST",
       body: JSON.stringify({
-        character: {
-          name,
-          archetype: state.sel.archetype,
-          attributes: state.attrs,
-          perk: state.sel.perk,
-        },
+        character: { name, archetype: state.sel.archetype, attributes: state.attrs, perk: state.sel.perk },
         startLocationId: state.sel.location,
       }),
     });
@@ -191,45 +169,49 @@ function enterGame(view) {
   $("#screen-create").classList.add("hidden");
   $("#screen-game").classList.remove("hidden");
   storyBuffer = [];
-  renderScene(view, { fresh: true });
+  renderScene(view);
 }
 
-async function sendTurn(payload) {
+async function post(path, body, actionLabel) {
   $("#turnError").textContent = "";
+  if (actionLabel) storyBuffer.push({ type: "action", text: "› " + actionLabel });
   try {
-    const view = await api(`/api/games/${state.gameId}/turn`, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    const view = await api(`/api/games/${state.gameId}${path}`, { method: "POST", body: JSON.stringify(body) });
     renderScene(view);
   } catch (e) {
     $("#turnError").textContent = e.message;
+    // Aktion nicht ausgeführt -> Zeile wieder entfernen
+    if (actionLabel) storyBuffer.pop();
+    renderScene(state.view); // nur neu zeichnen
   }
 }
 
-async function doRecruit(npcId) {
-  $("#turnError").textContent = "";
+async function refreshView() {
   try {
-    const view = await api(`/api/games/${state.gameId}/recruit`, {
-      method: "POST",
-      body: JSON.stringify({ npcId }),
-    });
+    const view = await api(`/api/games/${state.gameId}`);
     renderScene(view);
-  } catch (e) {
-    $("#turnError").textContent = e.message;
-  }
+  } catch {}
 }
 
-function renderScene(view, { fresh } = {}) {
-  // Story-Log: aktuelle Erzählung anhängen.
-  if (view.scene?.narration) {
+function renderScene(view) {
+  if (!view) return;
+  state.view = view;
+
+  // Panel
+  if (view.panel?.src) {
+    $("#panelImg").src = view.panel.src;
+    $("#panelImg").alt = view.panel.alt || "";
+    $("#panelCaption").textContent = view.panel.caption || "";
+  }
+
+  // Story-Log (nur bei neuer Erzählung anhängen)
+  if (view.scene?.narration && storyBuffer[storyBuffer.length - 1]?.text !== view.scene.narration) {
     storyBuffer.push({ type: "narration", text: view.scene.narration });
   }
   const log = $("#storyLog");
   log.innerHTML = "";
   storyBuffer.slice(-12).forEach((e, i, arr) => {
-    const node = el("div", `entry ${e.type}${i === arr.length - 1 ? " latest" : ""}`, escapeHtml(e.text));
-    log.appendChild(node);
+    log.appendChild(el("div", `entry ${e.type}${i === arr.length - 1 ? " latest" : ""}`, escapeHtml(e.text)));
   });
   log.lastChild?.scrollIntoView({ behavior: "smooth", block: "end" });
 
@@ -238,56 +220,89 @@ function renderScene(view, { fresh } = {}) {
   if (view.lastCheck) {
     const k = view.lastCheck;
     cb.className = "check-banner " + (k.success ? "ok" : "bad");
-    cb.textContent =
-      `🎲 ${k.skillName}: Wurf ${k.roll} + Attribut ${signed(k.attrMod)} + Rang ${k.rank} = ${k.total} gegen DC ${k.dc} → ` +
-      (k.kritErfolg ? "KRITISCHER ERFOLG!" : k.kritFehler ? "KRITISCHER PATZER!" : k.success ? "Erfolg" : "Misserfolg");
+    cb.textContent = k.teufelsfruchtSchwaeche
+      ? `🌀 Teufelsfrucht-Schwäche: Du kannst nicht schwimmen — der Versuch scheitert katastrophal.`
+      : `🎲 ${k.skillName}: ${k.roll} + Attr ${signed(k.attrMod)} + Rang ${k.rank}${k.dfBonus ? " + Frucht " + k.dfBonus : ""} = ${k.total} vs DC ${k.dc} → ` +
+        (k.kritErfolg ? "KRITISCHER ERFOLG!" : k.kritFehler ? "KRITISCHER PATZER!" : k.success ? "Erfolg" : "Misserfolg");
     cb.classList.remove("hidden");
-  } else {
-    cb.classList.add("hidden");
-  }
+  } else cb.classList.add("hidden");
 
-  // Level-Ups
   if (view.lastLevelUps?.length) {
-    storyBuffer.push({ type: "action", text: `★ Levelaufstieg! Du bist jetzt Stufe ${view.lastLevelUps.at(-1).level}.` });
+    const lvl = view.lastLevelUps.at(-1).level;
+    if (storyBuffer.at(-1)?.text !== `★ Levelaufstieg! Stufe ${lvl}.`)
+      storyBuffer.push({ type: "action", text: `★ Levelaufstieg! Stufe ${lvl}.` });
   }
 
-  // Auswahlmöglichkeiten
+  renderDayBar(view);
+  renderChoices(view);
+  renderRecruit(view);
+  renderSidebar(view);
+  renderMap(view);
+  renderTravel(view);
+  renderActivities(view);
+  renderDenDen(view);
+
+  $("#shareLink").value = `${location.origin}${location.pathname}?game=${view.gameId}`;
+  $("#freeText").value = "";
+}
+
+function locked(view) {
+  return !!view.clock?.locked;
+}
+
+function renderDayBar(view) {
+  const bar = $("#dayBar");
+  const c = view.clock;
+  clearInterval(state.clockTimer);
+  if (c.locked) {
+    bar.className = "day-bar locked";
+    let remaining = c.secondsRemaining;
+    const paint = () => {
+      bar.innerHTML = `🌙 <b>Tag ${c.day} vorbei.</b> Ruh dich aus, Käpt'n — der neue Tag beginnt in <b>${remaining}s</b>.`;
+    };
+    paint();
+    state.clockTimer = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(state.clockTimer);
+        refreshView(); // Server startet beim Laden den neuen Tag
+      } else paint();
+    }, 1000);
+  } else {
+    bar.className = "day-bar";
+    bar.innerHTML = `☀️ <b>Tag ${c.day}</b> · Aktionen heute: <b>${c.actionsRemaining}/${c.actionsPerDay}</b>`;
+  }
+}
+
+function renderChoices(view) {
   const choices = $("#choices");
   choices.innerHTML = "";
+  const isLocked = locked(view);
   (view.scene?.choices || []).forEach((c) => {
     const badge = c.skillCheck ? `<span class="c-check">${c.skillCheck.skill} · DC ${c.skillCheck.dc}</span>` : "";
     const node = el("button", "choice", escapeHtml(c.text) + badge);
-    node.onclick = () => {
-      storyBuffer.push({ type: "action", text: "› " + c.text });
-      sendTurn({ choiceId: c.id });
-    };
+    node.disabled = isLocked;
+    node.onclick = () => post("/turn", { choiceId: c.id }, c.text);
     choices.appendChild(node);
   });
+  $("#freeText").disabled = isLocked;
+  $("#freeForm").querySelector("button").disabled = isLocked;
+}
 
-  // Rekrutierung
+function renderRecruit(view) {
   const rb = $("#recruitBox");
   const rl = $("#recruitList");
   rl.innerHTML = "";
-  if (view.recruitable?.length) {
+  if (view.recruitable?.length && !locked(view)) {
     view.recruitable.forEach((r) => {
       const row = el("div", "recruit-item", `<div class="r-info">${escapeHtml(r.name)} <small>${escapeHtml(r.role)} — ${escapeHtml(r.reason)}</small></div>`);
       const btn = el("button", null, "Überzeugen");
-      btn.onclick = () => {
-        storyBuffer.push({ type: "action", text: `› Ich versuche, ${r.name} zu rekrutieren.` });
-        doRecruit(r.id);
-      };
+      btn.onclick = () => post("/recruit", { npcId: r.id }, `Ich versuche, ${r.name} zu rekrutieren.`);
       row.appendChild(btn);
       rl.appendChild(row);
     });
     rb.classList.remove("hidden");
-  } else {
-    rb.classList.add("hidden");
-  }
-
-  renderSidebar(view);
-
-  $("#shareLink").value = `${location.origin}${location.pathname}?game=${view.gameId}`;
-  $("#freeText").value = "";
+  } else rb.classList.add("hidden");
 }
 
 function renderSidebar(view) {
@@ -300,31 +315,36 @@ function renderSidebar(view) {
   const xpNext = 100 * c.level;
   $("#xpBar").style.width = pct(c.xp, xpNext) + "%";
   $("#xpText").textContent = `${c.xp}/${xpNext}`;
+  $("#heatBar").style.width = pct(c.heat, 100) + "%";
+  $("#heatText").textContent = `${c.heat}`;
 
   const st = c.standing;
   $("#standing").textContent =
     st.typ === "marine_rang" ? `Marine-Rang: ${st.wert}` :
-    st.typ === "kopfgeld" ? `Kopfgeld: ${st.kopfgeld} Ⓑ (${st.wert})` :
-    `Ruf: ${st.wert}`;
+    st.typ === "ruf" ? `Ruf: ${st.wert}` : `Status: ${c.bountyTier.label}`;
+  $("#bounty").innerHTML = `💰 Kopfgeld: <b>${c.bounty.toLocaleString("de-DE")} Ⓑ</b> <span class="tier t${c.bountyTier.level}">${c.bountyTier.label}</span> · Marine: ${c.heatLevel.label}`;
+
+  $("#devilfruit").innerHTML = c.devilFruit
+    ? `🍇 Teufelsfrucht: <b>${escapeHtml(c.devilFruit.name)}</b> (${c.devilFruit.type}) — <span class="warn">kann nicht schwimmen</span>`
+    : "";
+  $("#shipLine").innerHTML = c.ship ? `⛵ Schiff: <b>${escapeHtml(c.ship.name)}</b>` : "";
 
   const attrs = $("#attrs");
   attrs.innerHTML = "";
-  Object.entries(c.attributes).forEach(([k, v]) => {
-    attrs.appendChild(el("div", "s-row", `<span>${k}</span><b>${v}</b>`));
-  });
+  Object.entries(c.attributes).forEach(([k, v]) => attrs.appendChild(el("div", "s-row", `<span>${k}</span><b>${v}</b>`)));
 
   const skills = $("#skills");
   skills.innerHTML = "";
   Object.entries(c.skills).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).forEach(([k, v]) => {
-    skills.appendChild(el("div", "s-row", `<span>${k}</span><b>${v}</b>`));
+    const prog = c.skillProgress?.[k] ? ` <small>(+${c.skillProgress[k]}/3)</small>` : "";
+    skills.appendChild(el("div", "s-row", `<span>${k}</span><b>${v}${prog}</b>`));
   });
   if (!skills.children.length) skills.textContent = "—";
 
   const party = $("#party");
   party.innerHTML = "";
-  if (view.party?.length) {
-    view.party.forEach((p) => party.appendChild(el("div", "li", `${escapeHtml(p.name)}<small>${escapeHtml(p.role)} · Loyalität ${p.loyalty ?? "?"}</small>`)));
-  } else party.textContent = "Noch niemand.";
+  if (view.party?.length) view.party.forEach((p) => party.appendChild(el("div", "li", `${escapeHtml(p.name)}<small>${escapeHtml(p.role)} · Loyalität ${p.loyalty ?? "?"}</small>`)));
+  else party.textContent = "Noch niemand.";
 
   const mem = $("#memory");
   mem.innerHTML = "";
@@ -337,20 +357,90 @@ function renderSidebar(view) {
     });
   } else mem.textContent = "Noch keine Bekanntschaften.";
 
-  $("#beri").textContent = c.beri;
+  $("#beri").textContent = c.beri.toLocaleString("de-DE");
   const inv = $("#inventory");
   inv.innerHTML = "";
   if (c.inventory?.length) {
-    c.inventory.forEach((it) => inv.appendChild(el("div", "li", `${escapeHtml(it.name)}${it.anzahl > 1 ? " ×" + it.anzahl : ""}`)));
+    c.inventory.forEach((it) => {
+      const row = el("div", "li", `${escapeHtml(it.name)}${it.anzahl > 1 ? " ×" + it.anzahl : ""}`);
+      if (it.kind === "teufelsfrucht" && !c.devilFruit && !locked(view)) {
+        const eat = el("button", "mini", "Essen");
+        eat.title = "Achtung: unumkehrbar, du kannst danach nicht mehr schwimmen!";
+        eat.onclick = () => post("/eat-fruit", { fruitId: it.fruitId }, `Ich esse die ${it.name}.`);
+        row.appendChild(eat);
+      }
+      inv.appendChild(row);
+    });
   } else inv.textContent = "Leer.";
+}
+
+function renderMap(view) {
+  const map = state.meta.map;
+  const cur = view.locationId;
+  const wrap = $("#mapWrap");
+  const modeIcon = { zu_fuss: "🚶 zu Fuß", passage: "🛳️ Passagier", eigenes_schiff: "⛵ eigenes Schiff" }[view.travelMode] || view.travelMode;
+  $("#travelModeLabel").textContent = modeIcon;
+
+  const W = 260, H = 200;
+  const px = (x) => (x / 100) * (W - 30) + 15;
+  const py = (y) => (y / 100) * (H - 30) + 15;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="map-svg">`;
+  map.edges.forEach((e) => {
+    const a = map.locations.find((l) => l.id === e.from);
+    const b = map.locations.find((l) => l.id === e.to);
+    if (!a || !b) return;
+    svg += `<line x1="${px(a.x)}" y1="${py(a.y)}" x2="${px(b.x)}" y2="${py(b.y)}" class="map-edge" />`;
+  });
+  map.locations.forEach((l) => {
+    const isCur = l.id === cur;
+    svg += `<circle cx="${px(l.x)}" cy="${py(l.y)}" r="${isCur ? 7 : 4}" class="map-node ${isCur ? "cur" : ""}" />`;
+    svg += `<text x="${px(l.x)}" y="${py(l.y) - 9}" class="map-label ${isCur ? "cur" : ""}">${escapeHtml(l.name)}</text>`;
+  });
+  svg += `</svg>`;
+  wrap.innerHTML = svg;
+}
+
+function renderTravel(view) {
+  const list = $("#travelList");
+  list.innerHTML = "";
+  const isLocked = locked(view);
+  (view.travelOptions || []).forEach((o) => {
+    const cost = o.hasShip ? "eigenes Schiff" : `${o.passageCost} Ⓑ`;
+    const btn = el("button", "chip", `${escapeHtml(o.name)} · ${o.days}T · ${cost}`);
+    btn.disabled = isLocked || !o.affordable;
+    if (!o.affordable) btn.title = "Passage zu teuer";
+    btn.onclick = () => post("/travel", { destId: o.to }, `Ich reise nach ${o.name}.`);
+    list.appendChild(btn);
+  });
+  if (!list.children.length) list.textContent = "Keine Verbindungen.";
+}
+
+function renderActivities(view) {
+  const list = $("#activityList");
+  list.innerHTML = "";
+  const isLocked = locked(view);
+  state.meta.activities.forEach((a) => {
+    const btn = el("button", "chip", escapeHtml(a.name));
+    btn.title = a.desc + (a.requiresLocationType ? ` (nur an: ${a.requiresLocationType.join("/")})` : "");
+    btn.disabled = isLocked;
+    btn.onclick = () => post("/activity", { activityId: a.id }, a.name);
+    list.appendChild(btn);
+  });
+}
+
+function renderDenDen(view) {
+  const dd = $("#denden");
+  dd.innerHTML = "";
+  const calls = view.denDen?.calls || [];
+  if (calls.length) calls.slice(-6).forEach((c) => dd.appendChild(el("div", "li", `${escapeHtml(c.from)}: ${escapeHtml(c.text)}`)));
+  else dd.innerHTML = `<div class="hint">Noch still. (Multiplayer-Kanal ist vorbereitet — hier erscheinen später Anrufe anderer Spieler.)</div>`;
 }
 
 $("#freeForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const text = $("#freeText").value.trim();
-  if (!text) return;
-  storyBuffer.push({ type: "action", text: "› " + text });
-  sendTurn({ freeText: text });
+  if (!text || locked(state.view)) return;
+  post("/turn", { freeText: text }, text);
 });
 
 // ---------- Helfer ----------

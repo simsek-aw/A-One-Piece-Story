@@ -45,6 +45,8 @@ export const GM_JSON_SCHEMA = {
         hpDelta: { type: "integer" },
         beriDelta: { type: "integer" },
         xpDelta: { type: "integer" },
+        bountyDelta: { type: "integer" },
+        heatDelta: { type: "integer" },
         location: { anyOf: [{ type: "null" }, { type: "string" }] },
         itemsAdded: { type: "array", items: { type: "string" } },
         itemsRemoved: { type: "array", items: { type: "string" } },
@@ -55,6 +57,8 @@ export const GM_JSON_SCHEMA = {
         "hpDelta",
         "beriDelta",
         "xpDelta",
+        "bountyDelta",
+        "heatDelta",
         "location",
         "itemsAdded",
         "itemsRemoved",
@@ -90,8 +94,31 @@ export const GM_JSON_SCHEMA = {
         required: ["id", "name", "role", "reason"],
       },
     },
+    // Optionale Ereignisse: eine gefundene Teufelsfrucht bzw. ein erlangtes Schiff.
+    devilFruitFound: {
+      anyOf: [
+        { type: "null" },
+        {
+          type: "object",
+          additionalProperties: false,
+          properties: { id: { type: "string" }, name: { type: "string" }, type: { type: "string" } },
+          required: ["id", "name", "type"],
+        },
+      ],
+    },
+    shipAcquired: {
+      anyOf: [
+        { type: "null" },
+        {
+          type: "object",
+          additionalProperties: false,
+          properties: { name: { type: "string" } },
+          required: ["name"],
+        },
+      ],
+    },
   },
-  required: ["narration", "choices", "stateChanges", "npcs", "recruitable"],
+  required: ["narration", "choices", "stateChanges", "npcs", "recruitable", "devilFruitFound", "shipAcquired"],
 };
 
 function toInt(v, fallback = 0) {
@@ -136,6 +163,8 @@ export function validateGmResponse(raw) {
     hpDelta: clampInt(toInt(s.hpDelta, 0), -500, 500),
     beriDelta: clampInt(toInt(s.beriDelta, 0), -100000, 100000),
     xpDelta: clampInt(toInt(s.xpDelta, 0), 0, 1000),
+    bountyDelta: clampInt(toInt(s.bountyDelta, 0), -50_000_000, 50_000_000),
+    heatDelta: clampInt(toInt(s.heatDelta, 0), -100, 100),
     location: s.location == null ? null : toStr(s.location),
     itemsAdded: toArr(s.itemsAdded).map((x) => toStr(x)).filter(Boolean).slice(0, 10),
     itemsRemoved: toArr(s.itemsRemoved).map((x) => toStr(x)).filter(Boolean).slice(0, 10),
@@ -163,7 +192,19 @@ export function validateGmResponse(raw) {
     .filter((r) => r.id && r.name)
     .slice(0, 5);
 
-  return { narration, choices, stateChanges, npcs, recruitable };
+  let devilFruitFound = null;
+  const df = raw.devilFruitFound;
+  if (df && typeof df === "object" && df.id) {
+    devilFruitFound = { id: toStr(df.id), name: toStr(df.name), type: toStr(df.type) };
+  }
+
+  let shipAcquired = null;
+  const sh = raw.shipAcquired;
+  if (sh && typeof sh === "object" && sh.name) {
+    shipAcquired = { name: toStr(sh.name) };
+  }
+
+  return { narration, choices, stateChanges, npcs, recruitable, devilFruitFound, shipAcquired };
 }
 
 function clampInt(n, min, max) {

@@ -26,6 +26,7 @@ export const SKILLS = {
   heimlichkeit: { id: "heimlichkeit", name: "Heimlichkeit", attribut: "geschick" },
   wahrnehmung: { id: "wahrnehmung", name: "Wahrnehmung", attribut: "verstand" },
   kochen: { id: "kochen", name: "Kochen & Barkeeping", attribut: "geschick" },
+  schwimmen: { id: "schwimmen", name: "Schwimmen", attribut: "zaehigkeit" },
   haki: { id: "haki", name: "Haki (latent)", attribut: "willenskraft" },
 };
 
@@ -119,6 +120,16 @@ export function createCharacter({ name, archetype, attributes, perk }) {
     beri: arch.startBeri,
     standing: { ...arch.standing },
     inventory: [{ ...arch.startItem, anzahl: 1 }],
+    // Kopfgeld / Marine-Aufmerksamkeit
+    bounty: arch.standing.kopfgeld || 0,
+    heat: 0,
+    // Teufelsfrucht & Schwimmen
+    devilFruit: null,
+    canSwim: true,
+    // Eigenes Schiff (null = keins)
+    ship: null,
+    // Trainingsfortschritt pro Skill (für Rang-Aufstiege via Aktivitäten)
+    skillProgress: {},
   };
   character.maxHp = maxHp(character);
   character.hp = character.maxHp;

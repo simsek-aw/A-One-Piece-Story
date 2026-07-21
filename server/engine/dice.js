@@ -24,13 +24,28 @@ export function skillCheck(character, skillId, dc) {
 
   const roll = rollDie(20);
   const attrMod = attributeModifier(attrValue);
-  const total = roll + attrMod + rank;
+
+  // Teufelsfrucht-Nutzer können nicht schwimmen: Schwimm-Proben scheitern
+  // katastrophal (das ist der klassische Nachteil, deterministisch verankert).
+  if (skillId === "schwimmen" && character.devilFruit) {
+    return {
+      skillId, skillName: "Schwimmen", attribut: attrId, dc,
+      roll, attrMod, rank, total: 0,
+      success: false, kritErfolg: false, kritFehler: true,
+      teufelsfruchtSchwaeche: true,
+    };
+  }
+
+  // Fähigkeits-Bonus der Teufelsfrucht auf passende Skills.
+  const dfBonus = character.devilFruit?.bonusSkills?.includes(skillId) ? 2 : 0;
+  const total = roll + attrMod + rank + dfBonus;
 
   const kritErfolg = roll === 20;
   const kritFehler = roll === 1;
   const success = kritErfolg || (!kritFehler && total >= dc);
 
   return {
+    dfBonus,
     skillId,
     skillName: skill ? skill.name : skillId,
     attribut: attrId,

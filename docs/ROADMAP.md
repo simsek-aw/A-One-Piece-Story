@@ -3,6 +3,16 @@
 Reihenfolge grob nach Abhängigkeit/Wert. Der Solo-Story-Kern steht; die
 folgenden Punkte bauen darauf auf.
 
+## Erledigt (Ausbaustufe 2)
+
+- [x] Echtzeit-Tagestakt (Aktionen pro Tag + Cooldown), konfigurierbar
+- [x] Kopfgeld- & Marine-Heat-System mit Begegnungs-Konsequenzen
+- [x] Teufelsfrüchte (finden, essen, Fähigkeit + Schwimm-Nachteil)
+- [x] Ausbildungspfade (Dojo, Marine-Drill, Bücherwurm, Unterwelt, Arbeiten, Meditation)
+- [x] Karte & Reisen (Schiff/Passage), Fortbewegungsart in der UI
+- [x] Anime-Panel-Slot pro Szene (Platzhalter-SVG)
+- [x] Multiplayer-Datenmodell (Tages-Takt, Den-Den-Mushi, Raum) + UI-Slots
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Levelaufstieg-UI**: Beim Aufstieg Skill-Punkte/Perk wählen (Backend
@@ -10,14 +20,15 @@ folgenden Punkte bauen darauf auf.
 - [ ] **Party-Boni wirksam machen**: Begleiter geben je nach Rolle Bonus auf
       passende Checks (Kampf/Erkundung/sozial/Handwerk). Loyalität steigt/fällt
       mit Entscheidungen und kann zu eigenen Begleiter-Plots führen.
+- [ ] **Haki-Ausbau**: Meditation/Willens-Pfad zu echten Haki-Fähigkeiten führen.
+- [ ] **„Lücke in der Geschichte"-Handlungsstrang**: lore_fortschritt-Schwellen
+      lösen Enthüllungen aus (Void-Century-artiger roter Faden für Bücherwürmer).
 - [ ] **Kampf-Substruktur**: Aktuell abstrakt über Checks. Optional ein
       leichtgewichtiges Runden-/Initiative-System für größere Konfrontationen.
-- [ ] **Inventar-Nutzung**: Items im Zug einsetzen (heilen, Werkzeuge,
-      Verbrauchsgüter), Feilschen/Handel an Orten.
-- [ ] **Reise & Karte**: Orte bereisen (Schiff nötig), Reisezeit, ortsgebundene
-      Ereignisse und wiederkehrende Schauplätze.
-- [ ] **Speichern/Laden-UI**: Mehrere Spielstände pro Nutzer, Übersicht statt
-      nur `?game=<id>`-Link.
+- [ ] **Inventar-Nutzung**: Items im Zug einsetzen (heilen, Werkzeuge),
+      Feilschen/Handel an Orten.
+- [ ] **Eigenes Schiff ausbauen**: Werft, Upgrades, Crew-Positionen an Bord.
+- [ ] **Speichern/Laden-UI**: Mehrere Spielstände pro Nutzer.
 
 ## Claude-Spielleiter härten
 

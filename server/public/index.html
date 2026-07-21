@@ -59,10 +59,17 @@
     <main id="screen-game" class="screen hidden">
       <div class="game-layout">
         <section class="story">
+          <!-- Anime-Panel-Slot -->
+          <figure class="panel-art">
+            <img id="panelImg" alt="" />
+            <figcaption id="panelCaption"></figcaption>
+          </figure>
+
+          <!-- Tages-/Echtzeit-Leiste -->
+          <div id="dayBar" class="day-bar"></div>
+
           <div id="storyLog" class="story-log"></div>
-
           <div id="checkBanner" class="check-banner hidden"></div>
-
           <div id="choices" class="choices"></div>
 
           <div id="recruitBox" class="recruit-box hidden">
@@ -86,9 +93,25 @@
             <div class="bars">
               <div class="bar-row"><span>❤️ TP</span><div class="bar"><div id="hpBar" class="bar-fill hp"></div></div><span id="hpText"></span></div>
               <div class="bar-row"><span>⭐ EP</span><div class="bar"><div id="xpBar" class="bar-fill xp"></div></div><span id="xpText"></span></div>
+              <div class="bar-row"><span>🔥 Heat</span><div class="bar"><div id="heatBar" class="bar-fill heat"></div></div><span id="heatText"></span></div>
             </div>
             <div id="standing" class="standing"></div>
+            <div id="bounty" class="bounty"></div>
+            <div id="devilfruit" class="df-line"></div>
+            <div id="shipLine" class="ship-line"></div>
             <div id="attrs" class="stat-block"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Karte · <span id="travelModeLabel"></span></h3>
+            <div id="mapWrap" class="map-wrap"></div>
+            <div class="panel-sub">Reisen</div>
+            <div id="travelList" class="btn-list"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Aktivitäten (kosten 1 Tagesaktion)</h3>
+            <div id="activityList" class="btn-list"></div>
           </div>
 
           <div class="panel">
@@ -111,8 +134,10 @@
             <div id="inventory" class="list"></div>
           </div>
 
-          <div class="panel share">
-            <div class="hint">Spielstand-Link (später auch für Multiplayer):</div>
+          <div class="panel">
+            <h3>📞 Den-Den-Mushi</h3>
+            <div id="denden" class="list"></div>
+            <div class="hint">Spielstand-/Einladungs-Link:</div>
             <input id="shareLink" type="text" readonly />
           </div>
         </aside>

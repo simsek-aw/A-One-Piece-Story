@@ -3,6 +3,11 @@
 // Jeder Archetyp gibt Attribut-Boni, Start-Skills, ein Start-Item und eine
 // "Stellung" (Marine-Rang / Kopfgeld / Ruf). Niemand ist an seine Rolle
 // gebunden — ein Marine kann desertieren, ein Barkeeper eine Crew gründen usw.
+//
+// Die Orte selbst leben in content/map.js (mit Koordinaten & Reisewegen);
+// hier werden nur die startbaren Orte daraus abgeleitet.
+
+import { LOCATIONS } from "./map.js";
 
 export const ARCHETYPES = {
   marine: {
@@ -37,43 +42,14 @@ export const ARCHETYPES = {
   },
 };
 
-// Startorte im East Blue der frühen Piraten-Ära. Nicht hart an Archetypen
-// gebunden — jeder kann überall starten, aber manche passen thematisch besser
-// (Hinweis: recommendedFor ist nur eine Empfehlung fürs UI).
-export const START_LOCATIONS = {
-  loguetown: {
-    id: "loguetown",
-    name: "Loguetown",
-    blurb:
-      "Die 'Stadt des Anfangs und des Endes'. Hier starb der Piratenkönig — und hier " +
-      "beginnen jetzt tausend Träume. Marine, Kopfgeldjäger und frische Piraten treffen aufeinander.",
-    recommendedFor: ["pirat", "barkeeper"],
-  },
-  shells_town: {
-    id: "shells_town",
-    name: "Shells Town",
-    blurb:
-      "Eine Marine-Garnisonsstadt. Ordnung an der Oberfläche, Korruption in den Kellern. " +
-      "Ein guter Ort, um Karriere zu machen — oder Fragen zu stellen, die man besser nicht stellt.",
-    recommendedFor: ["marine"],
-  },
-  hafenkneipe_syrup: {
-    id: "hafenkneipe_syrup",
-    name: "Kleines Hafendorf",
-    blurb:
-      "Ein verschlafenes Küstendorf mit einer einzigen Kneipe, die zufällig zu verkaufen steht. " +
-      "Wer hier ankommt, sucht entweder Ruhe — oder einen Neuanfang fernab der Marine.",
-    recommendedFor: ["barkeeper", "pirat"],
-  },
-  gefaengnisinsel: {
-    id: "gefaengnisinsel",
-    name: "Felsklippen-Außenposten",
-    blurb:
-      "Ein karger Marine-Vorposten auf einer windgepeitschten Klippeninsel. Wenig Komfort, " +
-      "viele Geheimnisse — und ein Vorgesetzter, dem man nicht trauen sollte.",
-    recommendedFor: ["marine", "pirat"],
-  },
-};
+// Startorte werden aus der Karte (content/map.js) abgeleitet: alle Orte mit
+// startable=true. Jeder kann überall starten; recommendedFor ist nur eine
+// UI-Empfehlung.
+export const START_LOCATIONS = Object.fromEntries(
+  Object.values(LOCATIONS)
+    .filter((l) => l.startable)
+    .map((l) => [l.id, l]),
+);
 
 export function listArchetypes() {
   return Object.values(ARCHETYPES).map((a) => ({

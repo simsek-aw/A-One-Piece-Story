@@ -6,6 +6,8 @@
 // Ort, Archetyp, Spieleraktion und Würfel-Ergebnisse, streut NPCs, Gerüchte,
 // Rekrutierungs-Angebote und kleine Plot-Haken ein.
 
+import { randomDevilFruit } from "../content/devilFruits.js";
+
 const LOCATION_FLAVOR = {
   loguetown: [
     "Der Wind trägt Salz und Asche über den Marktplatz von Loguetown. Auf dem Hinrichtungsgerüst, wo der Piratenkönig sein Ende fand, drängen sich Neugierige.",
@@ -16,13 +18,21 @@ const LOCATION_FLAVOR = {
     "Die weißen Mauern der Marine-Garnison von Shells Town glänzen — doch hinter ihnen riecht es nach fauligen Deals.",
     "Auf dem Hof der Garnison drillt ein Offizier eine Handvoll Rekruten, während die Stadt gedämpft ihren Geschäften nachgeht.",
   ],
-  hafenkneipe_syrup: [
-    "Das kleine Hafendorf döst in der Nachmittagssonne. Die Kneipe am Kai ist der einzige Ort mit Leben — und sie steht zum Verkauf.",
+  hafendorf_sirup: [
+    "Das Sirup-Hafendorf döst in der Nachmittagssonne. Die Kneipe am Kai ist der einzige Ort mit Leben — und sie steht zum Verkauf.",
     "Möwen kreischen über den Booten des verschlafenen Dorfes. Drinnen in der Kneipe klimpert jemand halbherzig auf einer Laute.",
   ],
-  gefaengnisinsel: [
+  klippen_vorposten: [
     "Der Wind heult um den Felsklippen-Außenposten. Die See darunter ist grau und unversöhnlich, und die Soldaten sprechen nur im Flüsterton über ihren Kommandanten.",
     "Möwen wagen sich kaum an die windgepeitschten Klippen. Der Marine-Vorposten wirkt eher wie ein Gefängnis für seine eigene Besatzung.",
+  ],
+  orangen_hafen: [
+    "Der Orangen-Hafen duftet nach Zitrusfrüchten und Teer. An den Kaimauern wird gefeilscht, geladen — und misstrauisch beobachtet.",
+    "Kisten voller Orangen stapeln sich am Dock. Doch die Blicke der Händler sind wachsam: Piratenbanden kommen hier oft zu Besuch.",
+  ],
+  windmuehlendorf: [
+    "Über dem Windmühlendorf drehen sich träge die alten Flügel. Abends erzählt man sich hier Geschichten — auch von einer 'Lücke' in der Geschichte der Welt.",
+    "Ein ruhiges Dorf, in dem die Zeit langsamer läuft. Doch in den alten Logbüchern der Bibliothek schlummern Fragen, die niemand laut stellt.",
   ],
 };
 
@@ -61,7 +71,56 @@ export class MockProvider {
   async generateScene(context) {
     if (context.kind === "start") return this.startScene(context);
     if (context.kind === "recruit") return this.recruitScene(context);
+    if (context.kind === "activity") return this.activityScene(context);
+    if (context.kind === "travel") return this.travelScene(context);
+    if (context.kind === "eat_fruit") return this.eatFruitScene(context);
     return this.turnScene(context);
+  }
+
+  activityScene(context) {
+    const a = context.activity;
+    return {
+      narration:
+        `Du widmest den Tag der Aktivität: ${a.name}.\n\n` +
+        `${a.desc}\n\nDie Mühe zahlt sich aus — du spürst, wie du ein Stück wächst.`,
+      choices: this.genericChoices(context),
+      stateChanges: this.emptyChanges(),
+      npcs: [],
+      recruitable: [],
+    };
+  }
+
+  travelScene(context) {
+    const t = context.travelInfo;
+    const parts = [
+      `Die See rollt unter dir dahin. Nach ${t.days} Tag(en) taucht ${context.world.locationName} am Horizont auf.`,
+    ];
+    const changes = this.emptyChanges();
+    // Auf hoher See kann es zu Zwischenfällen kommen.
+    if (chance(0.35)) {
+      parts.push("Unterwegs kreuzt ein fremdes Schiff euren Kurs — die Begegnung endet glimpflich, kostet aber Nerven.");
+      changes.xpDelta = 15;
+    }
+    return {
+      narration: parts.join("\n\n") + `\n\nDu betrittst ${context.world.locationName}. Was tust du?`,
+      choices: this.genericChoices(context),
+      stateChanges: changes,
+      npcs: [],
+      recruitable: [],
+    };
+  }
+
+  eatFruitScene(context) {
+    const f = context.fruit;
+    return {
+      narration:
+        `Der Geschmack ist grauenhaft — wie fauliges Meer und bitterer Rauch. Doch dann: ${f.ability}\n\n` +
+        `Du bist jetzt ein Teufelsfrucht-Nutzer (${f.type}). Der Preis dafür ist unumkehrbar: ${f.downside}`,
+      choices: this.genericChoices(context),
+      stateChanges: { ...this.emptyChanges(), xpDelta: 30 },
+      npcs: [],
+      recruitable: [],
+    };
   }
 
   startScene(context) {
@@ -141,9 +200,44 @@ export class MockProvider {
     changes.xpDelta = check?.success ? 20 : 10;
     if (check?.kritErfolg) changes.xpDelta = 35;
     if (check?.kritFehler) changes.hpDelta = -6;
-    if (chance(0.3)) changes.timeAdvanceDays = 1;
     if (chance(0.15)) changes.beriDelta = pick([-15, 10, 25, 40]);
     if (check?.success && chance(0.15)) changes.itemsAdded = [pick(["Notration", "Rostiges Messer", "Verband", "Fass Rum"])];
+
+    // --- Kopfgeld/Heat-Konsequenzen: Marine-Begegnungen ---
+    const st = context.status || {};
+    const troubleP = (st.marineTroubleChance || 5) / 100;
+    let extra = {};
+    if (chance(troubleP)) {
+      const officer = { id: "npc_offizier_borrot", name: "Offizier Borrot", role: "Marine-Offizier" };
+      if (st.bounty > 0 || st.heat >= 45) {
+        parts.push(`Eine Marine-Patrouille wird auf dich aufmerksam! „Das Gesicht kenne ich von einem Steckbrief …“ Es wird brenzlig.`);
+        changes.heatDelta = 6;
+        if (!check?.success) changes.hpDelta -= 5;
+        npcs.push({ id: officer.id, name: officer.name, role: officer.role, disposition: -20, note: "Hat dich als Gesuchten erkannt." });
+      } else {
+        parts.push(`Eine Marine-Patrouille mustert dich kurz, findet aber nichts Verdächtiges und zieht weiter.`);
+        npcs.push({ id: officer.id, name: officer.name, role: officer.role, disposition: 0, note: "Routine-Kontrolle." });
+      }
+    }
+
+    // Kritischer Erfolg gegen Widerstand kann Ruhm (und Kopfgeld) bringen.
+    if (check?.kritErfolg && chance(0.4)) {
+      changes.bountyDelta = pick([500000, 1000000, 3000000]);
+      parts.push(`Deine Tat spricht sich herum — dein Ruf (und dein Kopfgeld) wächst.`);
+    }
+
+    // Seltener Teufelsfrucht-Fund (nur wenn man noch keine hat).
+    if (!st.hasDevilFruit && chance(0.06)) {
+      const fruit = randomDevilFruit();
+      parts.push(`In einer alten Truhe entdeckst du eine seltsame, spiralig gemusterte Frucht: eine ${fruit.name}!`);
+      extra.devilFruitFound = { id: fruit.id, name: fruit.name, type: fruit.type };
+    }
+    // Sehr seltenes Schiff (nur wenn man keins hat).
+    if (!st.hasShip && chance(0.04)) {
+      const shipName = pick(["Möwenschwinge", "Roter Anker", "Sturmkind", "Alte Dame"]);
+      parts.push(`Am Kai liegt ein herrenloses kleines Schiff — mit etwas Mühe könnte es deins werden: die '${shipName}'.`);
+      extra.shipAcquired = { name: shipName };
+    }
 
     return {
       narration: parts.join("\n\n") + "\n\nWie gehst du vor?",
@@ -151,6 +245,7 @@ export class MockProvider {
       stateChanges: changes,
       npcs,
       recruitable,
+      ...extra,
     };
   }
 
@@ -193,6 +288,8 @@ export class MockProvider {
       hpDelta: 0,
       beriDelta: 0,
       xpDelta: 0,
+      bountyDelta: 0,
+      heatDelta: 0,
       location: null,
       itemsAdded: [],
       itemsRemoved: [],
