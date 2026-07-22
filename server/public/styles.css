@@ -575,4 +575,29 @@ figure.drawing::after {
   font-size: 1rem; line-height: 1; padding: 6px 10px; cursor: pointer;
 }
 .theme-toggle:hover { background: var(--ink); color: var(--on-accent); }
+
+/* ============================================================
+   DOPPELLINIGER TUSCHE-RAHMEN — das klassische Manga-Panel: dicker
+   Außenrahmen + eine dünne gepunktete Linie kurz davor. Rein dekorativ
+   (pointer-events: none), darum unbedenklich additiv auf bestehende Boxen.
+   ============================================================ */
+.card, .panel, .combat-box, .entry.narration, .entry.event,
+.recruit-dialogue, .consequence-banner {
+  position: relative;
+}
+.card::before, .panel::before, .combat-box::before, .entry.narration::before,
+.entry.event::before, .recruit-dialogue::before, .consequence-banner::before {
+  content: "";
+  position: absolute; inset: 6px;
+  border: 1.5px dotted var(--line);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.entry.event::before { border-color: var(--on-accent); opacity: 0.6; }
+
+/* Gepunktete Trennlinie unter Sub-Überschriften ("Reisen", "Begegnet / vor Ort", …) */
+.panel-sub { border-bottom: 1.5px dotted var(--line); padding-bottom: 5px; }
+
+/* Wiederverwendbarer "Schnittkanten"-Teiler zwischen größeren Abschnitten. */
+.dot-divider { border: none; border-top: 2px dotted var(--line); margin: 16px 0; opacity: 0.6; }
 @media (max-width: 900px) { .sidebar { border-left: 3px solid var(--line); } }
