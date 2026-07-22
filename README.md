@@ -107,7 +107,10 @@ Mock-Spielleiter.
 - **Story-Loop**: Szene → Auswahl (mit optionalen Checks) oder Freitext →
   Fortsetzung.
 - **NPC-Gedächtnis**: Figuren merken sich Begegnungen und Entscheidungen; ihre
-  Gesinnung entwickelt sich und beeinflusst spätere Szenen.
+  Gesinnung entwickelt sich und beeinflusst spätere Szenen. In den Listen
+  „Bekannte Gesichter" und Crew bekommt jede Person ein deterministisches
+  Mini-Portrait (Chibi-Kopf, Frisur + Ausdruck aus Name/Gesinnung abgeleitet) —
+  kein KI-Bild, immer dasselbe Gesicht für dieselbe Person.
 - **Rekrutierung & Crew-Boni**: Begleiter über einen Überzeugen-Check gewinnen;
   sie geben je nach Rolle Bonus auf passende Checks (Navigator → Navigation,
   Söldner → Nahkampf, …).

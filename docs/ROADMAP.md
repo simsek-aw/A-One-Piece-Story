@@ -204,6 +204,20 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 18) — NPC-Mini-Portraits ("Bekannte Gesichter")
+
+- [x] `server/public/app.js`: `npcFaceSvg(seed, disposition)` erzeugt einen
+      deterministischen Chibi-Kopf (Kreis, 4 Frisur-Varianten per Hash,
+      Augen leicht versetzt, Mund abhängig von Gesinnung
+      lächelnd/neutral/finster) — rein client-seitig, kein Server-Request,
+      kein KI-Bild. Dieselbe Person (Name/ID) bekommt über den Hash immer
+      dasselbe Gesicht.
+- [x] `fill="currentColor"`/`stroke="currentColor"` statt fixer Hex-Töne ->
+      passt sich automatisch dem Papier/Tinte-Theme an wie der Rest des UI.
+- [x] Eingebunden in Crew- (`#party`) und Gedächtnis-Liste (`#memory`,
+      „Bekannte Gesichter") — Crew gilt pauschal als wohlgesinnt, NPCs nutzen
+      ihre echte gespeicherte Gesinnung (`n.gesinnung`).
+
 ## Erledigt (Ausbaustufe 17) — Mobile Haptik bei kritischen Momenten
 
 - [x] `server/public/app.js`: `playSceneMangaFx()` klassifiziert bereits jede

@@ -14,6 +14,40 @@ function vibrate(pattern) {
   try { navigator.vibrate?.(pattern); } catch { /* optional */ }
 }
 
+// Deterministisches Mini-Portrait (Chibi-Kopf) für NPCs: dieselbe Person
+// bekommt über Name+Rolle immer dasselbe Gesicht, ganz ohne Server-Anfrage
+// oder KI-Bild. Nutzt currentColor -> passt sich automatisch dem Papier/
+// Tinte-Theme an, genau wie der Rest des UI.
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+function npcFaceSvg(seed, disposition = 0) {
+  const h = hashStr(String(seed));
+  const hair = [
+    "", // kahl
+    `<path d="M6 12 Q16 2 26 12 L26 15 Q16 8 6 15 Z" fill="currentColor"/>`, // kurz
+    `<path d="M5 13 L9 4 L13 12 L16 3 L19 12 L23 4 L27 13 Q16 6 5 13 Z" fill="currentColor"/>`, // zerzaust
+    `<path d="M6 13 Q10 3 22 6 Q27 8 26 14 Q18 6 6 13 Z" fill="currentColor"/>`, // seitlich
+  ][h % 4];
+  const eyeShift = ((h >> 3) % 3) - 1;
+  const mouth = disposition > 20
+    ? `<path d="M11 21 Q16 25 21 21" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>`
+    : disposition < -20
+      ? `<path d="M11 22 Q16 19 21 22" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>`
+      : `<line x1="12" y1="21" x2="20" y2="21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`;
+  return `<svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">` +
+    `<circle cx="16" cy="17" r="11" fill="none" stroke="currentColor" stroke-width="1.8"/>` +
+    hair +
+    `<circle cx="${12 + eyeShift}" cy="16" r="1.6" fill="currentColor"/><circle cx="${20 + eyeShift}" cy="16" r="1.6" fill="currentColor"/>` +
+    mouth +
+    `</svg>`;
+}
+function npcFaceEl(seed, disposition) {
+  return el("span", "npc-face", npcFaceSvg(seed, disposition));
+}
+
 const state = {
   meta: null,
   sel: { archetype: null, perk: null, location: null },
@@ -1010,8 +1044,14 @@ function renderSidebar(view) {
 
   const party = $("#party");
   party.innerHTML = "";
-  if (view.party?.length) view.party.forEach((p) => party.appendChild(el("div", "li", `${escapeHtml(p.name)}<small>${escapeHtml(p.role)} · Loyalität ${p.loyalty ?? "?"}</small>`)));
-  else party.textContent = "Noch niemand.";
+  if (view.party?.length) {
+    view.party.forEach((p) => {
+      const row = el("div", "li with-face");
+      row.appendChild(npcFaceEl(p.name + p.role, 40)); // Crew gilt als wohlgesinnt -> Lächeln
+      row.appendChild(el("div", null, `${escapeHtml(p.name)}<small>${escapeHtml(p.role)} · Loyalität ${p.loyalty ?? "?"}</small>`));
+      party.appendChild(row);
+    });
+  } else party.textContent = "Noch niemand.";
 
   const mem = $("#memory");
   mem.innerHTML = "";
@@ -1020,7 +1060,10 @@ function renderSidebar(view) {
     npcs.slice(0, 12).forEach((n) => {
       const disp = n.gesinnung > 20 ? "friend" : n.gesinnung < -20 ? "foe" : "neutral";
       const note = n.letzteNotizen?.length ? n.letzteNotizen.at(-1) : "";
-      mem.appendChild(el("div", "li", `${escapeHtml(n.name)} <span class="disp ${disp}">${n.gesinnung}</span><small>${escapeHtml(n.role || "")}${note ? " — " + escapeHtml(note) : ""}</small>`));
+      const row = el("div", "li with-face");
+      row.appendChild(npcFaceEl(n.id || n.name, n.gesinnung));
+      row.appendChild(el("div", null, `${escapeHtml(n.name)} <span class="disp ${disp}">${n.gesinnung}</span><small>${escapeHtml(n.role || "")}${note ? " — " + escapeHtml(note) : ""}</small>`));
+      mem.appendChild(row);
     });
   } else mem.textContent = "Noch keine Bekanntschaften.";
 

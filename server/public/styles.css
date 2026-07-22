@@ -318,6 +318,12 @@ button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .disp.neutral { background: var(--panel2); color: var(--muted); }
 .disp.foe { background: rgba(226,96,63,0.18); color: var(--bad); }
 
+/* Deterministisches Mini-Portrait (Chibi-Kopf) für Crew/NPC-Zeilen — kein
+   KI-Bild, currentColor passt sich dem Papier/Tinte-Theme automatisch an. */
+.list .li.with-face { display: flex; align-items: center; gap: 10px; }
+.npc-face { flex-shrink: 0; width: 28px; height: 28px; color: var(--ink); }
+.npc-face svg { display: block; }
+
 .share input { font-size: 0.75rem; }
 
 /* Anime-Panel */
