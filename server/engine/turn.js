@@ -449,6 +449,7 @@ function applyGmResponse(game, gm, turnInfo) {
   const keyPanels = (gm.panels || []).map((p) => momentPanel(p.kind, p.caption));
   const presentNpcIds = gm.npcs.map((npc) => npc.id);
   game.scene = { narration: gm.narration, choices: gm.choices, panels: keyPanels, presentNpcIds };
+  game.lastProviderNotice = gm.providerNotice || null;
   // Ein Rekrutierungsangebot ist nur gültig, wenn dieselbe Person in dieser
   // Szene physisch anwesend und im Erzähltext erkennbar eingeführt wurde.
   game.recruitable = gm.recruitable.filter((candidate) => {
@@ -531,6 +532,7 @@ export function currentSceneView(game) {
     lastLoreUnlocks: game.lastLoreUnlocks || [],
     lastHakiUnlocks: game.lastHakiUnlocks || [],
     consequences: game.lastConsequences || null,
+    providerNotice: game.lastProviderNotice || null,
     lore: {
       progress: game.world.flags.lore_fortschritt || 0,
       unlocked: unlockedLore(game.world.flags.lore_fortschritt || 0),

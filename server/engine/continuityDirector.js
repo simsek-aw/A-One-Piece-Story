@@ -13,6 +13,7 @@ const COMBAT_MOTIVE = /\b(weil|nachdem|aus rache|kopfgeld|beute|befehl|verhaft|a
 const DISCOVERY_ACTION = /\b(such|untersuch|durchstöber|durchsuch|öffn|kiste|truhe|lager|höhle|wrack|beute|grab)\w*/i;
 const SHIP_ACTION = /\b(schiff|boot|kahn|kai|dock)\w*.{0,40}\b(kauf|nehm|beanspruch|reparier|übernehm|stehl)\w*|\b(kauf|nehm|beanspruch|reparier|übernehm|stehl)\w*.{0,40}\b(schiff|boot|kahn)\w*/i;
 const EXPLICIT_REWARD = /\b(überreicht|übergibt|schenkt|belohnt|als belohnung|vermacht|gibt dir|bietet dir)/i;
+const LEAVE_INTENT = /\b(weiterzieh|weitergeh|weggeh|fortgeh|verlass|aufbrech|ziehe weiter|gehe weiter|sache ruhen lassen)/i;
 
 export function continuityContext(game) {
   const present = new Set(game.scene?.presentNpcIds || []);
@@ -46,12 +47,19 @@ export async function generateCoherentScene(game, provider, context) {
 
   console.warn(`[continuity] Szenenentwurf verworfen: ${firstIssues.join(" | ")}`);
 
+  // Der Provider hat bereits auf den lokalen Erzähler zurückgeschaltet. Ein
+  // zweiter externer Aufruf würde bei Quota/Timeout nur erneut scheitern.
+  if (first.providerNotice?.type === "fallback") {
+    game.lastContinuityReview = { corrected: true, fallback: true, issues: firstIssues };
+    return { ...continuityFallback(game, context), providerNotice: first.providerNotice };
+  }
+
   const retryContext = {
     ...context,
     continuityReview: {
       rejected: true,
       issues: firstIssues,
-      instruction: "Verwirf den vorigen Entwurf vollständig. Schreibe dieselbe Spieleraktion als räumlich und kausal lückenlose Szene neu.",
+      instruction: "Verwirf den vorigen Entwurf vollständig. Schreibe dieselbe Spieleraktion als räumlich und kausal lückenlose Szene neu. Wiederhole keine Absätze oder Formulierungen der vorherigen Szene. Die Handlung muss sichtbar voranschreiten und 2–4 konkrete Folgeoptionen liefern.",
       rejectedDraft: {
         narration: first.narration,
         sceneLocation: first.stateChanges.sceneLocation,
@@ -73,7 +81,7 @@ export async function generateCoherentScene(game, provider, context) {
   } catch (error) {
     game.lastContinuityReview = { corrected: true, fallback: true, issues: [...firstIssues, `Korrektur fehlgeschlagen: ${error.message}`] };
   }
-  return continuityFallback(game, context);
+  return { ...continuityFallback(game, context), providerNotice: first.providerNotice || null };
 }
 
 export function auditContinuity(game, context, gm) {
@@ -83,6 +91,18 @@ export function auditContinuity(game, context, gm) {
   const newPlace = normalize(gm.stateChanges.sceneLocation || continuity.sceneLocation);
   const combined = `${context.playerAction || ""}\n${gm.narration}`;
   const placeChanged = !!newPlace && newPlace !== oldPlace && !newPlace.includes(oldPlace) && !oldPlace.includes(newPlace);
+
+  if (!gm.combatStart && gm.choices.length < 1) {
+    issues.push("Die Szene bietet keine spielbare Folgeoption und kann den Spieler festsetzen.");
+  }
+
+  if (context.kind === "turn" && repeatedParagraphShare(continuity.previousNarration, gm.narration) >= 0.5) {
+    issues.push("Der Entwurf wiederholt mindestens die Hälfte der vorherigen Szene, statt die Spieleraktion fortzuführen.");
+  }
+
+  if (context.kind === "turn" && LEAVE_INTENT.test(context.playerAction || "") && !placeChanged && !DEPARTURE.test(gm.narration)) {
+    issues.push(`Der Spieler will den Schauplatz verlassen, bleibt im Entwurf aber ohne erzählten Aufbruch in „${continuity.sceneLocation}“.`);
+  }
 
   if (placeChanged && !MOVEMENT.test(combined) && context.kind !== "travel") {
     issues.push(`Unbegründeter Ortswechsel von „${continuity.sceneLocation}“ zu „${gm.stateChanges.sceneLocation}“.`);
@@ -136,6 +156,23 @@ export function auditContinuity(game, context, gm) {
 
 function continuityFallback(game, context) {
   const continuity = context.continuity || continuityContext(game);
+  const movingOn = LEAVE_INTENT.test(context.playerAction || "");
+  if (movingOn) {
+    const nextPlace = `${continuity.mapLocation} – Hauptstraße`;
+    return {
+      narration: `Du lässt ${continuity.sceneLocation} bewusst hinter dir. Der Lärm und die Stimmen werden leiser, während du die Hauptstraße von ${continuity.mapLocation} erreichst. Vor dir öffnen sich neue Wege; niemand hält dich am alten Schauplatz fest.`,
+      choices: [
+        { id: "move_a", text: "Die Umgebung und mögliche Abzweigungen prüfen.", skillCheck: { skill: "wahrnehmung", dc: 10 } },
+        { id: "move_b", text: "Nach einem sicheren Ort für eine Pause suchen.", skillCheck: null },
+        { id: "move_c", text: "Gezielt nach Gerüchten und Neuigkeiten fragen.", skillCheck: { skill: "ueberzeugen", dc: 11 } },
+      ],
+      stateChanges: {
+        timeAdvanceDays: 0, hpDelta: 0, beriDelta: 0, xpDelta: 5, bountyDelta: 0, heatDelta: 0,
+        location: null, sceneLocation: nextPlace, itemsAdded: [], itemsRemoved: [], flagsSet: {},
+      },
+      npcs: [], recruitable: [], devilFruitFound: null, shipAcquired: null, combatStart: null, canonOffer: null, panels: [],
+    };
+  }
   const actors = continuity.presentNpcs || [];
   const actorText = actors.length
     ? `${actors.map((npc) => npc.name).join(" und ")} ${actors.length === 1 ? "bleibt" : "bleiben"} in deiner unmittelbaren Nähe.`
@@ -164,6 +201,29 @@ function continuityFallback(game, context) {
     }),
     recruitable: [], devilFruitFound: null, shipAcquired: null, combatStart: null, canonOffer: null, panels: [],
   };
+}
+
+function repeatedParagraphShare(previous, current) {
+  const oldParagraphs = paragraphs(previous);
+  const newParagraphs = paragraphs(current);
+  if (!oldParagraphs.length || !newParagraphs.length) return 0;
+  const repeatedLength = newParagraphs
+    .filter((paragraph) => oldParagraphs.some((old) => wordSimilarity(old, paragraph) >= 0.82))
+    .reduce((sum, paragraph) => sum + paragraph.length, 0);
+  const totalLength = newParagraphs.reduce((sum, paragraph) => sum + paragraph.length, 0);
+  return totalLength ? repeatedLength / totalLength : 0;
+}
+
+function paragraphs(text) {
+  return String(text || "").split(/\n\s*\n/).map(normalize).filter((part) => part.length >= 35 && !/^wie gehst du vor/.test(part));
+}
+
+function wordSimilarity(a, b) {
+  const left = new Set(a.split(/\s+/).filter((word) => word.length > 2));
+  const right = new Set(b.split(/\s+/).filter((word) => word.length > 2));
+  if (!left.size || !right.size) return 0;
+  const shared = [...left].filter((word) => right.has(word)).length;
+  return shared / Math.max(left.size, right.size);
 }
 
 function npcMentioned(narration, npc) {

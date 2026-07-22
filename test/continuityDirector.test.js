@@ -139,3 +139,33 @@ test("accepts a devil fruit after a deliberate search", () => {
 
   assert.deepEqual(auditContinuity(game, context, plausible), []);
 });
+
+test("rejects a scene that mostly repeats the previous narration", () => {
+  const game = gameOnBoat();
+  game.scene.narration = "Auf dem Deck stapeln sich schwere Kisten, während Möwen über dem Händlerboot kreisen.\n\nTaro und Leutnant Bea bleiben neben dir und beobachten jede deiner Bewegungen.";
+  const context = { kind: "turn", playerAction: "Ich warte ab.", continuity: continuityContext(game) };
+  const repeated = scene({
+    narration: "Auf dem Deck stapeln sich schwere Kisten, während Möwen über dem Händlerboot kreisen.\n\nTaro und Leutnant Bea bleiben neben dir und beobachten jede deiner Bewegungen.\n\nEin kurzer Blick Taros verrät Unruhe.",
+  });
+
+  assert.ok(auditContinuity(game, context, repeated).some((issue) => issue.includes("wiederholt")));
+});
+
+test("turning away cannot leave the player trapped in the same scene", async () => {
+  const game = gameOnBoat();
+  const context = { kind: "turn", playerAction: "Weiterziehen und die Sache ruhen lassen.", continuity: continuityContext(game) };
+  const stuck = scene({ narration: "Taro verhandelt weiter, während Leutnant Bea schweigend die Ladung kontrolliert." });
+  const result = await generateCoherentScene(game, { generateScene: async () => stuck }, context);
+
+  assert.match(result.narration, /hinter dir/i);
+  assert.match(result.stateChanges.sceneLocation, /Hauptstraße/);
+  assert.ok(result.choices.length >= 2);
+});
+
+test("rejects a non-combat scene without any choices", () => {
+  const game = gameOnBoat();
+  const context = { kind: "turn", playerAction: "Ich sehe mich um.", continuity: continuityContext(game) };
+  const noChoices = scene({ choices: [] });
+
+  assert.ok(auditContinuity(game, context, noChoices).some((issue) => issue.includes("keine spielbare")));
+});

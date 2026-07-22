@@ -395,8 +395,13 @@ function renderScene(view) {
   }
 
   // Story-Log (nur bei neuer Erzählung anhängen; Rendering weiter unten)
-  if (view.scene?.narration && storyBuffer[storyBuffer.length - 1]?.text !== view.scene.narration) {
+  if (isNewNarration) {
     storyBuffer.push({ type: "narration", text: view.scene.narration });
+  }
+
+  if (view.providerNotice?.type === "fallback") {
+    const note = `⚠ ${view.providerNotice.provider}: ${view.providerNotice.message}. Die Szene wurde mit dem lokalen Ersatz-Erzähler gesichert.`;
+    if (!storyBuffer.some((entry) => entry.text === note)) storyBuffer.push({ type: "event", text: note });
   }
 
   // Check-Banner
@@ -677,8 +682,16 @@ function inCombat(view) {
 function renderChoices(view) {
   const choices = $("#choices");
   choices.innerHTML = "";
-  // Während eines Kampfes übernimmt die Kampf-UI; normale Auswahl ausgeblendet.
-  if (inCombat(view)) {
+  const lock = actionLock(view);
+  if (lock) {
+    const notice = el("div", "action-lock", `<strong>${escapeHtml(lock.title)}</strong><span>${escapeHtml(lock.text)}</span>`);
+    if (lock.action) {
+      const button = el("button", "primary", lock.button);
+      button.type = "button";
+      button.onclick = lock.action;
+      notice.appendChild(button);
+    }
+    choices.appendChild(notice);
     $("#freeText").disabled = true;
     $("#freeForm").querySelector("button").disabled = true;
     return;
@@ -696,6 +709,32 @@ function renderChoices(view) {
   });
   $("#freeText").disabled = isLocked;
   $("#freeForm").querySelector("button").disabled = isLocked;
+}
+
+function actionLock(view) {
+  if (inCombat(view)) return {
+    title: "Der Kampf läuft",
+    text: "Triff deine nächste Entscheidung in der Kampfbox.",
+    button: "Zur Kampfbox",
+    action: () => $("#combatBox").scrollIntoView({ behavior: "smooth", block: "center" }),
+  };
+  if (view.recruitment?.status === "active") return {
+    title: "Das Gespräch läuft",
+    text: "Beende die aktuelle Gesprächsphase, bevor du etwas anderes tust.",
+    button: "Zum Gespräch",
+    action: () => $("#recruitDialogue").scrollIntoView({ behavior: "smooth", block: "center" }),
+  };
+  if (view.clock?.locked) return {
+    title: "Der neue Tag beginnt gleich",
+    text: `Noch ${view.clock.secondsRemaining || 0} Sekunden bis zum Morgen.`,
+  };
+  if (view.clock?.mustRest) return {
+    title: "Du bist erschöpft",
+    text: "Raste jetzt, damit das Abenteuer am nächsten Morgen weitergeht.",
+    button: "🌙 Jetzt rasten",
+    action: () => post("/rest", {}, "Ich suche einen Schlafplatz und beende den Tag."),
+  };
+  return null;
 }
 
 function renderRecruit(view) {

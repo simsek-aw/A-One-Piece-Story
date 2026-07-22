@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { DeepSeekProvider } from "../server/ai/deepseekProvider.js";
 import { generateKrea } from "../server/ai/imageProvider.js";
+import { GeminiProvider } from "../server/ai/geminiProvider.js";
 import { config } from "../server/config.js";
 
 test("DeepSeek requests JSON output and repairs a nearly valid response", async () => {
@@ -46,4 +47,22 @@ test("Krea submits, polls and downloads a generated image", async () => {
     config.krea.apiKey = originalKey;
     config.krea.imageModel = originalModel;
   }
+});
+
+test("Gemini exposes its local fallback instead of failing silently", async () => {
+  const provider = new GeminiProvider({ apiKey: "test", model: "test" });
+  provider._client = { models: { generateContent: async () => { throw new Error("429 RESOURCE_EXHAUSTED"); } } };
+  const result = await provider.generateScene({
+    kind: "turn",
+    playerAction: "Ich gehe weiter.",
+    world: { location: "loguetown", locationName: "Loguetown", locationType: "hafenstadt" },
+    continuity: { presentNpcs: [] },
+    story: { active: [] },
+    status: {},
+    memory: { npcs: [] },
+  });
+
+  assert.equal(result.providerNotice.type, "fallback");
+  assert.match(result.providerNotice.message, /Kontingent|Anfragelimit/);
+  assert.ok(result.choices.length > 0);
 });

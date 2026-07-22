@@ -287,7 +287,12 @@ export function validateGmResponse(raw) {
     .filter((p) => p.caption)
     .slice(0, 2);
 
-  return { narration, choices, stateChanges, npcs, recruitable, devilFruitFound, shipAcquired, combatStart, canonOffer, panels };
+  const notice = raw.providerNotice;
+  const providerNotice = notice && typeof notice === "object"
+    ? { provider: toStr(notice.provider).slice(0, 30), type: toStr(notice.type).slice(0, 30), message: toStr(notice.message).slice(0, 160) }
+    : null;
+
+  return { narration, choices, stateChanges, npcs, recruitable, devilFruitFound, shipAcquired, combatStart, canonOffer, panels, providerNotice };
 }
 
 function clampInt(n, min, max) {

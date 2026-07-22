@@ -59,7 +59,15 @@ export class GeminiProvider {
       }
     } catch (error) {
       console.warn(`[ai] Gemini-Fallback auf Mock: ${error.message}`);
-      return this.fallback.generateScene(context);
+      const fallback = await this.fallback.generateScene(context);
+      return {
+        ...fallback,
+        providerNotice: {
+          provider: "Gemini",
+          type: "fallback",
+          message: friendlyFallbackReason(error),
+        },
+      };
     }
   }
 
@@ -78,4 +86,12 @@ export class GeminiProvider {
       "\n\nAntworte ausschließlich mit einem JSON-Objekt im vorgegebenen Format."
     );
   }
+}
+
+function friendlyFallbackReason(error) {
+  const message = String(error?.message || "");
+  if (/429|quota|rate.?limit|resource_exhausted/i.test(message)) return "Kontingent oder Anfragelimit vorübergehend erreicht";
+  if (/json|parse|syntax/i.test(message)) return "Antwortformat war ungültig";
+  if (/timeout|timed out|aborted/i.test(message)) return "Anfrage hat zu lange gedauert";
+  return "Anfrage konnte nicht verarbeitet werden";
 }
