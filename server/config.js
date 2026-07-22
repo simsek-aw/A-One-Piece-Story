@@ -26,6 +26,14 @@ function loadDotEnv() {
 }
 loadDotEnv();
 
+function commaList(value) {
+  return [...new Set(String(value || "").split(",").map((entry) => entry.trim()).filter(Boolean))];
+}
+
+const configuredOpenRouterModels = commaList(process.env.OPENROUTER_MODELS);
+const defaultOpenRouterModel = process.env.OPENROUTER_MODEL || configuredOpenRouterModels[0] || "openai/gpt-4o-mini";
+const openRouterModels = [...new Set([defaultOpenRouterModel, ...configuredOpenRouterModels])];
+
 export const config = {
   port: Number(process.env.PORT || 3000),
   aiProvider: (process.env.AI_PROVIDER || "mock").toLowerCase(),
@@ -53,7 +61,10 @@ export const config = {
     apiKey: process.env.OPENROUTER_API_KEY || "",
     // Freie Modellwahl, z. B. ein Modell mit ":free"-Endung — siehe
     // https://openrouter.ai/models?max_price=0 für die aktuell kostenlosen.
-    model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+    model: defaultOpenRouterModel,
+    // Mehrere Modelle erscheinen einzeln im Spielleiter-Menü. OPENROUTER_MODEL
+    // bleibt als Standard und für bestehende Deployments kompatibel.
+    models: openRouterModels,
     // Optional, nur fürs OpenRouter-eigene Ranking (nicht sicherheitsrelevant).
     siteUrl: process.env.OPENROUTER_SITE_URL || "",
     siteName: process.env.OPENROUTER_SITE_NAME || "A One Piece Story",

@@ -42,7 +42,8 @@ cp .env.example .env
 # Oder OpenRouter (ein Key, viele Modelle, auch kostenlose ":free"-IDs):
 #   AI_PROVIDER=openrouter
 #   OPENROUTER_API_KEY=sk-or-...   # https://openrouter.ai/keys
-#   OPENROUTER_MODEL=meta-llama/llama-3.1-8b-instruct:free
+#   OPENROUTER_MODEL=google/gemma-4-26b-a4b-it:free  # Standard
+#   OPENROUTER_MODELS=google/gemma-4-26b-a4b-it:free,poolside/laguna-s-2.1:free
 #
 # Oder DeepSeek direkt:
 #   AI_PROVIDER=deepseek

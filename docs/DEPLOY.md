@@ -54,10 +54,13 @@ klassischer „kleiner Server" einfacher.
    - `AI_PROVIDER = openrouter`
    - `OPENROUTER_API_KEY = <dein Schlüssel>` (als Secret) —
      [openrouter.ai/keys](https://openrouter.ai/keys)
-   - `OPENROUTER_MODEL = meta-llama/llama-3.1-8b-instruct:free` (Beispiel;
-     aktuelle kostenlose Modelle unter
+   - `OPENROUTER_MODEL = google/gemma-4-26b-a4b-it:free` (optionales Standardmodell)
+   - `OPENROUTER_MODELS = google/gemma-4-26b-a4b-it:free,poolside/laguna-s-2.1:free`
+     (optional; kommagetrennt, jedes Modell erscheint separat im Menü)
+   - Modell-IDs immer vollständig inklusive Anbieter-Präfix eintragen. Beispiele
+     ohne `google/` oder `poolside/` funktionieren nicht. Aktuelle kostenlose Modelle:
      [openrouter.ai/models?max_price=0](https://openrouter.ai/models?max_price=0) —
-     die Liste ändert sich, einfach eine `:free`-ID eintragen)
+     die Liste ändert sich; einfach vollständige `:free`-IDs eintragen.
    - Nicht jedes Modell hinter OpenRouter hält sich strikt an JSON-Ausgabe;
      der Provider parst deshalb robust (Markdown-Codezäune, Vor-/Nachrede
      werden entfernt) — bei Ausfall eines Modells einfach ein anderes

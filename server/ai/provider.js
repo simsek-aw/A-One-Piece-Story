@@ -21,6 +21,21 @@ const LABELS = {
   anthropic: "Claude",
 };
 
+const OPENROUTER_PREFIX = "openrouter:";
+
+export function openRouterProviderId(model = config.openrouter.model) {
+  return `${OPENROUTER_PREFIX}${String(model).trim().toLowerCase()}`;
+}
+
+function openRouterModelFromProvider(providerName) {
+  return providerName.startsWith(OPENROUTER_PREFIX) ? providerName.slice(OPENROUTER_PREFIX.length) : null;
+}
+
+function openRouterLabel(model) {
+  const slug = String(model).split("/").at(-1) || model;
+  return `OpenRouter · ${slug.replace(/:free$/i, "")} ${/:free$/i.test(slug) ? "(free)" : ""}`.trim();
+}
+
 export function createProvider(requestedProvider = config.aiProvider) {
   const providerName = String(requestedProvider || "mock").toLowerCase();
   if (providerName === "anthropic") {
@@ -50,14 +65,15 @@ export function createProvider(requestedProvider = config.aiProvider) {
     }
     return new GeminiProvider(config.gemini);
   }
-  if (providerName === "openrouter") {
+  if (providerName === "openrouter" || providerName.startsWith(OPENROUTER_PREFIX)) {
     if (!config.openrouter.apiKey) {
       console.warn(
         "[ai] AI_PROVIDER=openrouter, aber OPENROUTER_API_KEY fehlt. Fällt auf Mock zurück.",
       );
       return new MockProvider();
     }
-    return new OpenRouterProvider(config.openrouter);
+    const model = openRouterModelFromProvider(providerName) || config.openrouter.model;
+    return new OpenRouterProvider({ ...config.openrouter, model });
   }
   if (providerName === "deepseek") {
     if (!config.deepseek.apiKey) {
@@ -73,7 +89,13 @@ export function activeProviderName() {
   if (config.aiProvider === "anthropic" && config.anthropic.apiKey) return "anthropic";
   if (config.aiProvider === "openai" && config.openai.apiKey) return "openai";
   if (config.aiProvider === "gemini" && config.gemini.apiKey) return "gemini";
-  if (config.aiProvider === "openrouter" && config.openrouter.apiKey) return "openrouter";
+  if ((config.aiProvider === "openrouter" || config.aiProvider.startsWith(OPENROUTER_PREFIX)) && config.openrouter.apiKey) {
+    const requestedModel = openRouterModelFromProvider(config.aiProvider);
+    const model = requestedModel && config.openrouter.models.map((entry) => entry.toLowerCase()).includes(requestedModel)
+      ? requestedModel
+      : config.openrouter.model;
+    return openRouterProviderId(model);
+  }
   if (config.aiProvider === "deepseek" && config.deepseek.apiKey) return "deepseek";
   return "mock";
 }
@@ -81,7 +103,9 @@ export function activeProviderName() {
 export function availableProviders() {
   const providers = [{ id: "mock", label: LABELS.mock, model: "regelbasierter Ersatz-Erzähler" }];
   if (config.gemini.apiKey) providers.push({ id: "gemini", label: LABELS.gemini, model: config.gemini.model });
-  if (config.openrouter.apiKey) providers.push({ id: "openrouter", label: LABELS.openrouter, model: config.openrouter.model });
+  if (config.openrouter.apiKey) {
+    config.openrouter.models.forEach((model) => providers.push({ id: openRouterProviderId(model), label: openRouterLabel(model), model }));
+  }
   if (config.deepseek.apiKey) providers.push({ id: "deepseek", label: LABELS.deepseek, model: config.deepseek.model });
   if (config.openai.apiKey) providers.push({ id: "openai", label: LABELS.openai, model: config.openai.model });
   if (config.anthropic.apiKey) providers.push({ id: "anthropic", label: LABELS.anthropic, model: config.anthropic.model });

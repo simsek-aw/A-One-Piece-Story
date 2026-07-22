@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { DeepSeekProvider } from "../server/ai/deepseekProvider.js";
 import { generateKrea } from "../server/ai/imageProvider.js";
 import { GeminiProvider } from "../server/ai/geminiProvider.js";
+import { activeProviderName, availableProviders, createProvider } from "../server/ai/provider.js";
 import { config } from "../server/config.js";
 
 test("DeepSeek requests JSON output and repairs a nearly valid response", async () => {
@@ -65,4 +66,32 @@ test("Gemini exposes its local fallback instead of failing silently", async () =
   assert.equal(result.providerNotice.type, "fallback");
   assert.match(result.providerNotice.message, /Kontingent|Anfragelimit/);
   assert.ok(result.choices.length > 0);
+});
+
+test("multiple OpenRouter models become separate selectable providers", () => {
+  const original = {
+    apiKey: config.openrouter.apiKey,
+    model: config.openrouter.model,
+    models: config.openrouter.models,
+    aiProvider: config.aiProvider,
+  };
+  try {
+    config.openrouter.apiKey = "test";
+    config.openrouter.model = "google/gemma-4-26b-a4b-it:free";
+    config.openrouter.models = ["google/gemma-4-26b-a4b-it:free", "poolside/laguna-s-2.1:free"];
+    config.aiProvider = "openrouter";
+
+    const entries = availableProviders().filter((entry) => entry.id.startsWith("openrouter:"));
+    assert.deepEqual(entries.map((entry) => entry.id), [
+      "openrouter:google/gemma-4-26b-a4b-it:free",
+      "openrouter:poolside/laguna-s-2.1:free",
+    ]);
+    assert.equal(activeProviderName(), entries[0].id);
+    assert.equal(createProvider(entries[1].id).model, "poolside/laguna-s-2.1:free");
+  } finally {
+    config.openrouter.apiKey = original.apiKey;
+    config.openrouter.model = original.model;
+    config.openrouter.models = original.models;
+    config.aiProvider = original.aiProvider;
+  }
 });

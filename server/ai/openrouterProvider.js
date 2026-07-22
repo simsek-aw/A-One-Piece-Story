@@ -2,7 +2,7 @@
 // (Claude, GPT, Gemini, Llama, DeepSeek, Mistral, …) über EINEN API-Key,
 // inklusive mehrerer kostenloser Modelle (Modell-IDs mit ":free"-Endung).
 // Im Auswahlmenü verfügbar, sobald ein OPENROUTER_API_KEY vorliegt. Freie
-// Modellwahl über OPENROUTER_MODEL — siehe
+// Modellwahl über OPENROUTER_MODEL oder die Menüliste OPENROUTER_MODELS — siehe
 // https://openrouter.ai/models (Filter "Free" für aktuell kostenlose Modelle).
 //
 // OpenRouter ist API-kompatibel zur OpenAI-API (nur andere Basis-URL), darum

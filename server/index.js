@@ -16,7 +16,7 @@ import {
   spendSkillPoint,
   currentSceneView,
 } from "./engine/turn.js";
-import { createProvider, activeProviderName, availableProviders } from "./ai/provider.js";
+import { createProvider, activeProviderName, availableProviders, openRouterProviderId } from "./ai/provider.js";
 import { getPanelImage, PANELS_DIR, imagesEnabled, activeImageBackendName } from "./ai/imageProvider.js";
 import { listArchetypes, listStartLocations } from "./content/startingScenarios.js";
 import { creationRules } from "./engine/character.js";
@@ -37,6 +37,12 @@ console.log(`[ai] Verfügbare Spielleiter: ${providerOptions.map((option) => opt
 
 function providerNameForGame(game) {
   const selected = String(game.aiProvider || defaultProviderName).toLowerCase();
+  // Alte Spielstände speicherten nur "openrouter". Sie werden ohne Bruch auf
+  // das konfigurierte Standardmodell gehoben.
+  if (selected === "openrouter") {
+    const migrated = openRouterProviderId(config.openrouter.model);
+    if (providers.has(migrated)) return migrated;
+  }
   return providers.has(selected) ? selected : defaultProviderName;
 }
 

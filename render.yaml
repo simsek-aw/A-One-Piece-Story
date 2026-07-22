@@ -31,7 +31,9 @@ services:
       # - key: OPENROUTER_API_KEY
       #   sync: false
       # - key: OPENROUTER_MODEL
-      #   value: meta-llama/llama-3.1-8b-instruct:free # Beispiel, austauschbar
+      #   value: google/gemma-4-26b-a4b-it:free # optionales Standardmodell
+      # - key: OPENROUTER_MODELS
+      #   value: google/gemma-4-26b-a4b-it:free,poolside/laguna-s-2.1:free
       #
       # Direkter DeepSeek-Zugang:
       # - key: DEEPSEEK_API_KEY
