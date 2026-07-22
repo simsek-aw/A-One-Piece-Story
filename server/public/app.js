@@ -394,6 +394,15 @@ function renderScene(view) {
     upgradePanel($("#panelImg"), { scope: "scene" }, "s:" + view.locationId);
   }
 
+  // Ortswechsel deterministisch sichtbar machen — unabhängig davon, wie klar
+  // (oder unklar) die KI-Erzählung ihn beschrieben hat. Beantwortet "bin ich
+  // von A nach B gegangen?" immer eindeutig, bevor die Szene selbst kommt.
+  if (view.locationChange) {
+    const lc = view.locationChange;
+    const note = `🧭 Weitergezogen: ${lc.from} → ${lc.to}`;
+    if (!storyBuffer.some((entry) => entry.text === note)) storyBuffer.push({ type: "waypoint", text: note });
+  }
+
   // Story-Log (nur bei neuer Erzählung anhängen; Rendering weiter unten)
   if (isNewNarration) {
     storyBuffer.push({ type: "narration", text: view.scene.narration });
@@ -401,6 +410,15 @@ function renderScene(view) {
 
   if (view.providerNotice?.type === "fallback") {
     const note = `⚠ ${view.providerNotice.provider}: ${view.providerNotice.message}. Die Szene wurde mit dem lokalen Ersatz-Erzähler gesichert.`;
+    if (!storyBuffer.some((entry) => entry.text === note)) storyBuffer.push({ type: "event", text: note });
+  }
+
+  // Transparenz, wenn der Kontinuitäts-Wächter zweimal in Folge einen Entwurf
+  // verworfen und auf die neutrale Übergangs-Szene zurückgefallen ist — genau
+  // der Moment, der sich sonst wie ein unerklärter "Stillstand" anfühlt.
+  if (view.continuityNotice?.fallback) {
+    const reason = view.continuityNotice.issues?.[0] || "Kontinuitätsproblem";
+    const note = `🩹 Die Szene blieb inhaltlich hängen (${reason}). Eine neutrale Übergangs-Szene wurde eingesetzt, damit nichts Unerklärtes passiert — versuch es mit einer klaren, konkreten Handlung.`;
     if (!storyBuffer.some((entry) => entry.text === note)) storyBuffer.push({ type: "event", text: note });
   }
 
@@ -582,7 +600,16 @@ function renderSceneContext(view) {
   const people = npcs.length
     ? npcs.map((npc) => `<span class="scene-chip" title="${escapeHtml(npc.role || "Anwesend")}">${escapeHtml(npc.displayName)}${npc.role ? `<small>${escapeHtml(npc.role)}</small>` : ""}</span>`).join("")
     : `<span class="scene-empty">Niemand Handlungsrelevantes in unmittelbarer Nähe</span>`;
+  // Deterministische Orts-Spur: zeigt immer eindeutig den zurückgelegten Weg,
+  // egal wie klar (oder unklar) die Erzählung selbst den Wechsel beschreibt.
+  const trail = view.locationTrail || [];
+  const trailRow = trail.length
+    ? `<div class="scene-context-row"><b>🧭 Weg</b><div class="scene-trail">${trail
+        .map((t, i) => `<span class="trail-stop${i === trail.length - 1 ? " trail-current" : ""}">${escapeHtml(t.to)}</span>`)
+        .join('<span class="trail-arrow">→</span>')}</div></div>`
+    : "";
   box.innerHTML =
+    trailRow +
     `<div class="scene-context-row"><b>◉ Vor Ort</b><div class="scene-chips">${people}</div></div>` +
     `<div class="scene-context-row"><b>⌁ Lokale Spur</b><div>${localThread ? `<strong>${escapeHtml(localThread.title)}</strong><small>${escapeHtml(localThread.hook)}</small>` : `<span class="scene-empty">Keine aktive Spur an diesem Ort</span>`}</div></div>`;
 }

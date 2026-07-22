@@ -151,6 +151,40 @@ folgenden Punkte bauen darauf auf.
 - [x] Krea als drittes echtes Bild-Backend für Avatar- und Szenenpanels;
       asynchrone Jobs werden serverseitig gepollt und anschließend gecacht.
 
+## Erledigt (Ausbaustufe 13) — Kontinuität & roter Faden
+
+Direkte Antwort auf Spieler-Feedback: Szenen wirkten teils steckengeblieben
+(Text wiederholt sich, Auswahl bestätigt nur mit kleinem Zusatz), und Orts-
+wechsel waren schwer nachzuvollziehen ("Bin ich von A nach B gegangen?").
+
+- [x] Deterministische Ortsspur (engine/turn.js: `recordLocationTrail`,
+      `game.world.locationTrail`, `game.lastLocationChange`): jeder echte
+      Ortswechsel (Reise oder Szenenwechsel) wird unabhängig von der
+      KI-Formulierung festgehalten. UI zeigt sowohl einen permanenten
+      "🧭 Weitergezogen: A → B"-Eintrag im Story-Log als auch eine laufende
+      Breadcrumb-Spur im Schauplatz-Kontext — macht "wo war ich, wo bin ich
+      jetzt" immer eindeutig sichtbar, egal wie klar der Erzähltext ist.
+- [x] Kontinuitäts-Wächter (engine/continuityDirector.js) um zwei Muster
+      erweitert, die sich wie Stillstand anfühlen, aber vom bisherigen
+      Absatz-Wiederholungs-Check nicht erfasst wurden: fast unveränderte
+      Auswahlmöglichkeiten (`choicesBarelyChanged`) und Entwürfe, die zwar
+      "neu" sind, aber kaum Substanz hinzufügen (`newParagraphLength` mit
+      abgestuftem Schwellenwert).
+- [x] Transparenz statt stillem Sicherheitsnetz: `continuityNotice` wird
+      jetzt über `currentSceneView` exponiert; greift der Kontinuitäts-Wächter
+      zweimal in Folge nicht durch und fällt auf die neutrale Übergangsszene
+      zurück, bekommt der Spieler das im Story-Log klar erklärt, statt es wie
+      einen unerklärten Aussetzer wirken zu lassen.
+- [x] Root-Cause-Fix im Mock-Provider: `genericChoices()` und mehrere
+      Erzähl-Bausteine (Orts-Stimmungsbilder, NPC-Präsenz-Zeile,
+      Skill-Check-Ergebnis) nutzten nur 1–3 feste Formulierungen, die sich
+      bei mehreren Zügen am selben Ort fast garantiert wortgleich
+      wiederholten. Jetzt 5–6 Varianten pro Ort + mehrere Formulierungs-
+      Varianten pro Baustein.
+- [x] System-Prompt (für echte KI-Provider) um explizite Anti-Füllsatz- und
+      Auswahl-Varianz-Regeln ergänzt: jede Szene muss mindestens ein neues,
+      konkretes Element bringen; Choices dürfen sich nicht nur umformulieren.
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen

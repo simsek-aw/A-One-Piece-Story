@@ -139,8 +139,10 @@ export async function doActivity(game, provider, { activityId }) {
 // Reise zu einem verbundenen Ort (See-Route: Schiff oder Passage nötig).
 export async function doTravel(game, provider, { destId }) {
   requireAction(game);
+  const departureScene = game.world.sceneLocation; // vor der Reise merken (echter Ausgangspunkt)
   const info = travelTo(game, destId); // ändert Ort, zieht Passage ab, Tage vergehen
   game.world.sceneLocation = game.world.locationName; // alten Innenraum nicht an den Zielort mitnehmen
+  const travelJump = recordLocationTrail(game, departureScene, game.world.sceneLocation);
   const modeTxt = info.mode === "eigenes_schiff" ? "mit meinem eigenen Schiff" : "als Passagier auf einem fremden Schiff";
   const playerAction = `Ich reise ${modeTxt} nach ${game.world.locationName} (${info.days} Tage auf See).`;
 
@@ -148,7 +150,7 @@ export async function doTravel(game, provider, { destId }) {
   syncDailyEffects(game); // Reisetage: Heat klingt ab
   const context = buildContext(game, { kind: "travel", playerAction, checkResult: null, travelInfo: info });
   const gm = await generateCoherentScene(game, provider, context);
-  applyGmResponse(game, gm, { playerAction, checkResult: null });
+  applyGmResponse(game, gm, { playerAction, checkResult: null, locationChange: travelJump });
   return currentSceneView(game);
 }
 
@@ -387,6 +389,7 @@ function applyGmResponse(game, gm, turnInfo) {
   const s = gm.stateChanges;
   const c = game.character;
   game.lastConsequences = null;
+  const previousSceneLocation = game.world.sceneLocation;
 
   // Ort (die KI darf den Ort nur zu einem bekannten Karten-Ort ändern).
   if (s.location && s.location !== game.world.location && LOCATIONS[s.location]) {
@@ -396,6 +399,12 @@ function applyGmResponse(game, gm, turnInfo) {
   }
   const resolvedSceneLocation = s.sceneLocation || inferSceneLocation(gm.narration, game.world.locationName);
   if (resolvedSceneLocation) game.world.sceneLocation = qualifySceneLocation(resolvedSceneLocation, game.world.locationName);
+
+  // Deterministische Ortsspur — unabhängig davon, ob die KI den Wechsel klar
+  // erzählt hat. Reisen liefern ihren Sprung schon vorberechnet (turnInfo),
+  // alle anderen Wechsel werden hier aus dem Vorher/Nachher abgeleitet.
+  game.lastLocationChange = turnInfo?.locationChange
+    || recordLocationTrail(game, previousSceneLocation, game.world.sceneLocation);
 
   // Werte (Tag wird NICHT hier verändert — die Uhr besitzt den Kalender).
   recomputeMaxHp(c);
@@ -488,6 +497,18 @@ export function spendSkillPoint(game, { skillId }) {
   return currentSceneView(game);
 }
 
+// Merkt einen tatsächlichen Ortswechsel deterministisch vor (max. 8 Einträge),
+// damit der Spieler seinen Weg jederzeit nachvollziehen kann — unabhängig
+// davon, wie klar (oder unklar) die KI-Erzählung den Wechsel beschrieben hat.
+function recordLocationTrail(game, from, to) {
+  if (!from || !to || from === to) return null;
+  const trail = game.world.locationTrail || (game.world.locationTrail = []);
+  const entry = { day: game.world.day, from, to };
+  trail.push(entry);
+  if (trail.length > 8) game.world.locationTrail = trail.slice(-8);
+  return entry;
+}
+
 function slug(name) {
   return (
     String(name).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40) || "item"
@@ -508,6 +529,10 @@ export function currentSceneView(game) {
     location: game.world.locationName,
     sceneLocation: game.world.sceneLocation || game.world.locationName,
     locationId: game.world.location,
+    // Deterministische Ortsspur (letzte Wechsel) + der Wechsel dieses Zuges,
+    // damit die UI immer eindeutig zeigen kann, wie der Spieler hierher kam.
+    locationTrail: (game.world.locationTrail || []).slice(-5),
+    locationChange: game.lastLocationChange || null,
     travelMode: currentTravelMode(game),
     scene: game.scene,
     combat: game.combat ? combatView(game) : null,
@@ -533,6 +558,11 @@ export function currentSceneView(game) {
     lastHakiUnlocks: game.lastHakiUnlocks || [],
     consequences: game.lastConsequences || null,
     providerNotice: game.lastProviderNotice || null,
+    // Transparenz, wenn der Kontinuitäts-Wächter eingegriffen hat (siehe
+    // continuityDirector.js) — macht sichtbar, WARUM eine Szene neutral/
+    // zurückhaltend wirkte, statt es wie einen unerklärten Aussetzer wirken
+    // zu lassen.
+    continuityNotice: game.lastContinuityReview || null,
     lore: {
       progress: game.world.flags.lore_fortschritt || 0,
       unlocked: unlockedLore(game.world.flags.lore_fortschritt || 0),

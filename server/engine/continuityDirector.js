@@ -27,12 +27,15 @@ export function continuityContext(game) {
     presentNpcs: npcs,
     party: (game.party || []).map((member) => ({ id: member.id, name: member.name, role: member.role })),
     previousNarration: game.scene?.narration?.slice(-1200) || "",
+    previousChoices: (game.scene?.choices || []).map((choice) => choice.text).filter(Boolean),
     rules: [
       "Bestehende Personen bleiben anwesend, bis ihr Weggang erzählt wird.",
       "Neue Personen brauchen an abgeschlossenen Orten einen plausiblen Zugang.",
       "Ein Kampf braucht einen sichtbaren Auslöser und ein nachvollziehbares Motiv.",
       "Ortswechsel müssen durch Spielerhandlung oder Erzählung überbrückt werden.",
       "Funde und neue Besitztümer brauchen eine passende Suche, Übergabe oder Belohnung.",
+      "Jede Szene muss mindestens ein neues, konkretes Element bringen — keine bloße Bestätigung der Spielerwahl.",
+      "Neue Auswahlmöglichkeiten dürfen die vorigen nicht nur umformulieren; sie müssen den Fortschritt der Szene widerspiegeln.",
     ],
   };
 }
@@ -96,8 +99,17 @@ export function auditContinuity(game, context, gm) {
     issues.push("Die Szene bietet keine spielbare Folgeoption und kann den Spieler festsetzen.");
   }
 
-  if (context.kind === "turn" && repeatedParagraphShare(continuity.previousNarration, gm.narration) >= 0.5) {
-    issues.push("Der Entwurf wiederholt mindestens die Hälfte der vorherigen Szene, statt die Spieleraktion fortzuführen.");
+  if (context.kind === "turn") {
+    const repeatedShare = repeatedParagraphShare(continuity.previousNarration, gm.narration);
+    if (repeatedShare >= 0.5) {
+      issues.push("Der Entwurf wiederholt mindestens die Hälfte der vorherigen Szene, statt die Spieleraktion fortzuführen.");
+    } else if (repeatedShare >= 0.3 && newParagraphLength(continuity.previousNarration, gm.narration) < 220) {
+      issues.push("Der Entwurf hängt sich stark an die vorige Szene an und fügt kaum neue Substanz hinzu — nur eine knappe Bestätigung der Wahl.");
+    }
+  }
+
+  if (context.kind === "turn" && choicesBarelyChanged(continuity.previousChoices, gm.choices)) {
+    issues.push("Die neuen Auswahlmöglichkeiten unterscheiden sich kaum von der vorigen Szene — kein erkennbarer Fortschritt.");
   }
 
   if (context.kind === "turn" && LEAVE_INTENT.test(context.playerAction || "") && !placeChanged && !DEPARTURE.test(gm.narration)) {
@@ -212,6 +224,28 @@ function repeatedParagraphShare(previous, current) {
     .reduce((sum, paragraph) => sum + paragraph.length, 0);
   const totalLength = newParagraphs.reduce((sum, paragraph) => sum + paragraph.length, 0);
   return totalLength ? repeatedLength / totalLength : 0;
+}
+
+// Wie viele Zeichen der neuen Antwort sind wirklich NEU (kein Wiederaufguss
+// eines Absatzes aus der vorigen Szene)? Ergänzt repeatedParagraphShare für
+// den Fall, dass der Entwurf zwar formal "neu" ist, aber kaum Substanz bringt.
+function newParagraphLength(previous, current) {
+  const oldParagraphs = paragraphs(previous);
+  const newParagraphs = paragraphs(current);
+  if (!newParagraphs.length) return 0;
+  return newParagraphs
+    .filter((paragraph) => !oldParagraphs.some((old) => wordSimilarity(old, paragraph) >= 0.82))
+    .reduce((sum, paragraph) => sum + paragraph.length, 0);
+}
+
+// Erkennt das "steckengeblieben"-Muster: derselbe Optionensatz kommt fast
+// unverändert zurück, obwohl der Spieler gerade gehandelt hat.
+function choicesBarelyChanged(previousTexts, newChoices) {
+  const oldList = (previousTexts || []).map(normalize).filter(Boolean);
+  const newList = (newChoices || []).map((choice) => normalize(choice.text)).filter(Boolean);
+  if (oldList.length < 2 || newList.length < 2) return false;
+  const matches = newList.filter((text) => oldList.some((old) => wordSimilarity(old, text) >= 0.6)).length;
+  return matches / newList.length >= 0.75;
 }
 
 function paragraphs(text) {

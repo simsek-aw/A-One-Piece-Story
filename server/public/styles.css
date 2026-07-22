@@ -503,6 +503,21 @@ button.choice:disabled { opacity: 0.45; cursor: not-allowed; }
 .entry.narration.latest { border-width: 3px; }
 .entry.action { border-left: 4px solid var(--line); color: var(--muted); }
 
+/* Wegpunkt-Eintrag: deterministischer "A → B"-Hinweis, kein Fließtext. */
+.entry.waypoint {
+  align-self: center; max-width: 88%;
+  text-align: center; font-size: 0.76rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 6px 16px; border: 1.5px dotted var(--line); border-radius: 999px;
+  background: var(--bg2); color: var(--muted);
+}
+
+/* Orts-Spur (Breadcrumb) über dem Schauplatz-Kontext. */
+.scene-trail { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 0.74rem; color: var(--muted); }
+.trail-stop { white-space: nowrap; }
+.trail-stop.trail-current { color: var(--ink); font-weight: 700; }
+.trail-arrow { opacity: 0.6; }
+
 /* Bild-Panels streng monochrom + gerahmt */
 .panel-art img, .key-panel img {
   border: 2.5px solid var(--line); border-radius: var(--radius);

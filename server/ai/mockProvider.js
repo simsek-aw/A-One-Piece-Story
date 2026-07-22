@@ -8,31 +8,53 @@
 
 import { randomDevilFruit } from "../content/devilFruits.js";
 
+// Mindestens 5 Varianten pro Ort: mit nur 2-3 Einträgen wiederholt sich die
+// Zeilen bei mehreren Zügen am selben Ort fast garantiert wortgleich — genau
+// das Muster, das sich wie Stillstand anfühlt (und der Kontinuitäts-Wächter
+// inzwischen zu Recht als "kaum neue Substanz" abweist).
 const LOCATION_FLAVOR = {
   loguetown: [
     "Der Wind trägt Salz und Asche über den Marktplatz von Loguetown. Auf dem Hinrichtungsgerüst, wo der Piratenkönig sein Ende fand, drängen sich Neugierige.",
     "In den Gassen Loguetowns feilschen Waffenschmiede, während Marine-Patrouillen misstrauisch die frischen Piratengesichter mustern.",
     "Am Hafen von Loguetown liegen Schiffe aller Art — von wackligen Kähnen bis zu stolzen Karavellen, jedes voller Hoffnung auf das One Piece.",
+    "Kopfgeldjäger vergleichen an einer Tafel voller Steckbriefe ihre neuesten Ziele, während Kinder zwischen den Ständen Fangen spielen.",
+    "Ein Ausrufer verliest vom Balkon des Gerichtsgebäudes die jüngsten Marine-Bekanntmachungen; seine Stimme geht im Stimmengewirr fast unter.",
+    "Zwischen den Ständen riecht es nach gebratenem Fisch und heißem Pech; irgendwo streiten sich zwei Händler laut um den Preis für Schießpulver.",
   ],
   shells_town: [
     "Die weißen Mauern der Marine-Garnison von Shells Town glänzen — doch hinter ihnen riecht es nach fauligen Deals.",
     "Auf dem Hof der Garnison drillt ein Offizier eine Handvoll Rekruten, während die Stadt gedämpft ihren Geschäften nachgeht.",
+    "Vor der Kaserne hängt frisch gestrichen ein Anschlag mit neuen Dienstvorschriften — niemand scheint ihn wirklich zu lesen.",
+    "In einer Seitengasse tuscheln zwei Wachen über einen Vorgesetzten, der zu tief in dubiose Geschäfte verstrickt sein soll.",
+    "Salzige Meeresluft treibt über den Exerzierplatz; Möwen kreisen abwartend über den Essensresten der Kantine.",
   ],
   hafendorf_sirup: [
     "Das Sirup-Hafendorf döst in der Nachmittagssonne. Die Kneipe am Kai ist der einzige Ort mit Leben — und sie steht zum Verkauf.",
     "Möwen kreischen über den Booten des verschlafenen Dorfes. Drinnen in der Kneipe klimpert jemand halbherzig auf einer Laute.",
+    "Ein rostiger Wetterhahn auf dem Kneipendach dreht sich quietschend im Wind; sonst ist es im Dorf fast unheimlich still.",
+    "Ein paar Fischer flicken am Kai ihre Netze und tauschen träge Neuigkeiten über vorbeiziehende Segel aus.",
+    "Die Nachmittagssonne wirft lange Schatten über die schmale Dorfstraße; irgendwo bellt ein Hund nach einer Katze, die längst verschwunden ist.",
   ],
   klippen_vorposten: [
     "Der Wind heult um den Felsklippen-Außenposten. Die See darunter ist grau und unversöhnlich, und die Soldaten sprechen nur im Flüsterton über ihren Kommandanten.",
     "Möwen wagen sich kaum an die windgepeitschten Klippen. Der Marine-Vorposten wirkt eher wie ein Gefängnis für seine eigene Besatzung.",
+    "Salzige Gischt schlägt gegen die Klippen; ein einsamer Wachposten starrt stur aufs graue Meer, als erwarte er etwas Bestimmtes.",
+    "In den engen Fluren des Vorpostens riecht es nach nasser Wolle und altem Öl; Stimmen verstummen, sobald du näher kommst.",
+    "Der Wind zerrt an einer losen Planke; irgendwo im Innern klirrt Metall, als würde jemand gerade Waffen inventarisieren.",
   ],
   orangen_hafen: [
     "Der Orangen-Hafen duftet nach Zitrusfrüchten und Teer. An den Kaimauern wird gefeilscht, geladen — und misstrauisch beobachtet.",
     "Kisten voller Orangen stapeln sich am Dock. Doch die Blicke der Händler sind wachsam: Piratenbanden kommen hier oft zu Besuch.",
+    "Ein Händler ruft lautstark den Tagespreis für Zitrusfrüchte aus, während zwei Lademeister sich um die letzte freie Kiste streiten.",
+    "Zwischen den Lagerhäusern hängen Netze zum Trocknen; ein Kind balanciert auf einem umgekippten Fass und wird prompt zurückgepfiffen.",
+    "Am Kai wird gerade eine Ladung gelöscht; der süßlich-herbe Duft von Orangen mischt sich mit Teer und Meerwasser.",
   ],
   windmuehlendorf: [
     "Über dem Windmühlendorf drehen sich träge die alten Flügel. Abends erzählt man sich hier Geschichten — auch von einer 'Lücke' in der Geschichte der Welt.",
     "Ein ruhiges Dorf, in dem die Zeit langsamer läuft. Doch in den alten Logbüchern der Bibliothek schlummern Fragen, die niemand laut stellt.",
+    "Ein alter Mann sitzt vor der Bibliothek und blättert stirnrunzelnd in einem zerfledderten Logbuch, das er niemandem zeigen will.",
+    "Zwischen den Windmühlen spielen Kinder Verstecken; ihr Lachen hallt seltsam kontrastierend zu den gemurmelten Geschichten der Alten.",
+    "Der Wind treibt raschelndes Laub über den Dorfplatz; irgendwo schlägt eine lose Fensterläde im Takt gegen die Mauer.",
   ],
 };
 
@@ -255,14 +277,29 @@ export class MockProvider {
     }
 
     if (check) {
+      const dcTag = `(${check.skillName}: ${check.total} gegen DC ${check.dc})`;
       if (check.kritErfolg) {
-        parts.push(`Ein Meisterwurf! (${check.skillName}: ${check.total} gegen DC ${check.dc}) — alles gelingt weit über Erwarten.`);
+        parts.push(pick([
+          `Ein Meisterwurf! ${dcTag} — alles gelingt weit über Erwarten.`,
+          `Das sitzt perfekt! ${dcTag} — besser hättest du es nicht planen können.`,
+        ]));
       } else if (check.kritFehler) {
-        parts.push(`Ein katastrophaler Patzer! (${check.skillName}: ${check.total} gegen DC ${check.dc}) — das geht gründlich schief.`);
+        parts.push(pick([
+          `Ein katastrophaler Patzer! ${dcTag} — das geht gründlich schief.`,
+          `Das läuft komplett aus dem Ruder! ${dcTag} — schlimmer hätte es kaum kommen können.`,
+        ]));
       } else if (check.success) {
-        parts.push(`Es gelingt dir. (${check.skillName}: ${check.total} gegen DC ${check.dc}).`);
+        parts.push(pick([
+          `Es gelingt dir. ${dcTag}.`,
+          `Dein Vorhaben glückt. ${dcTag}.`,
+          `Du behältst die Oberhand. ${dcTag}.`,
+        ]));
       } else {
-        parts.push(`Es misslingt. (${check.skillName}: ${check.total} gegen DC ${check.dc}).`);
+        parts.push(pick([
+          `Es misslingt. ${dcTag}.`,
+          `Dein Vorhaben scheitert. ${dcTag}.`,
+          `Diesmal läuft es nicht zu deinen Gunsten. ${dcTag}.`,
+        ]));
       }
     }
 
@@ -281,7 +318,15 @@ export class MockProvider {
     let recruitable = [];
 
     if (presentNpcs.length) {
-      parts.push(`${presentNpcs.map((npc) => npc.name).join(" und ")} ${presentNpcs.length === 1 ? "bleibt" : "bleiben"} in deiner Nähe und ${presentNpcs.length === 1 ? "verfolgt" : "verfolgen"} deine Handlung.`);
+      const names = presentNpcs.map((npc) => npc.name).join(" und ");
+      const plural = presentNpcs.length > 1;
+      parts.push(pick([
+        `${names} ${plural ? "bleiben" : "bleibt"} in deiner Nähe und ${plural ? "verfolgen" : "verfolgt"} deine Handlung.`,
+        `${names} ${plural ? "beobachten" : "beobachtet"} aufmerksam, wie du weitermachst.`,
+        plural
+          ? `Aus dem Augenwinkel siehst du, dass ${names} noch da sind und genau hinsehen.`
+          : `Aus dem Augenwinkel siehst du, dass ${names} noch da ist und genau hinsieht.`,
+      ]));
     } else if (knownNpcs.length && chance(0.35)) {
       const known = pick(knownNpcs);
       const mood = known.gesinnung > 20 ? "freundlich" : known.gesinnung < -20 ? "feindselig" : "reserviert";
@@ -426,13 +471,43 @@ export class MockProvider {
     };
   }
 
+  // Formulierungs-Varianten statt fixer Texte: dieselben vier "Rollen"
+  // (nachforschen/verhandeln/handeln/weiterziehen) klingen sonst über viele
+  // Züge hinweg fast wortgleich — genau das Muster, das sich wie Stillstand
+  // anfühlt und den Kontinuitäts-Wächter zu Recht auslöst.
   genericChoices(context) {
     const thread = context.story?.active?.[0];
+    const investigate = thread
+      ? [
+          `Die Spur zu „${thread.title}“ gezielt untersuchen.`,
+          `Näher an „${thread.title}“ herangehen und nachhaken.`,
+          `Konkrete Hinweise zu „${thread.title}“ zusammentragen.`,
+        ]
+      : [
+          "Nachforschen und mehr herausfinden.",
+          "Dich aufmerksam umsehen und Details prüfen.",
+          "Die Umgebung gezielt nach Hinweisen absuchen.",
+        ];
+    const negotiate = [
+      "Mit Worten die Lage entschärfen.",
+      "Ruhig auf die Situation einreden.",
+      "Vermitteln und die Gemüter beruhigen.",
+    ];
+    const act = [
+      "Zur Tat schreiten.",
+      "Beherzt eingreifen.",
+      "Die Initiative ergreifen, bevor sich die Lage ändert.",
+    ];
+    const leave = [
+      "Weiterziehen und die Sache ruhen lassen.",
+      "Den Ort vorerst hinter dir lassen.",
+      "Dich zurückziehen und später wiederkommen.",
+    ];
     const options = [
-      { id: "a", text: thread ? `Die Spur zu „${thread.title}“ gezielt untersuchen.` : "Nachforschen und mehr herausfinden.", skillCheck: { skill: "wahrnehmung", dc: 11 } },
-      { id: "b", text: "Mit Worten die Lage entschärfen.", skillCheck: { skill: "ueberzeugen", dc: 12 } },
-      { id: "c", text: "Zur Tat schreiten.", skillCheck: { skill: pick(["nahkampf", "schwertkunst", "geschick"]) === "geschick" ? "heimlichkeit" : "nahkampf", dc: 13 } },
-      { id: "d", text: "Weiterziehen und die Sache ruhen lassen.", skillCheck: null },
+      { id: "a", text: pick(investigate), skillCheck: { skill: "wahrnehmung", dc: 11 } },
+      { id: "b", text: pick(negotiate), skillCheck: { skill: "ueberzeugen", dc: 12 } },
+      { id: "c", text: pick(act), skillCheck: { skill: pick(["nahkampf", "schwertkunst", "geschick"]) === "geschick" ? "heimlichkeit" : "nahkampf", dc: 13 } },
+      { id: "d", text: pick(leave), skillCheck: null },
     ];
     // 3 zufällige, aber stabile IDs a–d
     return options.slice(0, 3 + (chance(0.4) ? 1 : 0));
