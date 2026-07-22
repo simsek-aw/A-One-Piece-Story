@@ -142,7 +142,6 @@
           </section>
 
           <div id="storyLog" class="story-log"></div>
-          <div id="keyPanels" class="key-panels"></div>
           <div id="checkBanner" class="check-banner hidden"></div>
           <div id="consequenceBanner" class="consequence-banner hidden"></div>
 
@@ -158,20 +157,25 @@
             </div>
           </div>
 
-          <div id="recruitBox" class="recruit-box hidden">
-            <h3>Rekrutierung möglich</h3>
-            <div id="recruitList"></div>
-          </div>
-          <section id="recruitDialogue" class="recruit-dialogue hidden" aria-live="polite"></section>
+          <!-- Antworten gehören zum Erzählfluss und bleiben vertikal scrollbar. -->
+          <div id="choices" class="choices"></div>
 
-          <section class="action-dock" aria-label="Deine nächste Handlung">
-            <div id="choices" class="choices"></div>
+          <section class="action-dock" aria-label="Freie Handlung beschreiben">
             <form id="freeForm" class="free-form">
               <input id="freeText" type="text" placeholder="… oder beschreibe frei, was du tust" maxlength="500" />
               <button type="submit" class="primary">Tun</button>
             </form>
             <div id="turnError" class="error"></div>
           </section>
+
+          <div id="keyPanels" class="key-panels"></div>
+
+          <div id="recruitBox" class="recruit-box hidden">
+            <h3>Rekrutierung möglich</h3>
+            <div id="recruitList"></div>
+          </div>
+          <section id="recruitDialogue" class="recruit-dialogue hidden" aria-live="polite"></section>
+
         </section>
 
         <aside class="sidebar">

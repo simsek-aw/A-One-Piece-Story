@@ -222,7 +222,7 @@ button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .recruit-result.rejected { border-style: dashed; }
 
 .action-dock { position: sticky; bottom: 0; z-index: 11; width: 100%; min-width: 0; max-width: 100%; margin-top: 18px; padding: 10px; background: color-mix(in srgb, var(--bg) 94%, transparent); border: 3px solid var(--line); box-shadow: 0 -4px 0 var(--shadow); backdrop-filter: blur(5px); }
-.free-form { display: flex; gap: 8px; margin-top: 10px; }
+.free-form { display: flex; gap: 8px; margin: 0; }
 .free-form input { flex: 1 1 auto; min-width: 0; }
 .free-form button { flex: 0 0 auto; }
 
@@ -426,11 +426,10 @@ button.choice:disabled { opacity: 0.45; cursor: not-allowed; }
 
   /* Touch-freundlichere Ziele */
   .choice, .combat-btn, .chip, button.primary { min-height: 44px; }
-  .action-dock { margin-inline: -6px; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); }
-  .choices { width: 100%; flex-direction: row; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; padding: 1px 2px 5px; scrollbar-width: thin; }
-  .choice { min-width: min(80vw, 340px); padding: 11px 12px; scroll-snap-align: start; }
-  .action-lock { min-width: 100%; scroll-snap-align: start; }
-  .free-form { margin-top: 5px; }
+  .action-dock { width: calc(100% + 24px); max-width: none; margin-inline: -12px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); border-inline: 0; }
+  .choices { width: 100%; flex-direction: column; overflow: visible; padding: 0; }
+  .choice { width: 100%; min-width: 0; padding: 11px 12px; }
+  .action-lock { min-width: 0; }
   .panel-art img, .key-panel img { border-radius: 10px; }
   .story-log .entry { font-size: 0.98rem; }
   .scene-hud { top: calc(var(--topbar-height) + env(safe-area-inset-top)); }

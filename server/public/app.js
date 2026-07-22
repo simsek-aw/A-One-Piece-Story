@@ -1221,16 +1221,26 @@ $("#themeToggle").addEventListener("click", () => {
   closeNavMenu();
 });
 
-// Touch-Gesten: nach links wischen öffnet das Menü (von rechts), nach rechts schließt.
-let _tsx = 0, _tsy = 0;
-window.addEventListener("touchstart", (e) => { const t = e.touches[0]; _tsx = t.clientX; _tsy = t.clientY; }, { passive: true });
+// Das rechte Logbuch öffnet nur noch mit einer echten Randgeste. Horizontale
+// Bewegungen auf Antworten, Buttons oder Eingaben dürfen niemals das Menü öffnen.
+let _tsx = 0, _tsy = 0, _edgeSwipe = false;
+window.addEventListener("touchstart", (e) => {
+  const t = e.touches[0];
+  _tsx = t.clientX;
+  _tsy = t.clientY;
+  const interactive = e.target instanceof Element && e.target.closest("#choices, .action-dock, input, textarea, select, button, [role='button']");
+  _edgeSwipe = !interactive && _tsx >= window.innerWidth - 32;
+}, { passive: true });
 window.addEventListener("touchend", (e) => {
   const t = e.changedTouches[0];
   const dx = t.clientX - _tsx, dy = t.clientY - _tsy;
   if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-    if (dx < 0) openDrawer(); else closeDrawer();
+    if (document.body.classList.contains("drawer-open") && dx > 0) closeDrawer();
+    else if (_edgeSwipe && dx < 0) openDrawer();
   }
+  _edgeSwipe = false;
 }, { passive: true });
+window.addEventListener("touchcancel", () => { _edgeSwipe = false; }, { passive: true });
 
 // Service-Worker (installierbare Web-App / Offline-Shell)
 if ("serviceWorker" in navigator) {
