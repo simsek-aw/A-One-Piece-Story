@@ -185,6 +185,25 @@ wechsel waren schwer nachzuvollziehen ("Bin ich von A nach B gegangen?").
       Auswahl-Varianz-Regeln ergänzt: jede Szene muss mindestens ein neues,
       konkretes Element bringen; Choices dürfen sich nicht nur umformulieren.
 
+## Erledigt (Ausbaustufe 15) — "Bisher geschah..."-Rückblick
+
+Der Story-Log lebt nur im Browser (`storyBuffer`) und ist nach einem Reload
+oder "Fortsetzen" eines gespeicherten Charakters leer — man landet ohne
+Kontext in einer laufenden Geschichte.
+
+- [x] `server/engine/turn.js`: `recapFor(game)` leitet rein deterministisch
+      (keine KI) einen kompakten Rückblick aus dem Spielzustand ab — Ortsspur
+      der letzten Wechsel, Crew, Teufelsfrucht, Kopfgeld, offener Story-Hook
+      am aktuellen Ort. Wird über `currentSceneView` als `recap` exponiert.
+- [x] Guard gegen Fehlalarm direkt nach Charaktererstellung: zählt nur echte
+      Spielzüge (`game.history` mit `action`-Feld); die Eröffnungsszene beim
+      Spielstart erzeugt sonst schon einen Ortsspur-Eintrag, der fälschlich
+      wie eine "Historie" aussehen würde.
+- [x] Frontend: dismissible Banner im Manga-Panel-Look (`#recapBanner`),
+      nur beim (Wieder-)Einstieg über `enterGame()` gezeigt — nicht bei
+      jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
+      echte Aktion ausführt, oder per ×-Button sofort.
+
 ## Erledigt (Ausbaustufe 14) — 8-Bit-Retro-Szenenpanel
 
 Spieler-Vorschlag: statt (Platzhalter-)Bild-Generierung fürs Szenenpanel auf

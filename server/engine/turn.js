@@ -515,6 +515,51 @@ function slug(name) {
   );
 }
 
+// "Bisher geschah..."-Rückblick beim (Wieder-)Einstieg. Rein deterministisch
+// aus dem Spielzustand abgeleitet (keine KI, kein Zufall) — der Spieler-Log
+// lebt nur im Browser (storyBuffer) und ist nach einem Reload/Fortsetzen weg;
+// dieser Rückblick beantwortet "wo stehe ich gerade" ohne dass die KI etwas
+// neu erzählen muss. Gibt null zurück, wenn es (frischer Start) noch nichts
+// zu berichten gibt.
+export function recapFor(game) {
+  // Nur echte Spielzüge zählen (nicht die Eröffnungsszene bei Spielbeginn,
+  // die schon vor der ersten Spieler-Aktion einen Ortsspur-Eintrag erzeugen
+  // kann) — sonst zeigt der Rückblick sich fälschlich schon direkt nach der
+  // Charaktererstellung.
+  const turnsTaken = (game.history || []).filter((h) => h.action).length;
+  if (turnsTaken === 0) return null;
+
+  const trail = game.world.locationTrail || [];
+  const party = game.party || [];
+  const c = game.character;
+  const bullets = [];
+
+  if (trail.length) {
+    const recent = trail.slice(-3);
+    const stops = [recent[0].from, ...recent.map((t) => t.to)];
+    bullets.push(`Weg bisher: ${stops.join(" → ")}`);
+  }
+
+  if (party.length) {
+    bullets.push(`Deine Crew: ${party.map((p) => p.name).join(", ")}`);
+  }
+
+  if (c.devilFruit) bullets.push(`Teufelsfrucht: ${c.devilFruit.name}`);
+
+  if (c.bounty > 0) {
+    bullets.push(`Kopfgeld: ${Math.round(c.bounty).toLocaleString("de-DE")} Berry (${bountyTier(c.bounty).label})`);
+  }
+
+  const localHook = storyDirectorView(game).active.find((t) => t.location === game.world.location);
+  if (localHook) bullets.push(`Offener Faden hier: ${localHook.hook}`);
+
+  return {
+    day: game.world.day,
+    location: game.world.locationName,
+    bullets: bullets.slice(0, 5),
+  };
+}
+
 // Sichtbare Szene fürs Frontend.
 export function currentSceneView(game) {
   syncDailyEffects(game);
@@ -533,6 +578,7 @@ export function currentSceneView(game) {
     // damit die UI immer eindeutig zeigen kann, wie der Spieler hierher kam.
     locationTrail: (game.world.locationTrail || []).slice(-5),
     locationChange: game.lastLocationChange || null,
+    recap: recapFor(game),
     travelMode: currentTravelMode(game),
     scene: game.scene,
     combat: game.combat ? combatView(game) : null,

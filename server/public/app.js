@@ -275,6 +275,25 @@ function enterGame(view) {
   $("#openLogbook").classList.remove("hidden");
   storyBuffer = [];
   renderScene(view);
+  showRecapBanner(view.recap);
+}
+
+// "Bisher geschah..."-Rückblick: der Story-Log lebt nur im Browser
+// (storyBuffer) und ist nach einem Reload/Fortsetzen weg. Der Server liefert
+// deterministisch (keine KI) einen kompakten Rückblick mit — hier nur beim
+// (Wieder-)Einstieg gezeigt, nicht bei jedem Zug.
+function showRecapBanner(recap) {
+  const banner = $("#recapBanner");
+  if (!recap || !recap.bullets?.length) { banner.classList.add("hidden"); return; }
+  $("#recapTitle").textContent = `📜 Bisher geschah... (Tag ${recap.day} · ${recap.location})`;
+  const list = $("#recapList");
+  list.innerHTML = "";
+  recap.bullets.forEach((b) => list.appendChild(el("li", "", escapeHtml(b))));
+  banner.classList.remove("hidden");
+}
+
+function hideRecapBanner() {
+  $("#recapBanner").classList.add("hidden");
 }
 
 function showCharacterPicker() {
@@ -355,6 +374,7 @@ function renderSavedCharacters() {
 async function post(path, body, actionLabel) {
   $("#turnError").textContent = "";
   closeDrawer(); // auf Mobil: Menü schließen, damit man die Szene sieht
+  hideRecapBanner(); // Rückblick war nur für den Einstieg gedacht, nicht während des Spiels
   if (actionLabel) storyBuffer.push({ type: "action", text: "› " + actionLabel });
   try {
     const view = await api(`/api/games/${state.gameId}${path}`, { method: "POST", body: JSON.stringify(body) });
@@ -828,6 +848,7 @@ function renderRecruit(view) {
 
 async function combatAction(payload) {
   $("#turnError").textContent = "";
+  hideRecapBanner();
   try {
     const view = await api(`/api/games/${state.gameId}/combat-action`, { method: "POST", body: JSON.stringify(payload) });
     renderScene(view);
@@ -1231,6 +1252,7 @@ $("#openLogbook").addEventListener("click", () => {
   openDrawer();
 });
 $("#drawerOverlay").addEventListener("click", closeDrawer);
+$("#recapClose").addEventListener("click", hideRecapBanner);
 document.addEventListener("click", (event) => {
   if (!document.body.classList.contains("nav-menu-open")) return;
   if (event.target.closest("#navMenu, #menuToggle")) return;

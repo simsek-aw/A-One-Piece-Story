@@ -163,6 +163,36 @@ button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .consequence-banner.safe { border-style: dashed; }
 .consequence-banner.danger { background: var(--ink); color: var(--on-accent); }
 .consequence-title { font-family: "Bangers", "Arial Black", Impact, system-ui, sans-serif; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+
+/* "Bisher geschah..."-Rückblick: nur beim (Wieder-)Einstieg sichtbar, damit
+   nach einem Reload/Fortsetzen sofort klar ist, wo man steht — der Story-Log
+   selbst lebt nur im Browser und ist dann leer. */
+.recap-banner {
+  position: relative;
+  margin: 0 0 14px;
+  padding: 14px 40px 12px 16px;
+  border: 2.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: 5px 5px 0 var(--shadow);
+}
+.recap-banner h3 {
+  margin: 0 0 8px;
+  font-family: "Bangers", "Arial Black", Impact, system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 1.05rem;
+}
+.recap-banner ul { margin: 0; padding-left: 20px; }
+.recap-banner li { margin: 4px 0; font-size: 0.9rem; line-height: 1.4; }
+.recap-close {
+  position: absolute; top: 8px; right: 10px;
+  width: 26px; height: 26px;
+  border: 1.5px solid var(--line); border-radius: 50%;
+  background: var(--panel2); color: var(--ink);
+  font-size: 1.1rem; line-height: 1; cursor: pointer;
+}
+.recap-close:hover { background: var(--ink); color: var(--on-accent); }
 .scene-hud { position: sticky; top: var(--topbar-height); z-index: 12; margin: 0 0 16px; filter: drop-shadow(0 4px 0 var(--shadow)); }
 .scene-details { background: var(--panel2); }
 .scene-location { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 9px; margin: 0; padding: 8px 12px; border: 2px solid var(--line); background: var(--ink); color: var(--on-accent); cursor: pointer; list-style: none; }
@@ -646,11 +676,12 @@ figure.drawing::after {
    (pointer-events: none), darum unbedenklich additiv auf bestehende Boxen.
    ============================================================ */
 .card, .panel, .combat-box, .entry.narration, .entry.event,
-.recruit-dialogue, .consequence-banner {
+.recruit-dialogue, .consequence-banner, .recap-banner {
   position: relative;
 }
 .card::before, .panel::before, .combat-box::before, .entry.narration::before,
-.entry.event::before, .recruit-dialogue::before, .consequence-banner::before {
+.entry.event::before, .recruit-dialogue::before, .consequence-banner::before,
+.recap-banner::before {
   content: "";
   position: absolute; inset: 6px;
   border: 1.5px dotted var(--line);
