@@ -1210,6 +1210,21 @@ document.addEventListener("click", (event) => {
   closeNavMenu();
 });
 
+// Schnellzugriff-Leiste im Logbuch: springt statt zu scrollen und blitzt das
+// Ziel-Panel kurz auf, damit man es im langen Logbuch sofort wiederfindet.
+document.querySelectorAll(".quick-nav [data-jump]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const target = document.getElementById(btn.dataset.jump);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    target.classList.remove("jump-flash");
+    // Reflow erzwingen, damit die Animation bei wiederholtem Klick neu startet.
+    void target.offsetWidth;
+    target.classList.add("jump-flash");
+    setTimeout(() => target.classList.remove("jump-flash"), 900);
+  });
+});
+
 // Schwarz-Weiß invertieren (paper <-> ink), Wahl merken.
 $("#themeToggle").addEventListener("click", () => {
   const cur = document.documentElement.getAttribute("data-theme") === "ink" ? "ink" : "paper";

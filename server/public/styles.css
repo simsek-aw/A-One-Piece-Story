@@ -228,6 +228,36 @@ button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Sidebar */
 .sidebar { display: flex; flex-direction: column; gap: 14px; }
+
+/* Schnellzugriff-Leiste: Icon-Raster statt "alles durchscrollen" fürs lange
+   Logbuch. Springt per data-jump zum jeweiligen Panel (siehe app.js). */
+.quick-nav {
+  position: sticky; top: var(--topbar-height); z-index: 3;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(58px, 1fr)); gap: 6px;
+  padding: 8px; margin: 0 0 4px;
+  background: var(--bg2); border: 2px solid var(--line); border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+.quick-nav button {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 2px; border: 2px solid var(--line); border-radius: var(--radius);
+  background: var(--panel); color: var(--ink); cursor: pointer;
+  box-shadow: 2px 2px 0 var(--shadow); transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s;
+}
+.quick-nav button span { font-size: 1.25rem; line-height: 1; }
+.quick-nav button small { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.quick-nav button:hover {
+  background: var(--ink); color: var(--on-accent);
+  transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--shadow);
+}
+
+/* Kurzes Aufblitzen des Ziel-Panels nach einem Sprung. */
+@keyframes jump-flash { 0%, 100% { box-shadow: 4px 4px 0 var(--shadow); } 20%, 60% { box-shadow: 4px 4px 0 var(--shadow), 0 0 0 3px var(--accent); } }
+.panel.jump-flash { animation: jump-flash 0.9s ease; }
+
+/* Platz für das sticky Quick-Nav lassen, damit scrollIntoView() den
+   Panel-Titel nicht dahinter versteckt (Topbar + 3 Icon-Reihen). */
+.panel { scroll-margin-top: 250px; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
 .panel h3 { margin: 0 0 10px; font-size: 0.95rem; color: var(--accent); }
 .game-menu { margin-top: auto; border-width: 3px; }
@@ -439,6 +469,11 @@ button.choice:disabled { opacity: 0.45; cursor: not-allowed; }
   .scene-context-row { grid-template-columns: 1fr; gap: 2px; }
   .scene-context-row > b { padding-top: 0; }
   .recruit-options { grid-template-columns: 1fr; }
+
+  /* Im Drawer ist die Sidebar selbst der Scrollcontainer, ohne konkurrierende
+     fixe Topbar darüber -> hier direkt am eigenen Rand kleben. */
+  .quick-nav { top: 0; grid-template-columns: repeat(4, 1fr); }
+  .panel { scroll-margin-top: 200px; }
 }
 
 /* Sehr schmale Geräte */

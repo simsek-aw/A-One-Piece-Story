@@ -179,7 +179,23 @@
         </section>
 
         <aside class="sidebar">
-          <div class="panel">
+          <nav class="quick-nav" aria-label="Schnellzugriff Logbuch">
+            <button type="button" data-jump="panelCharacter"><span aria-hidden="true">🧍</span><small>Charakter</small></button>
+            <button type="button" data-jump="panelNews"><span aria-hidden="true">🗞️</span><small>Windrose</small></button>
+            <button type="button" data-jump="panelThreads"><span aria-hidden="true">🧭</span><small>Fäden</small></button>
+            <button type="button" data-jump="panelFactions"><span aria-hidden="true">⚖️</span><small>Ruf</small></button>
+            <button type="button" data-jump="panelMap"><span aria-hidden="true">🗺️</span><small>Karte</small></button>
+            <button type="button" data-jump="panelActivities"><span aria-hidden="true">🎯</span><small>Aktiv.</small></button>
+            <button type="button" data-jump="panelSkills"><span aria-hidden="true">📈</span><small>Skills</small></button>
+            <button type="button" data-jump="panelLore"><span aria-hidden="true">📜</span><small>Chronik</small></button>
+            <button type="button" data-jump="panelParty"><span aria-hidden="true">🤝</span><small>Crew</small></button>
+            <button type="button" data-jump="panelCanon"><span aria-hidden="true">🏴</span><small>Fraktion</small></button>
+            <button type="button" data-jump="panelMemory"><span aria-hidden="true">👥</span><small>Gesichter</small></button>
+            <button type="button" data-jump="panelInventory"><span aria-hidden="true">🎒</span><small>Inventar</small></button>
+            <button type="button" data-jump="panelDenDen"><span aria-hidden="true">📞</span><small>Mushi</small></button>
+          </nav>
+
+          <div id="panelCharacter" class="panel">
             <div class="char-head">
               <img id="charAvatar" class="avatar hidden" alt="Profilbild" />
               <div class="panel-head">
@@ -200,52 +216,52 @@
             <div id="attrs" class="stat-block"></div>
           </div>
 
-          <div class="panel">
+          <div id="panelNews" class="panel">
             <h3>🗞️ Die Windrose <span id="newsFresh" class="news-fresh hidden">neu</span></h3>
             <div id="newsList" class="news-list"></div>
           </div>
 
-          <div class="panel">
+          <div id="panelThreads" class="panel">
             <h3>🧭 Offene Fäden</h3>
             <div id="storyThreads" class="list"></div>
           </div>
 
-          <div class="panel">
+          <div id="panelFactions" class="panel">
             <h3>⚖️ Ruf</h3>
             <div id="factionList" class="list"></div>
           </div>
 
-          <div class="panel">
+          <div id="panelMap" class="panel">
             <h3>Karte · <span id="travelModeLabel"></span></h3>
             <div id="mapWrap" class="map-wrap"></div>
             <div class="panel-sub">Reisen</div>
             <div id="travelList" class="btn-list"></div>
           </div>
 
-          <div class="panel">
+          <div id="panelActivities" class="panel">
             <h3>Aktivitäten (kosten 1 Tagesaktion)</h3>
             <div id="activityList" class="btn-list"></div>
           </div>
 
-          <div class="panel">
+          <div id="panelSkills" class="panel">
             <h3>Fertigkeiten</h3>
             <div id="skillPointsHint" class="sp-hint hidden"></div>
             <div id="skillAlloc" class="skill-alloc hidden"></div>
             <div id="skills" class="stat-block small"></div>
           </div>
 
-          <div class="panel">
+          <div id="panelLore" class="panel">
             <h3>📜 Chronik · Die Lücke in der Geschichte</h3>
             <div id="loreBar" class="lore-bar"></div>
             <div id="loreList" class="list"></div>
           </div>
 
-          <div class="panel">
+          <div id="panelParty" class="panel">
             <h3>Crew / Party</h3>
             <div id="party" class="list"></div>
           </div>
 
-          <div class="panel">
+          <div id="panelCanon" class="panel">
             <h3>🏴 Crews & Fraktionen</h3>
             <div id="canonAffil" class="canon-affil"></div>
             <div id="canonOffer" class="canon-offer hidden"></div>
@@ -258,17 +274,17 @@
             <div id="canonEmpty" class="hint hidden">Noch niemandem begegnet. Du erfährst von Crews durch die Nachrichten, Gerüchte und eigene Begegnungen.</div>
           </div>
 
-          <div class="panel">
+          <div id="panelMemory" class="panel">
             <h3>Bekannte Gesichter</h3>
             <div id="memory" class="list"></div>
           </div>
 
-          <div class="panel">
+          <div id="panelInventory" class="panel">
             <h3>Inventar · <span id="beri"></span> Ⓑ</h3>
             <div id="inventory" class="list"></div>
           </div>
 
-          <div class="panel">
+          <div id="panelDenDen" class="panel">
             <h3>📞 Den-Den-Mushi</h3>
             <div id="denden" class="list"></div>
             <div class="hint">Spielstand-/Einladungs-Link:</div>
