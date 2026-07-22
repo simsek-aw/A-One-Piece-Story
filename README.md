@@ -152,7 +152,9 @@ Mock-Spielleiter.
 - **Mobil & installierbar (PWA)**: touch-freundliches Layout; oben links per
   Hamburger oder per Swipe-Left öffnet sich das Menü als Off-Canvas-Drawer.
   Als Web-App installierbar (`manifest.json` + Service-Worker mit Offline-Shell,
-  App-Icons) — Grundlage für späteres 2-Spieler-Handy-Multiplayer.
+  App-Icons) — Grundlage für späteres 2-Spieler-Handy-Multiplayer. Kritische/
+  gefährliche Momente (Kampf, kritischer Erfolg/Patzer, entdecktes Risiko)
+  geben auf unterstützten Geräten kurzes Haptik-Feedback (`navigator.vibrate`).
 - **Multiplayer vorbereitet**: geteilter Tages-Takt, Den-Den-Mushi- & Raum-
   Datenmodell, UI-Slots — noch ohne Echtzeit-Vernetzung (siehe Roadmap).
 - **Persistenz**: Spielstände als JSON; Fortsetzen per `?game=<id>`-Link.

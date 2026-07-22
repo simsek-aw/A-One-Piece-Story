@@ -204,6 +204,18 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 17) — Mobile Haptik bei kritischen Momenten
+
+- [x] `server/public/app.js`: `playSceneMangaFx()` klassifiziert bereits jede
+      dramatische Szene (Kampf/Duell/Explosion, kritischer Erfolg/Sieg,
+      kritischer Patzer/entdecktes Risiko, Enthüllung, Ortswechsel) für das
+      Manga-FX-Overlay. Dieselbe Einstufung löst jetzt zusätzlich
+      `navigator.vibrate(...)` aus — kurzer Doppel-Puls bei "impact"
+      (Kampf/Krit-Erfolg), ein längerer Puls bei "danger" (Krit-Patzer/
+      entdeckt). Enthüllung/Ortswechsel bleiben rein erzählerisch (keine
+      Vibration). Keine doppelte Erkennungslogik, reines No-Op auf Geräten
+      ohne Vibration-API (Desktop, iOS Safari).
+
 ## Erledigt (Ausbaustufe 16) — Kapitel-Überschriften im Logbuch
 
 Der Story-Log war eine reine Zug-für-Zug-Liste ohne Struktur.

@@ -8,6 +8,12 @@ const el = (tag, cls, html) => {
   return n;
 };
 
+// Haptik-Feedback für Mobilgeräte, die die Vibration-API unterstützen (z. B.
+// Desktop/iOS Safari haben navigator.vibrate schlicht nicht -> No-Op).
+function vibrate(pattern) {
+  try { navigator.vibrate?.(pattern); } catch { /* optional */ }
+}
+
 const state = {
   meta: null,
   sel: { archetype: null, perk: null, location: null },
@@ -672,6 +678,14 @@ function playSceneMangaFx(view, previousView) {
   if (!effect) return;
 
   const [kind, word] = effect;
+  // Haptik auf Mobilgeräten für die wirklich kritischen/gefährlichen Momente
+  // (Kampf/Duell/Explosion, kritischer Erfolg/Sieg, kritischer Patzer/
+  // entdecktes Risiko) — dieselbe Einstufung wie für den Manga-FX-Overlay,
+  // damit keine zweite Erkennungslogik gepflegt werden muss. Enthüllung/
+  // Ortswechsel sind erzählerisch, nicht körperlich spürbar -> keine Vibration.
+  if (kind === "impact") vibrate([35, 60, 35]);
+  else if (kind === "danger") vibrate(180);
+
   const overlay = $("#mangaFx");
   clearTimeout(state.fxTimer);
   overlay.className = `manga-fx fx-${kind}`;
