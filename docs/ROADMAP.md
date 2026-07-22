@@ -211,8 +211,12 @@ einen bewusst deklarierten Retro-Stil setzen — "wie ein altes Pokémon-Game".
 
 - [x] `server/ai/artProvider.js`: `panelFor(game)` erzeugt jetzt ein
       deterministisches 8-Bit-Panel (160×144, klassische Game-Boy-Auflösung,
-      4-Ton-DMG-Grünpalette) statt der bisherigen Skyline-Silhouette. Kein
-      externer Bild-Request, kein API-Kontingent.
+      4-Ton-Schwarz-Weiß-Palette statt Farbe) statt der bisherigen Skyline-
+      Silhouette. Kein externer Bild-Request, kein API-Kontingent.
+- [x] Palette nachträglich von Grün auf monochromes Schwarz-Weiß (Tinte/
+      Papier-Creme statt sterilem Grau) umgestellt — passt jetzt zum
+      Tusche-Manga-Look der Key-Moment-Panels statt zwei getrennte Farbwelten
+      nebeneinander zu haben.
 - [x] Tag/Nacht-Umschaltung über bestehendes `isNight(game)`: Himmel-, Boden-
       und Kontrastton tauschen die Rolle (`sky`/`mid`/`ink`), sodass
       Silhouetten und Bodentextur in beiden Modi gleich gut lesbar bleiben.

@@ -1,7 +1,8 @@
 // Szenen-Panel-Slot: "Retro-Modus" — der aktuelle Schauplatz wird als
 // waschechtes 8-Bit-Panel gezeigt, wie ein altes monochromes Taschenspiel
-// (Game-Boy-Auflösung 160×144, 4-Ton-Grün-Palette, blockige Pixel statt
-// Kurven). Deterministisch, kein externer Bild-Request, kein API-Kontingent
+// (Game-Boy-Auflösung 160×144, 4-Ton-Schwarz-Weiß-Palette, blockige Pixel
+// statt Kurven — passend zum Tusche-Manga-Look des restlichen Spiels).
+// Deterministisch, kein externer Bild-Request, kein API-Kontingent
 // nötig — und bewusst NICHT durch echte KI-Bilder ersetzbar: das Retro-Panel
 // IST der Stil, keine Übergangslösung. Für dramatische Schlüsselmomente
 // (Duell, Explosion, …) bleibt momentPanel() im Tusche-Manga-Look, als
@@ -12,8 +13,10 @@
 import { LOCATIONS } from "../content/map.js";
 import { isNight } from "../engine/clock.js";
 
-// Original-DMG-Game-Boy-Palette (dunkelstes zu hellstes Grün).
-const GB = { darkest: "#0f380f", dark: "#306230", light: "#8bac0f", lightest: "#9bbc0f" };
+// Monochrome Schwarz-Weiß-Palette (dunkelster zu hellstem Ton) — bewusst
+// keine Farbe, passend zum Tusche-Look der Key-Moment-Panels und des
+// restlichen UI-Themes (Papier-Creme/Tinten-Schwarz statt sterilem Grau).
+const GB = { darkest: "#0f0f0f", dark: "#4a4a4a", light: "#b8b6ac", lightest: "#f4f1ea" };
 const PX = 4; // Pixelraster-Einheit (px pro "8-Bit-Pixel")
 const COLS = 40, ROWS = 36; // 40*4 x 36*4 = 160x144 (klassische GB-Auflösung)
 const W = COLS * PX, H = ROWS * PX;

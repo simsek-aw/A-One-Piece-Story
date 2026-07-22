@@ -93,9 +93,9 @@ Mock-Spielleiter.
 - **Karte & Reisen**: Ortsnetz mit Koordinaten; Seereisen brauchen ein eigenes
   Schiff oder bezahlte Passage. UI zeigt Position, Fortbewegungsart und Crew.
 - **8-Bit-Retro-Panel pro Szene**: ortsabhängige Pixel-Grafik im Game-Boy-Look
-  (160×144, 4-Ton-Grünpalette, Tag/Nacht-Umschaltung) — deterministisch als
-  inline SVG erzeugt, bewusst dauerhaft im Retro-Stil statt durch KI-Bilder
-  ersetzbar.
+  (160×144, 4-Ton-Schwarz-Weiß-Palette passend zum Tusche-Manga-Look,
+  Tag/Nacht-Umschaltung) — deterministisch als inline SVG erzeugt, bewusst
+  dauerhaft im Retro-Stil statt durch KI-Bilder ersetzbar.
 - **Key-Moment-Panels**: für Schlüsselmomente (Ankunft, Duell, Explosion,
   Enthüllung, Crew, Sieg …) blendet der Spielleiter 1–2 gezeichnete
   Manga/Anime-Panels mitten im oder am Ende des Textes ein — stilisiertes SVG,
