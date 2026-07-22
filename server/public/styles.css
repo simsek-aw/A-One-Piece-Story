@@ -533,6 +533,24 @@ button.choice:disabled { opacity: 0.45; cursor: not-allowed; }
 .entry.narration.latest { border-width: 3px; }
 .entry.action { border-left: 4px solid var(--line); color: var(--muted); }
 
+/* Kapitel-Überschrift: deterministischer Tag/Ort-Titel, kein Fließtext —
+   gliedert das Logbuch wie ein Manga-Bandtitel statt einer reinen Zug-Liste. */
+.entry.chapter {
+  background: none; border: none; box-shadow: none; border-radius: 0;
+  padding: 20px 8px 4px; margin: 4px 0 -4px; text-align: center;
+}
+.chapter-title {
+  font-family: "Bangers", "Arial Black", Impact, system-ui, sans-serif;
+  font-size: 1.25rem; letter-spacing: 0.08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 10px;
+}
+.chapter-title::before, .chapter-title::after {
+  content: ""; flex: 1 1 auto; border-top: 2px dotted var(--line); opacity: 0.6;
+}
+.chapter-subtitle {
+  margin-top: 3px; font-size: 0.82rem; font-style: italic; color: var(--muted);
+}
+
 /* Wegpunkt-Eintrag: deterministischer "A → B"-Hinweis, kein Fließtext. */
 .entry.waypoint {
   align-self: center; max-width: 88%;

@@ -204,6 +204,19 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 16) — Kapitel-Überschriften im Logbuch
+
+Der Story-Log war eine reine Zug-für-Zug-Liste ohne Struktur.
+
+- [x] `server/public/app.js`: `renderScene()` erkennt Tageswechsel
+      (`view.day !== lastChapterDay`) und fügt eine Kapitel-Überschrift
+      („Kapitel N · Ort" + optionaler Untertitel mit dem aktiven Story-Hook
+      am aktuellen Ort) ins Logbuch ein — rein deterministisch, kein
+      KI-Text nötig. Feuert genau einmal pro Tag (auch beim ersten Rendern
+      nach Spielstart/Wiedereinstieg), nicht bei jedem einzelnen Zug.
+- [x] CSS: Kapitel-Trenner im Manga-Bandtitel-Look (gepunktete Linien links/
+      rechts vom Titel in Bangers-Schrift, kursiver Untertitel).
+
 ## Erledigt (Ausbaustufe 14) — 8-Bit-Retro-Szenenpanel
 
 Spieler-Vorschlag: statt (Platzhalter-)Bild-Generierung fürs Szenenpanel auf

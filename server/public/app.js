@@ -263,6 +263,7 @@ async function startGame() {
 
 // ---------- Spiel ----------
 let storyBuffer = [];
+let lastChapterDay = null; // welcher Tag zuletzt eine Kapitel-Überschrift bekam
 
 function enterGame(view) {
   state.gameId = view.gameId;
@@ -274,6 +275,7 @@ function enterGame(view) {
   $("#screen-game").classList.remove("hidden");
   $("#openLogbook").classList.remove("hidden");
   storyBuffer = [];
+  lastChapterDay = null;
   renderScene(view);
   showRecapBanner(view.recap);
 }
@@ -414,6 +416,20 @@ function renderScene(view) {
     $("#panelCaption").textContent = view.panel.caption || "";
   }
 
+  // Kapitel-Überschrift: rein deterministisch aus Tag/Ort/aktivem Erzähl-
+  // faden abgeleitet (kein KI-Text nötig), macht aus der reinen Zug-Liste
+  // ein Logbuch mit Struktur. Ein neuer Tag beginnt ein neues Kapitel;
+  // beim (Wieder-)Einstieg bekommt der aktuelle Tag immer eine Überschrift.
+  if (view.day !== lastChapterDay) {
+    lastChapterDay = view.day;
+    const hook = view.story?.active?.find((t) => t.location === view.locationId);
+    storyBuffer.push({
+      type: "chapter",
+      text: `Kapitel ${view.day} · ${view.location}`,
+      subtitle: hook ? hook.hook : null,
+    });
+  }
+
   // Ortswechsel deterministisch sichtbar machen — unabhängig davon, wie klar
   // (oder unklar) die KI-Erzählung ihn beschrieben hat. Beantwortet "bin ich
   // von A nach B gegangen?" immer eindeutig, bevor die Szene selbst kommt.
@@ -485,6 +501,13 @@ function renderScene(view) {
   const visibleEntries = storyBuffer.slice(-12);
   const latestNarrationIndex = visibleEntries.findLastIndex((entry) => entry.type === "narration");
   visibleEntries.forEach((e, i) => {
+    if (e.type === "chapter") {
+      const div = el("div", "entry chapter");
+      div.innerHTML = `<div class="chapter-title">${escapeHtml(e.text)}</div>`
+        + (e.subtitle ? `<div class="chapter-subtitle">${escapeHtml(e.subtitle)}</div>` : "");
+      log.appendChild(div);
+      return;
+    }
     log.appendChild(el("div", `entry ${e.type}${i === latestNarrationIndex ? " latest" : ""}`, escapeHtml(e.text)));
   });
   // Im Kampf darf das allgemeine Story-Log nicht den sichtbaren Ausschnitt
