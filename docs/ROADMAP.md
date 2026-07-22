@@ -185,6 +185,31 @@ wechsel waren schwer nachzuvollziehen ("Bin ich von A nach B gegangen?").
       Auswahl-Varianz-Regeln ergänzt: jede Szene muss mindestens ein neues,
       konkretes Element bringen; Choices dürfen sich nicht nur umformulieren.
 
+## Erledigt (Ausbaustufe 14) — 8-Bit-Retro-Szenenpanel
+
+Spieler-Vorschlag: statt (Platzhalter-)Bild-Generierung fürs Szenenpanel auf
+einen bewusst deklarierten Retro-Stil setzen — "wie ein altes Pokémon-Game".
+
+- [x] `server/ai/artProvider.js`: `panelFor(game)` erzeugt jetzt ein
+      deterministisches 8-Bit-Panel (160×144, klassische Game-Boy-Auflösung,
+      4-Ton-DMG-Grünpalette) statt der bisherigen Skyline-Silhouette. Kein
+      externer Bild-Request, kein API-Kontingent.
+- [x] Tag/Nacht-Umschaltung über bestehendes `isNight(game)`: Himmel-, Boden-
+      und Kontrastton tauschen die Rolle (`sky`/`mid`/`ink`), sodass
+      Silhouetten und Bodentextur in beiden Modi gleich gut lesbar bleiben.
+- [x] Zwei Szenen-Layouts (Hafenstadt/Marine vs. Dorf) mit einfachen
+      Block-Silhouetten (Häuser, Kai, Mast, Windmühle) sowie einem kleinen
+      Figuren-Sprite auf offenem Boden.
+- [x] Bewusste Stil-Trennung beibehalten: Schlüsselmoment-Panels
+      (`momentPanel`, Duell/Explosion/…) bleiben im Tusche-Manga-Look als
+      dramatischer Kontrast zum ruhigen 8-Bit-Erkunden — zwei Bildsprachen,
+      eine für Ruhe/Exploration, eine für Drama.
+- [x] Frontend: Szenenpanel ist jetzt dauerhaft Retro (kein KI-Bild-Upgrade
+      mehr für den Szenen-Slot); eigener CSS-Pfad mit `image-rendering:
+      pixelated` statt Tusche-Filter, plus "🎮 RETRO-MODUS"-Badge. Die
+      Game-Boy-Palette bleibt unabhängig vom Papier/Tusche-Theme fix (ein
+      Handheld-Bildschirm sieht immer gleich aus).
+
 ## Als Nächstes (Solo vertiefen)
 
 - [ ] **Perk-Wahl beim Aufstieg**: zusätzlich zu Skillpunkten gelegentlich einen

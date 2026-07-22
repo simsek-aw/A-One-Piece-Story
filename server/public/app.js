@@ -386,12 +386,12 @@ function renderScene(view) {
     try { localStorage.setItem(PROVIDER_KEY, view.aiProvider); } catch { /* optional */ }
   }
 
-  // Panel (SVG sofort; echtes KI-Bild wird bei Bedarf nachgeladen)
+  // Szenen-Panel: bewusst dauerhaft 8-Bit-Retro (kein KI-Bild-Upgrade mehr —
+  // das Pixel-Panel IST der Stil, keine Übergangslösung).
   if (view.panel?.src) {
     $("#panelImg").src = view.panel.src;
     $("#panelImg").alt = view.panel.alt || "";
     $("#panelCaption").textContent = view.panel.caption || "";
-    upgradePanel($("#panelImg"), { scope: "scene" }, "s:" + view.locationId);
   }
 
   // Ortswechsel deterministisch sichtbar machen — unabhängig davon, wie klar

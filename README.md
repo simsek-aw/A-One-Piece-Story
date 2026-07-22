@@ -92,8 +92,10 @@ Mock-Spielleiter.
   trainieren Skills bis zum Rang-Aufstieg, mit Nebeneffekten (Beri/Heat/Lore).
 - **Karte & Reisen**: Ortsnetz mit Koordinaten; Seereisen brauchen ein eigenes
   Schiff oder bezahlte Passage. UI zeigt Position, Fortbewegungsart und Crew.
-- **Anime-Panel pro Szene**: ortsabhängige Platzhalter-Grafik (inline SVG);
-  echte KI-Bild-Generierung ist als Provider-Slot vorbereitet.
+- **8-Bit-Retro-Panel pro Szene**: ortsabhängige Pixel-Grafik im Game-Boy-Look
+  (160×144, 4-Ton-Grünpalette, Tag/Nacht-Umschaltung) — deterministisch als
+  inline SVG erzeugt, bewusst dauerhaft im Retro-Stil statt durch KI-Bilder
+  ersetzbar.
 - **Key-Moment-Panels**: für Schlüsselmomente (Ankunft, Duell, Explosion,
   Enthüllung, Crew, Sieg …) blendet der Spielleiter 1–2 gezeichnete
   Manga/Anime-Panels mitten im oder am Ende des Textes ein — stilisiertes SVG,
@@ -195,8 +197,8 @@ server/
     geminiProvider.js   Echter Spielleiter über Google Gemini (kostenlos)
     openrouterProvider.js Echter Spielleiter über OpenRouter (viele Modelle, ein Key)
     deepseekProvider.js Echter Spielleiter über die DeepSeek API
-    artProvider.js      Anime-Panel (Platzhalter-SVG) + Key-Moment-Panels
-    imageProvider.js    Echte KI-Bild-Panels (Krea/OpenAI/Gemini, gecacht)
+    artProvider.js      8-Bit-Retro-Szenenpanel (SVG) + Key-Moment-Panels
+    imageProvider.js    Echte KI-Bild-Panels für Key-Moments (Krea/OpenAI/Gemini, gecacht)
   public/               Frontend (Vanilla JS, kein Build-Schritt)
 docs/                   Architektur, Spieldesign, Roadmap
 ```

@@ -1,71 +1,101 @@
-// Anime-Panel-Slot. Jedes "Kapitel"/jede Szene bekommt ein grobes Panel, damit
-// man sieht, wo man ist. JETZT: eine deterministische Platzhalter-Grafik (inline
-// SVG, kein externer Request, funktioniert offline). SPÄTER: echte KI-Bilder
-// einsteckbar, indem man diese Funktion durch einen Aufruf an eine Bild-API
-// ersetzt (z. B. mit Caching pro Ort/Szene). Signatur bleibt dann gleich:
-//   panelFor(game) -> { kind, src, caption, alt }
+// Szenen-Panel-Slot: "Retro-Modus" — der aktuelle Schauplatz wird als
+// waschechtes 8-Bit-Panel gezeigt, wie ein altes monochromes Taschenspiel
+// (Game-Boy-Auflösung 160×144, 4-Ton-Grün-Palette, blockige Pixel statt
+// Kurven). Deterministisch, kein externer Bild-Request, kein API-Kontingent
+// nötig — und bewusst NICHT durch echte KI-Bilder ersetzbar: das Retro-Panel
+// IST der Stil, keine Übergangslösung. Für dramatische Schlüsselmomente
+// (Duell, Explosion, …) bleibt momentPanel() im Tusche-Manga-Look, als
+// bewusster Kontrast zum ruhigen 8-Bit-Erkunden.
 //
-// So bleibt der Rest des Spiels unverändert, wenn echte Panels dazukommen.
+// Signatur bleibt kompatibel: panelFor(game) -> { kind, src, caption, alt }
 
 import { LOCATIONS } from "../content/map.js";
+import { isNight } from "../engine/clock.js";
 
-// Farbpaletten je Ortstyp (Himmel oben, Meer/Boden unten, Akzent).
-const PALETTES = {
-  hafenstadt: ["#2b4b7a", "#1c3358", "#f4b942"],
-  marinestadt: ["#3a5a86", "#22406a", "#e8eef7"],
-  marinevorposten: ["#4a5a6a", "#2b3947", "#c7d3e0"],
-  dorf: ["#3f6a86", "#255066", "#f0c46a"],
-  default: ["#2b4b7a", "#1c3358", "#f4b942"],
-};
+// Original-DMG-Game-Boy-Palette (dunkelstes zu hellstes Grün).
+const GB = { darkest: "#0f380f", dark: "#306230", light: "#8bac0f", lightest: "#9bbc0f" };
+const PX = 4; // Pixelraster-Einheit (px pro "8-Bit-Pixel")
+const COLS = 40, ROWS = 36; // 40*4 x 36*4 = 160x144 (klassische GB-Auflösung)
+const W = COLS * PX, H = ROWS * PX;
 
 export function panelFor(game) {
   const loc = LOCATIONS[game.world.location];
   const type = loc?.type || "default";
-  const [sky, sea, accent] = PALETTES[type] || PALETTES.default;
-  const day = game.world.day;
-  const night = day % 4 === 0; // gelegentlich Nachtszene
-  const svg = buildSvg({ sky, sea, accent, night, type, name: loc?.name || game.world.locationName });
+  const night = isNight(game);
+  const name = loc?.name || game.world.locationName;
+  const svg = buildPixelScene({ type, night, day: game.world.day, name });
   const src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
   return {
-    kind: "placeholder-svg",
+    kind: "retro-8bit",
     src,
-    alt: `Panel: ${loc?.name || game.world.locationName}`,
-    caption: `${loc?.name || game.world.locationName} · Tag ${day}`,
+    alt: `8-Bit-Ansicht: ${name}`,
+    caption: `${name} · Tag ${game.world.day} · 🎮 Retro-Modus`,
   };
 }
 
-function buildSvg({ sky, sea, accent, night, type, name }) {
-  const W = 800, H = 300;
-  const building = (x, y, w, h) => `<g><rect x="${x + 5}" y="${y + 6}" width="${w}" height="${h}" fill="#07101f" opacity=".35"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="#0d1a30" stroke="${accent}" stroke-width="2"/><path d="M${x + 8} ${y + h / 2}H${x + w - 8}M${x + w / 2} ${y + 7}V${y + h - 7}" stroke="${accent}" opacity=".45"/></g>`;
-  const person = (x, y, player = false) => `<g transform="translate(${x},${y})"><ellipse rx="${player ? 15 : 10}" ry="${player ? 11 : 8}" fill="#0d1a30"/><circle r="${player ? 7 : 5}" fill="${player ? accent : "#e8eef7"}" stroke="#0d1a30" stroke-width="2"/><path d="M0 -${player ? 17 : 12} 5 -${player ? 9 : 7}H-5Z" fill="${player ? accent : "#0d1a30"}"/></g>`;
-  let terrain = "";
-  if (type === "hafenstadt" || type === "marinestadt") {
-    terrain = `<rect x="590" width="210" height="300" fill="url(#water)"/><path d="M584 0v300" stroke="#0d1a30" stroke-width="12"/>` +
-      `<g fill="#8a765a" stroke="#0d1a30" stroke-width="3"><rect x="548" y="45" width="155" height="20"/><rect x="548" y="205" width="190" height="20"/></g>` +
-      building(55, 34, 125, 66) + building(225, 28, 105, 78) + building(380, 45, 120, 58) + building(90, 180, 145, 70) + building(330, 178, 150, 66) +
-      `<path d="M0 140H584M285 0V300" stroke="#d6c49b" stroke-width="30" opacity=".55"/>` + person(520, 145, true) + person(430, 132) + person(548, 175);
-  } else if (type === "marinevorposten") {
-    terrain = `<path d="M610 0Q570 75 625 135T590 300H800V0Z" fill="url(#water)"/><path d="M610 0Q570 75 625 135T590 300" fill="none" stroke="#0d1a30" stroke-width="14"/>` +
-      building(230, 62, 210, 105) + building(80, 190, 120, 62) +
-      `<rect x="285" y="168" width="100" height="72" fill="none" stroke="#0d1a30" stroke-width="6" stroke-dasharray="10 7"/><path d="M335 300V240" stroke="#d6c49b" stroke-width="34" opacity=".55"/>` +
-      person(335, 210, true) + person(270, 195) + person(405, 195);
+// Zeichnet ein Rechteck im Pixelraster (Koordinaten in Raster-Einheiten, nicht px).
+function px(gx, gy, gw, gh, color) {
+  return `<rect x="${gx * PX}" y="${gy * PX}" width="${gw * PX}" height="${gh * PX}" fill="${color}"/>`;
+}
+
+// Blockiger kleiner Sprite (Spieler oder NPC), 2x3 Raster-Einheiten, ein
+// durchgängiger Kontrastton (kein zweiter Kopf-Ton, der mit dem Boden verschmilzt).
+function sprite(gx, gy, color) {
+  return (
+    px(gx, gy, 2, 1, color) + // Kopf
+    px(gx, gy + 1, 2, 1, color) + // Rumpf
+    px(gx, gy + 2, 1, 1, color) + // Bein links
+    px(gx + 1, gy + 2, 1, 1, color) // Bein rechts
+  );
+}
+
+function buildPixelScene({ type, night, day, name }) {
+  const sky = night ? GB.darkest : GB.lightest;
+  const mid = night ? GB.dark : GB.light;
+  const ink = night ? GB.light : GB.darkest;
+  const groundY = 24;
+  let scene = "";
+
+  // Himmelsdetails: Sonne/Mond + ein paar "Wolken"/Sterne aus Blöcken.
+  scene += night
+    ? px(33, 3, 2, 2, mid) + [6, 12, 20, 27].map((x, i) => px(x, 2 + (i % 2), 1, 1, mid)).join("")
+    : px(33, 3, 3, 3, mid) + px(4, 5, 4, 1, mid) + px(18, 3, 5, 1, mid);
+
+  // Bodentextur: ein Rasterpunkt-Muster für etwas "Retro-Grain". "ink"
+  // kontrastiert gegen den "mid"-Boden in Tag- UND Nachtpalette gleichermaßen.
+  // Zuerst gezeichnet, damit Gebäude/Figur später sauber darüber liegen.
+  let groundTexture = "";
+  for (let x = 1; x < COLS; x += 3) groundTexture += px(x, groundY + 1, 1, 1, ink);
+
+  if (type === "hafenstadt" || type === "marinestadt" || type === "marinevorposten") {
+    // Wasser rechts, Kai/Stege, ein Schiffsmast, Häuserblöcke links.
+    scene += px(0, groundY, COLS, ROWS - groundY, mid) + groundTexture; // Boden
+    scene += px(26, groundY, COLS - 26, ROWS - groundY, ink); // Wasser
+    scene += px(24, groundY, 2, ROWS - groundY, mid); // Kai-Kante
+    scene += px(29, groundY - 6, 1, 6, ink) + px(28, groundY - 7, 3, 1, ink); // Mast + Flagge
+    scene += type === "marinevorposten"
+      ? px(3, groundY - 9, 7, 9, ink) + px(5, groundY - 12, 3, 3, ink) // Wachturm
+      : px(3, groundY - 7, 6, 7, ink) + px(11, groundY - 9, 6, 9, ink) + px(19, groundY - 6, 5, 6, ink); // Häuserzeile
+    scene += px(6, groundY - 8, 2, 1, sky) + px(14, groundY - 10, 2, 1, sky); // Fenster
+    // Auf offenem Boden stehen (nicht vor einer Hauswand), sonst verschmilzt
+    // die Figur farblich mit der Silhouette dahinter.
+    scene += sprite(1, groundY, ink);
   } else {
-    terrain = `<path d="M0 238Q170 215 330 245T800 220V300H0Z" fill="url(#water)"/><path d="M0 238Q170 215 330 245T800 220" fill="none" stroke="#0d1a30" stroke-width="10"/>` +
-      building(90, 42, 110, 68) + building(300, 55, 130, 74) + building(555, 35, 105, 65) +
-      `<path d="M0 155Q210 120 390 155T800 130" fill="none" stroke="#d6c49b" stroke-width="32" opacity=".6"/>` + person(390, 150, true) + person(300, 145) + person(495, 142);
+    // Dorf: Wiese, ein paar Hütten, Windmühle-Silhouette (One-Piece-Dörfer-Vibe).
+    scene += px(0, groundY, COLS, ROWS - groundY, mid) + groundTexture; // Wiese
+    scene += px(3, groundY - 6, 6, 6, ink) + px(12, groundY - 8, 5, 8, ink); // Hütten
+    scene += px(24, groundY - 13, 1, 13, ink) + px(21, groundY - 16, 7, 4, ink); // Windmühlen-Flügel
+    scene += px(6, groundY - 7, 2, 1, sky); // Fenster
+    scene += sprite(18, groundY, ink); // Lücke zwischen Hütte und Windmühle
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-  <defs>
-    <pattern id="ground" width="18" height="18" patternUnits="userSpaceOnUse"><rect width="18" height="18" fill="${sky}"/><circle cx="3" cy="4" r="1" fill="${accent}" opacity=".2"/></pattern>
-    <pattern id="water" width="26" height="14" patternUnits="userSpaceOnUse"><rect width="26" height="14" fill="${sea}"/><path d="M0 7Q6 2 13 7T26 7" fill="none" stroke="${accent}" opacity=".35" stroke-width="2"/></pattern>
-  </defs>
-  <rect width="${W}" height="${H}" fill="url(#ground)"/>
-  ${terrain}
-  ${night ? `<rect width="${W}" height="${H}" fill="#07101f" opacity=".38"/>` : ""}
-  <g transform="translate(750,45)" opacity=".8"><circle r="25" fill="none" stroke="#f4f1ea" stroke-width="2"/><path d="M0-20 6 0 0 20-6 0Z" fill="#f4f1ea"/><text x="0" y="-29" text-anchor="middle" font-size="11" fill="#f4f1ea">N</text></g>
-  <rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="#0a1424" stroke-width="8"/>
-  <rect x="14" y="252" width="330" height="34" fill="#0d1a30" opacity=".9"/><text x="28" y="276" font-family="Arial Black, sans-serif" font-size="18" fill="#f4f1ea">DRAUFSICHT · ${escapeXml(name)}</text>
+  const label = String(name).toUpperCase();
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" shape-rendering="crispEdges">
+  <rect width="${W}" height="${H}" fill="${sky}"/>
+  ${scene}
+  <rect x="0" y="0" width="${W}" height="9" fill="${GB.darkest}"/>
+  <text x="4" y="7" font-family="monospace" font-size="6" letter-spacing="1" fill="${GB.lightest}">${escapeXml(label.slice(0, 24))} · TAG ${day}</text>
+  <rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="${GB.darkest}" stroke-width="${PX}"/>
 </svg>`;
 }
 

@@ -518,13 +518,27 @@ button.choice:disabled { opacity: 0.45; cursor: not-allowed; }
 .trail-stop.trail-current { color: var(--ink); font-weight: 700; }
 .trail-arrow { opacity: 0.6; }
 
-/* Bild-Panels streng monochrom + gerahmt */
-.panel-art img, .key-panel img {
+/* Key-Moment-Panel: bleibt streng monochromer Tusche-Manga-Look. */
+.key-panel img {
   border: 2.5px solid var(--line); border-radius: var(--radius);
   box-shadow: 5px 5px 0 var(--shadow);
   filter: grayscale(1) contrast(1.12);
 }
-:root[data-theme="ink"] .panel-art img, :root[data-theme="ink"] .key-panel img { filter: grayscale(1) contrast(1.1) invert(0.92); }
+:root[data-theme="ink"] .key-panel img { filter: grayscale(1) contrast(1.1) invert(0.92); }
+
+/* Szenen-Panel: 8-Bit-Retro-Modus — eigene Game-Boy-Grünpalette, knackig-
+   blockig statt weichgezeichnet (kein CSS-Antialiasing, keine Manga-Filter). */
+.panel-art img {
+  border: 2.5px solid var(--line); border-radius: var(--radius);
+  box-shadow: 5px 5px 0 var(--shadow);
+  image-rendering: pixelated; image-rendering: crisp-edges;
+}
+.panel-art { position: relative; }
+.panel-art::before {
+  content: "🎮 RETRO-MODUS"; position: absolute; top: 8px; right: 8px;
+  background: #0f380f; color: #9bbc0f; font-family: monospace; font-size: 0.62rem;
+  letter-spacing: 0.06em; padding: 3px 7px; border: 1.5px solid var(--line); z-index: 1;
+}
 
 /* Auswahl-Zellen: Rahmen + Schatten, beim Hover/Aktiv "eingedrückt" & invertiert */
 .choice, .option, button.primary, .chip, .combat-btn, .rest-btn, .stepper button {
