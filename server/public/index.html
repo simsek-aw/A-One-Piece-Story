@@ -43,6 +43,7 @@
     </div>
     <header class="topbar">
       <div class="brand">🏴‍☠️ <span>AOPS</span></div>
+      <div id="topbarContext" class="topbar-context"></div>
       <button id="menuToggle" class="hamburger" aria-label="Menü öffnen" aria-expanded="false">☰</button>
     </header>
     <nav id="navMenu" class="nav-menu" aria-label="Schnellmenü">
@@ -55,17 +56,6 @@
       <button id="openLogbook" class="nav-menu-button hidden" type="button">☰ Logbuch &amp; Spielwerte</button>
     </nav>
     <div id="drawerOverlay" class="drawer-overlay"></div>
-
-    <!-- Immer zuerst: Charakter wählen oder neues Abenteuer beginnen. -->
-    <div id="characterOverlay" class="character-overlay" role="dialog" aria-modal="true" aria-labelledby="characterOverlayTitle">
-      <section class="character-picker">
-        <h1 id="characterOverlayTitle">Wer sticht heute in See?</h1>
-        <p class="lead">Setze ein bestehendes Abenteuer fort oder erschaffe einen neuen Charakter.</p>
-        <div id="savedCharacterList" class="save-slots"></div>
-        <p id="noSavedCharacters" class="hint">Noch kein Charakter auf diesem Gerät gespeichert.</p>
-        <button id="newCharacterBtn" class="primary big">Neuen Charakter erstellen</button>
-      </section>
-    </div>
 
     <!-- Startbildschirm / Charaktererstellung -->
     <main id="screen-create" class="screen">
@@ -85,6 +75,12 @@
           </div>
           <p class="hint">Oder leg selbst los, Schritt für Schritt:</p>
           <input id="charName" type="text" placeholder="Wie heißt du?" maxlength="40" />
+
+          <div id="savedCharactersBlock" class="saved-characters-block">
+            <p class="hint">Oder setze ein bestehendes Abenteuer fort:</p>
+            <div id="savedCharacterList" class="save-slots"></div>
+            <p id="noSavedCharacters" class="hint">Noch kein Charakter auf diesem Gerät gespeichert.</p>
+          </div>
         </section>
 
         <section class="card wizard-step" data-step="2" hidden>
@@ -124,13 +120,18 @@
           <p class="hint" id="appearanceHint"></p>
         </section>
 
+        <section class="card wizard-step" data-step="7" hidden>
+          <h2>7 · Übersicht</h2>
+          <p class="hint">Alles richtig? Auf einen Punkt klicken, um ihn anzupassen.</p>
+          <div id="summaryList" class="summary-list"></div>
+        </section>
+
         <div class="wizard-nav">
           <button id="wizardBack" type="button" class="slot-forget wizard-back hidden">← Zurück</button>
           <button id="wizardNext" type="button" class="primary big wizard-next">Weiter →</button>
           <button id="startBtn" class="primary big hidden">Abenteuer starten</button>
         </div>
         <div class="actions">
-          <button id="backToCharacters" type="button" class="slot-forget">Zur Charakterwahl</button>
           <span id="createError" class="error"></span>
         </div>
       </div>

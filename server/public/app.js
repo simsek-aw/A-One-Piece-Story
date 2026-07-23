@@ -59,9 +59,28 @@ const state = {
   lastFxNarration: null,
   fxTimer: null,
   wizardStep: 1,
+  // Höchster je in diesem Durchlauf erreichter Schritt — unabhängig davon,
+  // wohin man gerade zurückgesprungen ist. So bleibt z. B. die Übersicht
+  // (Schritt 7) anklickbar, auch wenn man kurz zu Schritt 2 zurückspringt,
+  // um die Herkunft zu ändern, statt sich erneut durchklicken zu müssen.
+  wizardMaxStep: 1,
 };
-const WIZARD_STEPS = 6;
-const WIZARD_LABELS = ["", "Name", "Herkunft", "Attribute", "Talent", "Startort", "Aussehen"];
+const WIZARD_STEPS = 7;
+const WIZARD_LABELS = ["", "Name", "Herkunft", "Attribute", "Talent", "Startort", "Aussehen", "Übersicht"];
+
+// Nutzt den freien Platz in der Kopfleiste: Ära-Tagline vor dem ersten Zug,
+// danach Name/Level/Tag — aktualisiert sich bei jeder neuen Szene, damit es
+// nie veraltet wirkt (anders als ein starrer Deko-Text).
+function renderTopbarContext() {
+  const box = $("#topbarContext");
+  if (!box) return;
+  if (state.gameId && state.view?.character) {
+    const c = state.view.character;
+    box.textContent = `${c.name} · Lvl ${c.level} · Tag ${state.view.day}`;
+  } else {
+    box.textContent = state.meta?.era?.label || "";
+  }
+}
 const SAVE_SLOTS_KEY = "aops-save-slots";
 const PROVIDER_KEY = "aops-provider";
 const RANDOM_NAMES = ["Aren", "Bela", "Ciro", "Dena", "Elio", "Fara", "Garo", "Ilya", "Juna", "Keno", "Lira", "Miro", "Nela", "Orin", "Rava", "Sena", "Taro", "Vika", "Yaro", "Zira"];
@@ -92,6 +111,7 @@ init().catch((e) => console.error(e));
 async function init() {
   state.meta = await api("/api/meta");
   $("#eraLabel").textContent = state.meta.era.label;
+  renderTopbarContext();
   buildProviderPicker();
   const aHint = $("#appearanceHint");
   if (aHint) aHint.textContent = state.meta.imagesEnabled
@@ -111,9 +131,7 @@ async function init() {
   }
   buildCreation();
   renderSavedCharacters();
-  $("#newCharacterBtn").onclick = beginNewCharacter;
-  $("#backToCharacters").onclick = showCharacterPicker;
-  $("#menuCharacterPicker").onclick = showCharacterPicker;
+  $("#menuCharacterPicker").onclick = beginNewCharacter;
   $("#menuNewCharacter").onclick = beginNewCharacter;
   $("#menuRefreshGame").onclick = async () => {
     closeDrawer();
@@ -160,6 +178,7 @@ async function changeProvider() {
 
 // ---------- Charaktererstellung ----------
 function buildCreation() {
+  state.wizardMaxStep = 1; // frischer Durchlauf -> nur Schritt 1 anklickbar, bis man weiterkommt
   const aList = $("#archetypeList");
   aList.innerHTML = "";
   state.meta.archetypes.forEach((a) => {
@@ -228,13 +247,29 @@ function renderWizardProgress() {
   const list = $("#wizardProgress");
   list.innerHTML = "";
   for (let step = 1; step <= WIZARD_STEPS; step += 1) {
-    const cls = step === state.wizardStep ? "current" : step < state.wizardStep ? "done" : "";
-    list.appendChild(el("li", cls, `<span class="dot">${step}</span><span class="wp-label">${WIZARD_LABELS[step]}</span>`));
+    // Jeder Schritt bis zum je erreichten Höchststand (wizardMaxStep, NICHT
+    // nur der aktuell angezeigte) bleibt anklickbar — sonst würde ein
+    // Rücksprung von der Übersicht zum Anpassen eines Feldes bedeuten, sich
+    // danach wieder durch alle Schritte klicken zu müssen.
+    const reachable = step <= state.wizardMaxStep;
+    const cls = [
+      step === state.wizardStep ? "current" : reachable ? "done" : "",
+      reachable ? "clickable" : "",
+    ].filter(Boolean).join(" ");
+    const item = el("li", cls, `<span class="dot">${step}</span><span class="wp-label">${WIZARD_LABELS[step]}</span>`);
+    if (reachable) {
+      item.setAttribute("role", "button");
+      item.setAttribute("tabindex", "0");
+      item.onclick = () => goToWizardStep(step);
+      item.onkeydown = (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); goToWizardStep(step); } };
+    }
+    list.appendChild(item);
   }
 }
 
 function goToWizardStep(step) {
   state.wizardStep = Math.max(1, Math.min(WIZARD_STEPS, step));
+  state.wizardMaxStep = Math.max(state.wizardMaxStep, state.wizardStep);
   document.querySelectorAll(".wizard-step").forEach((section) => {
     section.hidden = Number(section.dataset.step) !== state.wizardStep;
   });
@@ -242,8 +277,37 @@ function goToWizardStep(step) {
   $("#wizardNext").classList.toggle("hidden", state.wizardStep === WIZARD_STEPS);
   $("#startBtn").classList.toggle("hidden", state.wizardStep !== WIZARD_STEPS);
   $("#createError").textContent = "";
+  if (state.wizardStep === WIZARD_STEPS) renderSummary();
   renderWizardProgress();
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Letzter Schritt: Übersicht aller Angaben, jede Zeile klickbar zum Zurück-
+// springen zum passenden Schritt — spart ein "war das wirklich alles?"-Gefühl
+// direkt vor dem Start.
+function renderSummary() {
+  const box = $("#summaryList");
+  if (!box) return;
+  box.innerHTML = "";
+  const archetype = state.meta.archetypes.find((a) => a.id === state.sel.archetype);
+  const perk = state.meta.creation.perks.find((p) => p.id === state.sel.perk);
+  const location = state.meta.startLocations.find((l) => l.id === state.sel.location);
+  const attrText = state.meta.creation.attributes.map((attr) => `${attr.name} ${state.attrs[attr.id]}`).join(" · ");
+
+  const rows = [
+    { step: 1, label: "Name", value: $("#charName").value.trim() || "—" },
+    { step: 2, label: "Herkunft", value: archetype?.name || "—" },
+    { step: 3, label: "Attribute", value: attrText || "—" },
+    { step: 4, label: "Talent", value: perk?.name || "Keiner" },
+    { step: 5, label: "Startort", value: location?.name || "—" },
+    { step: 6, label: "Aussehen", value: $("#charAppearance").value.trim() || "— (optional)" },
+  ];
+  rows.forEach((row) => {
+    const node = el("button", "summary-row", `<div class="sr-label">${escapeHtml(row.label)}</div><div class="sr-value">${escapeHtml(row.value)}</div><div class="sr-edit">Bearbeiten →</div>`);
+    node.type = "button";
+    node.onclick = () => goToWizardStep(row.step);
+    box.appendChild(node);
+  });
 }
 
 // Prüft, ob der AKTUELLE Schritt abgeschlossen ist. Gibt bei Bedarf eine
@@ -397,7 +461,6 @@ function enterGame(view) {
   state.gameId = view.gameId;
   state.lastFxNarration = null;
   rememberCharacter(view);
-  $("#characterOverlay").classList.add("hidden");
   history.replaceState(null, "", `?game=${view.gameId}`);
   $("#screen-create").classList.add("hidden");
   $("#screen-game").classList.remove("hidden");
@@ -426,13 +489,9 @@ function hideRecapBanner() {
   $("#recapBanner").classList.add("hidden");
 }
 
-function showCharacterPicker() {
-  if (state.view) rememberCharacter(state.view);
-  renderSavedCharacters();
-  closeDrawer();
-  $("#characterOverlay").classList.remove("hidden");
-}
-
+// Ehemals ein eigenes Popup ("Wer sticht heute in See?"); jetzt lebt die
+// Charakterauswahl direkt in Schritt 1 des Assistenten (unter dem Namen),
+// darum führen "Neuer Charakter" und "Zur Charakterauswahl" beide hierher.
 function beginNewCharacter() {
   if (state.view) rememberCharacter(state.view);
   state.gameId = null;
@@ -440,14 +499,15 @@ function beginNewCharacter() {
   state.lastFxNarration = null;
   state.sel = { archetype: null, perk: null, location: null };
   buildCreation();
+  renderSavedCharacters();
   $("#charName").value = "";
   $("#charAppearance").value = "";
   $("#createError").textContent = "";
-  $("#characterOverlay").classList.add("hidden");
   $("#screen-game").classList.add("hidden");
   $("#openLogbook").classList.add("hidden");
   $("#screen-create").classList.remove("hidden");
   history.replaceState(null, "", location.pathname);
+  renderTopbarContext();
   closeDrawer();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -482,7 +542,11 @@ function renderSavedCharacters() {
   list.innerHTML = "";
   if (empty) empty.classList.toggle("hidden", slots.length > 0);
   slots.forEach((slot) => {
-    const row = el("div", "save-slot", `<div><strong>${escapeHtml(slot.name)}</strong><small>${escapeHtml(slot.archetype || "Abenteurer")} · Stufe ${slot.level || 1} · ${escapeHtml(slot.location || "unbekannter Ort")}</small></div>`);
+    // slot.archetype ist die interne ID (z. B. "kopfgeldjaeger") — hier auf
+    // den echten Anzeigenamen ("Kopfgeldjäger") auflösen, sonst zeigt die
+    // Karte einen rohen, umlautlosen Bezeichner statt echten Text.
+    const archetypeName = state.meta.archetypes.find((a) => a.id === slot.archetype)?.name || "Abenteurer";
+    const row = el("div", "save-slot", `<div><strong>${escapeHtml(slot.name)}</strong><small>${escapeHtml(archetypeName)} · Stufe ${slot.level || 1} · ${escapeHtml(slot.location || "unbekannter Ort")}</small></div>`);
     const actions = el("div", "save-slot-actions");
     const load = el("button", "primary", "Fortsetzen");
     load.onclick = async () => {
@@ -531,6 +595,7 @@ function renderScene(view) {
   const isInCombat = inCombat(view);
   const isNewNarration = !!view.scene?.narration && view.scene.narration !== state.lastFxNarration;
   state.view = view;
+  renderTopbarContext();
   if (view.aiProvider && $("#providerSelect").querySelector(`option[value="${CSS.escape(view.aiProvider)}"]`)) {
     $("#providerSelect").value = view.aiProvider;
     try { localStorage.setItem(PROVIDER_KEY, view.aiProvider); } catch { /* optional */ }
@@ -1419,7 +1484,7 @@ document.addEventListener("keydown", (event) => {
   if (!["1", "2", "3", "4"].includes(event.key)) return;
   const target = event.target;
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target?.isContentEditable) return;
-  if ($("#screen-game").classList.contains("hidden") || !$("#characterOverlay").classList.contains("hidden")) return;
+  if ($("#screen-game").classList.contains("hidden")) return;
   const buttons = [...document.querySelectorAll("#choices .choice:not(:disabled)")];
   const button = buttons[Number(event.key) - 1];
   if (!button) return;

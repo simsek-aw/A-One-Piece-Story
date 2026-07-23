@@ -204,6 +204,48 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 25) — Assistent-Feinschliff, Kopfleiste, Aufräumen
+
+Direktes Feedback nach dem ersten Wizard-Durchlauf: eine Übersicht vor dem
+Start fehlte, Fortschritts-Zahlen waren nicht klickbar, die Charakterauswahl
+lebte noch in einem separaten Popup, ein Textbaustein wirkte deplatziert,
+und die Kopfleiste hatte ungenutzten Platz.
+
+- [x] **Schritt 7 · Übersicht**: zeigt alle sechs Angaben (Name, Herkunft,
+      Attribute, Talent, Startort, Aussehen) als klickbare Zeilen — Klick
+      springt direkt zum passenden Schritt zurück. "Schnellstart" landet
+      jetzt hier statt auf Schritt 6, damit man das Ergebnis einmal komplett
+      sieht, bevor man startet.
+- [x] **Fortschritts-Zahlen klickbar**: `state.wizardMaxStep` verfolgt den je
+      erreichten Höchststand getrennt vom aktuell angezeigten Schritt —
+      Springt man von der Übersicht zurück, um z. B. die Herkunft zu ändern,
+      bleiben alle bereits erreichten Schritte (inkl. der Übersicht selbst)
+      weiter anklickbar, statt sich erneut durchklicken zu müssen. Noch nicht
+      erreichte Schritte bleiben bewusst gesperrt (fehlende Vorschritt-Daten).
+- [x] **Charakterauswahl-Popup entfernt**: `#characterOverlay` komplett
+      gestrichen — die gespeicherten Charaktere stehen jetzt direkt unter dem
+      Namensfeld in Schritt 1 ("Oder setze ein bestehendes Abenteuer fort").
+      "Neuer Charakter"/"Zur Charakterauswahl" im Spielmenü führen beide auf
+      dieselbe, jetzt vereinheitlichte Stelle.
+- [x] Root-Cause-Fix für einen Umlaut-Bug dabei entdeckt: die Charakterkarte
+      zeigte die interne Archetyp-ID ("kopfgeldjaeger") statt des echten
+      Anzeigenamens ("Kopfgeldjäger") — jetzt wird der Name aus
+      `state.meta.archetypes` aufgelöst statt die rohe ID anzuzeigen.
+- [x] **Deplatzierten Zufalls-Text entfernt**: der Mock-Provider hängte mit
+      12 % Chance auf JEDE Szene ein "Spannung"-Panel mit der fixen
+      Bildunterschrift "Alle Blicke richten sich auf dich." an — unabhängig
+      vom tatsächlichen Szeneninhalt, wirkte dadurch beliebig/nicht
+      aktualisiert. Key-Moment-Panels lösen jetzt nur noch bei echten
+      Ereignissen aus (Kampfbeginn, Teufelsfrucht-Fund).
+- [x] **Kopfleiste nutzt den freien Platz neben Logo/Menü**: zeigt vor dem
+      ersten Zug die Ära-Tagline, sobald ein Spiel läuft Name/Level/Tag —
+      aktualisiert sich live mit jeder neuen Szene (`renderTopbarContext()`),
+      damit es (anders als der entfernte Text oben) nie veraltet wirkt.
+- [x] Per Playwright verifiziert: Übersicht + Klick-Navigation, Rücksprung
+      und erneutes Vorspringen ohne erneutes Durchklicken, Charakterauswahl
+      ohne Popup samt Fortsetzen-Fluss, Umlaut-Anzeige, Kopfleiste live in
+      beiden Zuständen (Ära-Tagline / Name-Level-Tag).
+
 ## Erledigt (Ausbaustufe 24) — Charaktererstellung als Schritt-für-Schritt-Assistent
 
 Bisher war die Charaktererstellung eine lange, scrollende Seite mit allen

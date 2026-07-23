@@ -74,6 +74,11 @@ body {
 }
 .brand { font-weight: 800; font-size: 1.15rem; letter-spacing: 0.3px; }
 .era { color: var(--accent); font-size: 0.85rem; }
+/* Nutzt den freien Platz neben Logo/Menü: Ära-Tagline vor dem ersten Zug,
+   danach Charaktername/Level/Tag auf einen Blick — aktualisiert sich live
+   mit jeder neuen Szene statt eine feste Deko zu sein. */
+.topbar-context { font-size: 0.85rem; color: var(--muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 720px) { .topbar-context { display: none; } }
 .provider { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 0.8rem; color: var(--muted); border: 2px solid var(--line); padding: 8px 10px; }
 .provider select { max-width: 150px; border: 0; background: transparent; color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
 .provider select:disabled { cursor: default; opacity: 0.75; }
@@ -86,12 +91,6 @@ body.nav-menu-open .nav-menu { opacity: 1; pointer-events: auto; transform: none
 
 .screen { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
 .hidden { display: none !important; }
-
-.character-overlay { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px; background: rgba(20, 17, 13, 0.72); backdrop-filter: blur(5px); }
-.character-picker { width: min(680px, 100%); max-height: min(760px, calc(100vh - 40px)); overflow: auto; background: var(--panel); color: var(--ink); border: 3px solid var(--line); box-shadow: 9px 9px 0 var(--shadow); padding: 26px; }
-.character-picker h1 { margin: 0 0 8px; font-family: "Bangers", "Arial Black", Impact, system-ui, sans-serif; font-size: 2rem; letter-spacing: 1.5px; text-transform: uppercase; }
-.character-picker .save-slots { margin: 20px 0 14px; }
-.character-picker #newCharacterBtn { margin-top: 10px; }
 
 /* Erstellung */
 .create-wrap h1 { font-size: 1.9rem; margin: 8px 0; }
@@ -124,6 +123,15 @@ body.nav-menu-open .nav-menu { opacity: 1; pointer-events: auto; transform: none
 .wizard-progress li.current .wp-label { color: var(--ink); font-weight: 700; }
 .wizard-progress .wp-label { display: none; }
 @media (min-width: 640px) { .wizard-progress .wp-label { display: inline; } }
+/* Bereits besuchte Schritte (inkl. dem aktuellen) sind anklickbar, um direkt
+   dorthin zurückzuspringen — kommende Schritte bewusst nicht (die Daten
+   dafür gibt es ja noch nicht). */
+.wizard-progress li.clickable { cursor: pointer; }
+.wizard-progress li.clickable:hover .dot { box-shadow: 0 0 0 2px var(--bg2), 0 0 0 3.5px var(--muted); }
+.wizard-progress li:not(.clickable) { opacity: 0.55; }
+
+/* Charakterauswahl: lebt jetzt direkt in Schritt 1 statt in einem Popup. */
+.saved-characters-block { margin-top: 18px; padding-top: 16px; border-top: 1.5px dotted var(--line); }
 
 .step-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .step-head h2 { margin: 0; }
@@ -157,6 +165,19 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .save-slot small { display: block; color: var(--muted); margin-top: 2px; }
 .save-slot-actions { display: flex; gap: 6px; align-items: center; }
 .save-slot .primary { padding: 7px 10px; }
+
+/* Übersichts-Schritt: jede Zeile führt beim Klick zurück zum passenden Schritt. */
+.summary-list { display: flex; flex-direction: column; gap: 8px; }
+.summary-row {
+  display: grid; grid-template-columns: 1fr 2fr auto; align-items: center; gap: 12px;
+  width: 100%; text-align: left; cursor: pointer; padding: 12px 14px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--bg2); color: var(--ink); font: inherit;
+}
+.summary-row:hover { border-color: var(--accent); transform: translateY(-1px); }
+.summary-row .sr-label { font-weight: 700; color: var(--muted); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.summary-row .sr-value { font-weight: 600; }
+.summary-row .sr-edit { color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
+@media (max-width: 640px) { .summary-row { grid-template-columns: 1fr; gap: 2px; } .summary-row .sr-edit { display: none; } }
 .slot-forget { border: 0; background: transparent; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 0.75rem; }
 @media (max-width: 560px) { .save-slot { align-items: flex-start; flex-direction: column; } }
 

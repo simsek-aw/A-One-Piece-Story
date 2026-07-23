@@ -431,11 +431,13 @@ export class MockProvider {
       extra.shipAcquired = { name: shipName };
     }
 
-    // Key-Moment-Panel für Schlüsselmomente
+    // Key-Moment-Panel für Schlüsselmomente. Bewusst NUR bei tatsächlich
+    // grundierten Ereignissen (Kampf, Teufelsfrucht-Fund) — ein früherer
+    // ungebundener Zufalls-Trigger ("Alle Blicke richten sich auf dich.")
+    // tauchte unabhängig vom Szeneninhalt auf und wirkte dadurch deplatziert.
     let panels = [];
     if (extra.combatStart) panels = [{ kind: "duell", caption: "Es kommt zum Kampf!" }];
     else if (extra.devilFruitFound) panels = [{ kind: "enthuellung", caption: "Eine geheimnisvolle Frucht" }];
-    else if (chance(0.12)) panels = [{ kind: "spannung", caption: "Alle Blicke richten sich auf dich." }];
 
     return {
       narration: parts.join("\n\n") + "\n\nWie gehst du vor?",

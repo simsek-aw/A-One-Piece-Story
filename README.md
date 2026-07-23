@@ -76,12 +76,17 @@ Mock-Spielleiter.
 ## Was schon funktioniert
 
 - **Charaktererstellung als Schritt-für-Schritt-Assistent**: Name, Herkunft,
-  Attribute, Talent, Startort, Aussehen — je ein Bildschirm mit Fortschritts-
-  anzeige, Zurück/Weiter-Navigation und eigenen "🎲 Zufällig"-Knöpfen pro
-  Schritt. Alternativ "Schnellstart" würfelt den kompletten Charakter auf
-  einmal aus. 11 Archetypen als Start (u. a. Marine-Soldat, angehender
-  Piratenkapitän, Barkeeper, Schiffszimmerer, Gelehrte, Musikant, Fischer) –
-  niemand ist an seine Rolle gebunden.
+  Attribute, Talent, Startort, Aussehen, dann eine **Übersicht** — je ein
+  Bildschirm mit Fortschrittsanzeige (Zahlen sind klickbar, um direkt zu
+  einem bereits erreichten Schritt zurückzuspringen), Zurück/Weiter-
+  Navigation und eigenen "🎲 Zufällig"-Knöpfen pro Schritt. Die Übersicht
+  zeigt alle Angaben als klickbare Zeilen zum schnellen Anpassen vor dem
+  Start. Alternativ "Schnellstart" würfelt den kompletten Charakter auf
+  einmal aus. Gespeicherte Charaktere stehen direkt in Schritt 1 zum
+  Fortsetzen bereit (kein separates Auswahl-Popup mehr). 11 Archetypen als
+  Start (u. a. Marine-Soldat, angehender Piratenkapitän, Barkeeper,
+  Schiffszimmerer, Gelehrte, Musikant, Fischer) – niemand ist an seine Rolle
+  gebunden.
 - **Attribute & Skills** (Fallout/Baldur's-Gate-Stil): 7 Attribute, Point-Buy,
   Skill-Ränge, 19 Perks/Talente.
 - **Skill-Checks**: 1W20 + Attribut-Modifikator + Skill-Rang gegen DC,
