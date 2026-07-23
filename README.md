@@ -39,8 +39,10 @@ cp .env.example .env
 #   GEMINI_API_KEY=...        # https://aistudio.google.com/apikey
 #   GEMINI_MODEL=gemini-2.5-flash
 #   GEMINI_MODELS=gemini-2.5-flash,gemini-2.5-flash-lite,gemini-2.0-flash
-#     (jedes Modell erscheint einzeln im Menü — eigenes Tageskontingent pro
-#     Modell, bei 429/limitiert einfach im Menü wechseln statt zu warten)
+#     (Reihenfolge = Priorität, bestes zuerst; eigenes Tageskontingent pro
+#     Modell. "Gemini · Automatisch" im Menü wechselt bei 429/Kontingent-
+#     Limit selbstständig zum nächsten Modell der Liste. Jedes Modell
+#     erscheint zusätzlich einzeln zum gezielten Pinnen ohne Auto-Wechsel.)
 #
 # Oder OpenRouter (ein Key, viele Modelle, auch kostenlose ":free"-IDs):
 #   AI_PROVIDER=openrouter

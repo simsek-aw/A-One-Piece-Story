@@ -204,6 +204,30 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 23) — Automatische Gemini-Kontingent-Kette
+
+Bisher musste man bei einem limitierten Gemini-Modell manuell im Menü ein
+anderes auswählen. Da Lite-Varianten auf dem kostenlosen Tarif i. d. R. ein
+deutlich höheres Tageskontingent (RPD) haben als das "Haupt"-Modell, ist ein
+automatischer Wechsel spürbar hilfreicher als eine rein manuelle Auswahl.
+
+- [x] `server/ai/geminiProvider.js`: `GeminiProvider` nimmt jetzt eine
+      priorisierte `models`-Liste statt nur eines einzelnen Modells.
+      `generateScene()` probiert sie der Reihe nach durch — meldet ein
+      Modell ein Kontingent-/Ratenlimit (429), wird automatisch das nächste
+      versucht. Andere Fehlerarten (ungültiger Key, kaputte Antwort, Timeout)
+      brechen weiterhin sofort zum Mock-Fallback ab, da ein Modellwechsel
+      dort nicht hilft.
+- [x] `server/ai/provider.js`: "Gemini" (ohne Modell-Suffix) ist jetzt die
+      automatische Kette (Standardwahl im Menü, **"Gemini · Automatisch"**);
+      `gemini:<model>` bleibt eine gezielte Einzel-Auswahl ohne Auto-Wechsel,
+      für alle, die bewusst ein bestimmtes Modell pinnen wollen.
+      Bestehende `AI_PROVIDER=gemini`-Deployments profitieren automatisch
+      vom neuen Verhalten, keine Konfigurationsänderung nötig.
+- [x] Per Node-Skript verifiziert: Kaskade wechselt bei 429-artigen Fehlern
+      korrekt durch die Modell-Liste; nicht-Kontingent-Fehler brechen sofort
+      (ohne unnötige Kaskade) zum Mock ab.
+
 ## Erledigt (Ausbaustufe 22) — Kampf vertiefen
 
 Bisher: Gegner griffen IMMER nur den Spieler an (Begleiter waren im Kampf

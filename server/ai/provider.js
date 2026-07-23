@@ -49,6 +49,13 @@ function geminiLabel(model) {
   return `Gemini · ${String(model).replace(/^gemini-/, "")}`;
 }
 
+// "gemini" (ohne Modell-Suffix) ist die AUTOMATISCHE Kontingent-Kette: probiert
+// config.gemini.models der Reihe nach (bestes zuerst), wechselt bei einem
+// 429/Kontingent-Fehler automatisch zum nächsten Modell. "gemini:<model>"
+// bleibt eine gezielte Einzel-Auswahl OHNE automatischen Wechsel — für alle,
+// die bewusst nur ein bestimmtes Modell nutzen wollen (z. B. zum Testen).
+export const GEMINI_AUTO_ID = "gemini";
+
 export function createProvider(requestedProvider = config.aiProvider) {
   const providerName = String(requestedProvider || "mock").toLowerCase();
   if (providerName === "anthropic") {
@@ -69,15 +76,18 @@ export function createProvider(requestedProvider = config.aiProvider) {
     }
     return new OpenAIProvider(config.openai);
   }
-  if (providerName === "gemini" || providerName.startsWith(GEMINI_PREFIX)) {
+  if (providerName === GEMINI_AUTO_ID || providerName.startsWith(GEMINI_PREFIX)) {
     if (!config.gemini.apiKey) {
       console.warn(
         "[ai] AI_PROVIDER=gemini, aber GEMINI_API_KEY fehlt. Fällt auf Mock zurück.",
       );
       return new MockProvider();
     }
-    const model = geminiModelFromProvider(providerName) || config.gemini.model;
-    return new GeminiProvider({ ...config.gemini, model });
+    const pinnedModel = geminiModelFromProvider(providerName);
+    // Gezielte Einzel-Auswahl -> genau ein Modell, keine automatische Kaskade.
+    // Sonst (bare "gemini") -> volle Kontingent-Kette.
+    const models = pinnedModel ? [pinnedModel] : config.gemini.models;
+    return new GeminiProvider({ ...config.gemini, models });
   }
   if (providerName === "openrouter" || providerName.startsWith(OPENROUTER_PREFIX)) {
     if (!config.openrouter.apiKey) {
@@ -102,9 +112,10 @@ export function createProvider(requestedProvider = config.aiProvider) {
 export function activeProviderName() {
   if (config.aiProvider === "anthropic" && config.anthropic.apiKey) return "anthropic";
   if (config.aiProvider === "openai" && config.openai.apiKey) return "openai";
-  if ((config.aiProvider === "gemini" || config.aiProvider.startsWith(GEMINI_PREFIX)) && config.gemini.apiKey) {
+  if ((config.aiProvider === GEMINI_AUTO_ID || config.aiProvider.startsWith(GEMINI_PREFIX)) && config.gemini.apiKey) {
     const requestedModel = geminiModelFromProvider(config.aiProvider);
-    const model = requestedModel && config.gemini.models.map((entry) => entry.toLowerCase()).includes(requestedModel)
+    if (!requestedModel) return GEMINI_AUTO_ID; // bare "gemini" -> automatische Kette bleibt aktiv
+    const model = config.gemini.models.map((entry) => entry.toLowerCase()).includes(requestedModel)
       ? requestedModel
       : config.gemini.model;
     return geminiProviderId(model);
@@ -123,6 +134,15 @@ export function activeProviderName() {
 export function availableProviders() {
   const providers = [{ id: "mock", label: LABELS.mock, model: "regelbasierter Ersatz-Erzähler" }];
   if (config.gemini.apiKey) {
+    // Automatische Kontingent-Kette zuerst und als empfohlene Standardwahl —
+    // probiert alle konfigurierten Modelle der Reihe nach durch, bevor auf
+    // den lokalen Mock zurückgefallen wird. Einzelne Modelle bleiben darunter
+    // für gezieltes Pinnen wählbar.
+    providers.push({
+      id: GEMINI_AUTO_ID,
+      label: "Gemini · Automatisch (wechselt bei Kontingent-Limit)",
+      model: config.gemini.models.join(" → "),
+    });
     config.gemini.models.forEach((model) => providers.push({ id: geminiProviderId(model), label: geminiLabel(model), model }));
   }
   if (config.openrouter.apiKey) {

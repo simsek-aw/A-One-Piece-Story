@@ -46,14 +46,18 @@ klassischer „kleiner Server" einfacher.
    Kontingent-Tarif über [Google AI Studio](https://aistudio.google.com/apikey)):
    - `AI_PROVIDER = gemini`
    - `GEMINI_API_KEY = <dein Schlüssel>` (als Secret)
-   - `GEMINI_MODEL = gemini-2.5-flash` (optional; stabiles Flash-Modell)
+   - `GEMINI_MODEL = gemini-2.5-flash` (optional; bestes/bevorzugtes Modell)
    - `GEMINI_MODELS = gemini-2.5-flash,gemini-2.5-flash-lite,gemini-2.0-flash`
-     (optional; kommagetrennt, jedes Modell erscheint EINZELN im Spielleiter-
-     Menü). Sinnvoll, weil jedes Gemini-Modell auf AI Studio ein eigenes,
-     unabhängiges Tageskontingent hat — ist eines gerade limitiert (429),
-     einfach im Menü auf ein anderes Modell wechseln, statt zu warten. Neuere
-     Modell-IDs aus [aistudio.google.com](https://aistudio.google.com) hier
-     einfach ergänzen.
+     (optional; kommagetrennt, Reihenfolge = Priorität, bestes zuerst).
+     Jedes Gemini-Modell hat auf AI Studio ein eigenes, unabhängiges
+     Tageskontingent — Lite-Varianten i. d. R. deutlich höher als das
+     "Haupt"-Modell. Im Menü erscheint standardmäßig **"Gemini · Automatisch"**:
+     probiert die Liste der Reihe nach durch und wechselt bei einem
+     Kontingent-Fehler (429) automatisch zum nächsten Modell, statt sofort
+     auf den lokalen Ersatz-Erzähler zurückzufallen. Jedes Modell erscheint
+     zusätzlich EINZELN im Menü, falls du bewusst nur ein bestimmtes pinnen
+     willst (kein automatischer Wechsel). Neuere Modell-IDs aus
+     [aistudio.google.com](https://aistudio.google.com) hier einfach ergänzen.
 
    **Oder OpenRouter** — ein Key, Zugriff auf sehr viele Modelle (Claude, GPT,
    Gemini, Llama, DeepSeek, Mistral, …), darunter mehrere komplett kostenlose
