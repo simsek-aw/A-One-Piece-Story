@@ -928,6 +928,11 @@ async function combatAction(payload) {
   }
 }
 
+const STATUS_BADGE = { vergiftet: "☠️ Vergiftet", betaeubt: "😵 Betäubt" };
+function statusBadges(statusList) {
+  return (statusList || []).map((s) => `<span class="status-badge ${s}">${STATUS_BADGE[s] || s}</span>`).join("");
+}
+
 function renderCombat(view) {
   const box = $("#combatBox");
   if (!inCombat(view)) {
@@ -948,15 +953,33 @@ function renderCombat(view) {
   cm.enemies.forEach((e) => {
     const w = pct(e.hp, e.maxHp);
     const node = el("div", "combat-enemy" + (e.alive ? "" : " dead") + (e.id === state.combatTarget ? " sel" : ""),
-      `<div class="ce-top"><span>${escapeHtml(e.name)}</span><span>${e.hp}/${e.maxHp}</span></div><div class="bar"><div class="bar-fill foe" style="width:${w}%"></div></div>`);
+      `<div class="ce-top"><span>${escapeHtml(e.name)}</span><span>${e.hp}/${e.maxHp}</span></div><div class="bar"><div class="bar-fill foe" style="width:${w}%"></div></div>${statusBadges(e.status)}`);
     if (e.alive) node.onclick = () => { state.combatTarget = e.id; renderCombat(view); };
     enemyWrap.appendChild(node);
   });
 
   const p = cm.player;
   $("#combatPlayer").innerHTML =
-    `<div class="ce-top"><span>${escapeHtml(p.name)}${cm.party.length ? " + " + cm.party.length + " Crew" : ""}</span><span>❤️ ${p.hp}/${p.maxHp}</span></div>` +
-    `<div class="bar"><div class="bar-fill hp" style="width:${pct(p.hp, p.maxHp)}%"></div></div>`;
+    `<div class="ce-top"><span>${escapeHtml(p.name)}</span><span>❤️ ${p.hp}/${p.maxHp}</span></div>` +
+    `<div class="bar"><div class="bar-fill hp" style="width:${pct(p.hp, p.maxHp)}%"></div></div>${statusBadges(p.status)}`;
+
+  // Begleiter sind jetzt echte Kampfziele (eigene HP, können niedergehen) —
+  // eigene Zeile pro Person statt nur einer Zahl ("+ 2 Crew").
+  const partyWrap = $("#combatParty");
+  partyWrap.innerHTML = "";
+  (cm.party || []).forEach((member) => {
+    const w = pct(member.hp, member.maxHp);
+    const node = el("div", "combat-companion" + (member.alive ? "" : " dead"),
+      `<div class="ce-top"><span>${escapeHtml(member.name)}</span><span>${member.hp}/${member.maxHp}</span></div>` +
+      `<div class="bar"><div class="bar-fill hp" style="width:${w}%"></div></div>${statusBadges(member.status)}`);
+    if (cm.options.canHeal && member.alive && member.hp < member.maxHp) {
+      const healBtn = el("button", "combat-heal-btn", "✚");
+      healBtn.title = `${member.name} verarzten`;
+      healBtn.onclick = (ev) => { ev.stopPropagation(); combatAction({ action: "heal", targetId: member.id }); };
+      node.appendChild(healBtn);
+    }
+    partyWrap.appendChild(node);
+  });
 
   const logBox = $("#combatLog");
   logBox.innerHTML = "";
@@ -991,6 +1014,12 @@ function renderCombat(view) {
     b.title = "Haoshoku — nur einmal pro Kampf";
     b.onclick = () => combatAction({ action: "overwhelm" });
     btns.appendChild(b);
+  }
+  if (cm.options.canHeal) {
+    const heal = el("button", "combat-btn", "✚ Verarzten (selbst)");
+    heal.title = "Nutzt deinen Medizin-Skill, um dich selbst zu verarzten. Einzelne Begleiter direkt über deren ✚-Knopf heilen.";
+    heal.onclick = () => combatAction({ action: "heal" });
+    btns.appendChild(heal);
   }
   const def = el("button", "combat-btn", "🛡️ Verteidigen");
   def.onclick = () => combatAction({ action: "defend" });

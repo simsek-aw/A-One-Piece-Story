@@ -1,6 +1,26 @@
 // Crew-/Party-Boni: "Je nachdem wer man ist, helfen sie einem bei Erkundung,
 // Kampf oder anderen Dingen." Jeder Begleiter unterstützt anhand seiner Rolle
 // bestimmte Fertigkeiten. Die Boni fließen deterministisch in Skill-Checks ein.
+//
+// Begleiter haben (wie der Spieler) persistente Trefferpunkte: Wunden aus
+// einem Kampf bleiben bis zur nächsten Rast bestehen, statt sich pro Kampf
+// automatisch zurückzusetzen — sonst wären Gefährten nie wirklich in Gefahr.
+
+// Grund-Maximum eines Begleiters, leicht mit dem Spieler-Level skalierend
+// (Begleiter haben keine eigenen Attribute, darum kein voller Werteblock).
+export function companionMaxHp(characterLevel = 1) {
+  return 22 + Math.max(0, (characterLevel || 1) - 1) * 4;
+}
+
+// Füllt hp/maxHp bei Begleitern aus älteren Spielständen (vor diesem Feature)
+// nach, statt eine Migration zu brauchen. Idempotent.
+export function ensurePartyStats(game) {
+  const level = game.character?.level || 1;
+  for (const member of game.party || []) {
+    if (!member.maxHp) member.maxHp = companionMaxHp(level);
+    if (member.hp == null) member.hp = member.maxHp;
+  }
+}
 
 // Schlüsselwort in der Rolle -> Skills, die dieser Begleiter unterstützt.
 const ROLE_HINTS = [

@@ -185,6 +185,14 @@ async function resolveCombatEnd(game, provider) {
   const c = game.character;
   const result = cm.result;
 
+  // Niedergeschlagene Begleiter sterben nicht dauerhaft an einer einzelnen
+  // Kampfrunde — dieselbe "kein permanenter Tod"-Logik wie beim Spieler unten.
+  // Echte Heilung gibt's erst durch Rasten/Verarzten in einem neuen Kampf.
+  for (const member of game.party || []) {
+    if ((member.hp ?? 1) <= 0) member.hp = 1;
+    member.status = [];
+  }
+
   let summary = "";
   if (result === "sieg") {
     let xp = 0, beri = 0, bounty = 0, heat = 0;
@@ -262,9 +270,11 @@ export async function doRest(game, provider) {
   if (c.beri >= INN_COST) {
     c.beri -= INN_COST;
     c.hp = c.maxHp;
+    for (const member of game.party || []) if (member.maxHp) member.hp = member.maxHp;
     playerAction = `Ich nehme mir ein Zimmer in einem Gasthaus (−${INN_COST} Ⓑ) und schlafe bis zum Morgen — frisch erholt.`;
   } else {
     c.hp = Math.min(c.maxHp, c.hp + Math.round(c.maxHp * 0.4));
+    for (const member of game.party || []) if (member.maxHp) member.hp = Math.min(member.maxHp, member.hp + Math.round(member.maxHp * 0.4));
     applyHeat(c, 2);
     playerAction = "Ohne Geld für eine Bleibe suchst du dir einen notdürftigen Schlafplatz und döst unruhig bis zum Morgen.";
   }

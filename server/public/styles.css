@@ -445,6 +445,23 @@ button.choice:disabled { opacity: 0.45; cursor: not-allowed; }
 .ce-top { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; }
 .bar-fill.foe { background: linear-gradient(90deg, #b23a2a, #e2603f); }
 .combat-player { background: var(--bg2); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; margin-bottom: 10px; }
+/* Begleiter im Kampf: eigene HP, können niedergehen, eigener Heilen-Knopf. */
+.combat-party { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.combat-companion { position: relative; background: var(--bg2); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; }
+.combat-companion.dead { opacity: 0.45; text-decoration: line-through; }
+.combat-heal-btn {
+  position: absolute; top: 6px; right: 8px;
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1px solid var(--ok); background: var(--panel2); color: var(--ok);
+  font-size: 0.9rem; line-height: 1; cursor: pointer;
+}
+.combat-heal-btn:hover { background: var(--ok); color: #06210f; }
+.status-badge {
+  display: inline-block; margin-top: 4px; margin-right: 5px;
+  font-size: 0.72rem; padding: 1px 7px; border-radius: 999px;
+  background: rgba(226,96,63,0.18); color: var(--bad);
+}
+.status-badge.betaeubt { background: rgba(244,185,66,0.2); color: #b8860b; }
 .combat-log { background: #0c1524; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; max-height: 150px; overflow-y: auto; margin-bottom: 10px; font-size: 0.82rem; }
 .cl-line { padding: 2px 0; border-bottom: 1px dotted #22314d; }
 .combat-targets { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; }

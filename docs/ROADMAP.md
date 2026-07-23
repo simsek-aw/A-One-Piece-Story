@@ -204,6 +204,50 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 22) — Kampf vertiefen
+
+Bisher: Gegner griffen IMMER nur den Spieler an (Begleiter waren im Kampf
+unverwundbar, hatten nicht mal ein HP-Feld), die Reihenfolge war starr fix
+(Spieler → Crew → Gegner) und es gab keine Statuseffekte oder eine
+Heilmöglichkeit im Kampf.
+
+- [x] `server/engine/party.js`: `companionMaxHp(level)` + `ensurePartyStats(game)`
+      — Begleiter bekommen jetzt persistente HP (wie der Spieler: Wunden
+      bleiben bis zur nächsten Rast bestehen, kein automatischer Reset pro
+      Kampf). Ältere Spielstände werden beim ersten Kampf automatisch
+      nachgerüstet, keine Migration nötig.
+- [x] `server/engine/combat.js` (großteils neu):
+      - **Initiative**: pro Runde ein Wurf Spielerseite (Geschick) vs.
+        Gegnerseite (Ø-Angriffsbonus) — gewinnt die Gegnerseite, greift sie
+        VOR der Spieleraktion an ("⚡ Die Gegner sind schneller!").
+      - **Begleiter als echte Ziele**: Gegner wählen zufällig zwischen
+        Spieler und lebenden Begleitern. Ein niedergeschlagener Begleiter
+        (0 HP) scheidet für den Rest des Kampfes aus Angriff/Ziel-Auswahl
+        aus, stirbt aber nicht dauerhaft — dieselbe "kein permanenter Tod"-
+        Logik wie beim Spieler (Revival auf 1 HP nach Kampfende).
+      - **Statuseffekte**: "vergiftet" (Schaden über 2 Rundenenden) und
+        "betäubt" (setzt die nächste Aktion aus) — manche Gegner-Vorlagen
+        (`content/enemies.js`: `inflicts`) können sie bei einem Treffer
+        auslösen. Wichtige Design-Entscheidung: die Betäubung wird erst am
+        ANFANG der FOLGERUNDE konsumiert, nicht sofort — sonst wäre der
+        Status-Badge im UI nie sichtbar gewesen (im selben Funktionsaufruf
+        zugefügt und verbraucht).
+      - **Verarzten (Heilen)**: neue Kampf-Aktion, nutzt den Medizin-Skill
+        (bisher ohne jede Kampf-Wirkung), heilt sich selbst oder eine*n
+        Begleiter*in, kostet die Runde wie ein Angriff.
+- [x] Frontend: eigene Begleiter-Zeilen im Kampf-Overlay (HP-Balken,
+      Status-Badges, ✚-Knopf pro Person), "✚ Verarzten (selbst)"-Aktions-
+      Knopf. Rasten heilt jetzt auch die Crew (proportional wie beim Spieler).
+- [x] Item-Verbrauch im Kampf bewusst NICHT umgesetzt: das Inventar besteht
+      aktuell nur aus frei benannten KI-Items ohne mechanische Eigenschaften
+      (keine "Heilmenge" o. ä. hinterlegt) — eine echte Item-Nutzung braucht
+      zuerst ein strukturiertes Item-/Tränke-System (siehe "Inventar-Nutzung"
+      weiter unten), sonst wäre der Kampf-Knopf nur Attrappe.
+- [x] Getestet: `test/combat.test.js` (Backfill, canHeal, Verarzten-Ziel-
+      wahl, Downed-Begleiter-Verhalten, statistischer Test über viele
+      simulierte Runden) + manuelle Playwright-Verifikation (HP-Balken,
+      Status-Badge sichtbar für genau eine Runde, Verarzten-Knopf).
+
 ## Erledigt (Ausbaustufe 21) — Prompt-Caching für den System-Prompt
 
 Der System-Prompt (Regeln/Formatvorgabe, ~4000 Token) ist bei jedem Zug
@@ -350,8 +394,9 @@ einen bewusst deklarierten Retro-Stil setzen — "wie ein altes Pokémon-Game".
       und schaltet eigene Begleiter-Plots frei.
 - [ ] **Haki-Ausbau**: Meditation/Willens-Pfad zu echten Haki-Fähigkeiten führen
       (auch im Kampf als eigene Spezial-Optionen).
-- [ ] **Kampf vertiefen**: Gegner können auch Begleiter angreifen; Initiative;
-      Statuseffekte; Items/Heilen im Kampf.
+- [x] **Kampf vertiefen** (siehe Ausbaustufe 22): Gegner können auch Begleiter
+      angreifen; Initiative; Statuseffekte; Verarzten im Kampf. Item-Verbrauch
+      im Kampf bewusst zurückgestellt (siehe dort, warum).
 - [ ] **Inventar-Nutzung**: Items im Zug einsetzen (heilen, Werkzeuge),
       Feilschen/Handel an Orten.
 - [ ] **Eigenes Schiff ausbauen**: Werft, Upgrades, Crew-Positionen an Bord.

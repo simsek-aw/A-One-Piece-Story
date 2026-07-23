@@ -140,10 +140,15 @@ Mock-Spielleiter.
   "fehlende Jahrhundert") — plus dein eigenes Kopfgeld und deine Crew. Der
   Spielleiter webt dieses Weltgeschehen in die Erzählung ein.
 - **Rundenbasiertes Kampfsystem**: Angriff mit Waffen-Skills, Verteidigen,
-  Teufelsfrucht-/Haki-Spezial (Flächenschaden), Fliehen; die Crew kämpft mit;
-  Gegner mit HP-Balken; Sieg/Flucht/Niederlage wirken auf EP, Beri, Kopfgeld
-  und Heat (Niederlage ist kein permanenter Tod). Runden laufen ohne KI-Aufruf,
-  nur Beginn und Ausgang werden erzählt.
+  Verarzten (Medizin-Skill, selbst oder Crew), Teufelsfrucht-/Haki-Spezial
+  (Flächenschaden), Fliehen; die Crew kämpft mit — und hat jetzt eigene,
+  persistente HP: Gegner greifen zufällig Spieler ODER Begleiter an, ein
+  niedergeschlagener Begleiter scheidet für den Rest des Kampfes aus (kein
+  permanenter Tod, erholt sich nach dem Kampf). Initiative (wer ist diese
+  Runde schneller?) und Statuseffekte (vergiftet, betäubt) sorgen für
+  taktische Wendungen. Gegner mit HP-Balken; Sieg/Flucht/Niederlage wirken
+  auf EP, Beri, Kopfgeld und Heat. Runden laufen ohne KI-Aufruf, nur Beginn
+  und Ausgang werden erzählt.
 - **Kanon-Koexistenz**: Hintergrund-Ereignisse aus der One-Piece-Timeline werden
   als Gerüchte eingestreut.
 - **Haki-Ausbau**: der Willenskraft-/Meditations-Pfad führt zu echten

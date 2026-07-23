@@ -3,6 +3,8 @@
 //   hp, atk (Angriffsbonus), def (Verteidigung), dmg (Grundschaden)
 //   xp (Belohnung), beri (Beute), bountyOnDefeat/heatOnDefeat (Konsequenzen,
 //   wenn man z.B. die Marine besiegt -> man wird zum gesuchten Gesetzlosen)
+//   inflicts (optional): { type: "vergiftet"|"betaeubt", chance } — Chance,
+//   bei einem Treffer zusätzlich einen Statuseffekt zu verursachen.
 
 export const ENEMIES = {
   bandit: {
@@ -12,6 +14,7 @@ export const ENEMIES = {
   wildtier: {
     id: "wildtier", name: "wildes Tier", hp: 22, atk: 5, def: 1, dmg: 7,
     xp: 22, beri: 0, bountyOnDefeat: 0, heatOnDefeat: 0,
+    inflicts: { type: "vergiftet", chance: 0.35 }, // Biss/Kralle
   },
   rivale: {
     id: "rivale", name: "Rivalisierender Pirat", hp: 28, atk: 5, def: 2, dmg: 7,
@@ -20,6 +23,7 @@ export const ENEMIES = {
   kopfgeldjaeger: {
     id: "kopfgeldjaeger", name: "Kopfgeldjäger", hp: 30, atk: 6, def: 2, dmg: 8,
     xp: 40, beri: 60, bountyOnDefeat: 500000, heatOnDefeat: 2,
+    inflicts: { type: "betaeubt", chance: 0.25 }, // gezielter Betäubungsschlag
   },
   marine_soldat: {
     id: "marine_soldat", name: "Marine-Soldat", hp: 24, atk: 4, def: 2, dmg: 6,
@@ -28,6 +32,7 @@ export const ENEMIES = {
   marine_offizier: {
     id: "marine_offizier", name: "Marine-Offizier", hp: 42, atk: 6, def: 3, dmg: 9,
     xp: 55, beri: 80, bountyOnDefeat: 2500000, heatOnDefeat: 18,
+    inflicts: { type: "betaeubt", chance: 0.2 }, // Rüstungsschlag mit dem Schwertgriff
   },
 };
 

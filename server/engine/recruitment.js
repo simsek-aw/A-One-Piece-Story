@@ -5,6 +5,7 @@
 import { skillCheck } from "./dice.js";
 import { applyXp } from "./character.js";
 import { upsertNpc } from "./memory.js";
+import { companionMaxHp } from "./party.js";
 
 const PERSONALITIES = {
   aggressiv: { label: "aggressiv", baseDc: 13, affinity: { ehrlich: 1, empathisch: -2, pragmatisch: 1, herausfordern: 2 } },
@@ -130,6 +131,7 @@ function finishRecruitment(game) {
   d.status = joined ? "joined" : "rejected";
   const shownName = d.nameKnown ? d.realName : "Die Person";
   if (joined && !game.party.some((member) => member.id === d.npcId)) {
+    const maxHp = companionMaxHp(game.character.level);
     game.party.push({
       id: d.npcId,
       name: d.realName,
@@ -137,6 +139,8 @@ function finishRecruitment(game) {
       personality: d.personality,
       loyalty: clamp(45 + d.rapport * 2, 35, 75),
       joinedDay: game.world.day,
+      hp: maxHp,
+      maxHp,
     });
     game.lastLevelUps = applyXp(game.character, 30);
     d.message = `${shownName} lässt den Blick lange auf dir ruhen – dann folgt ein entschiedenes Nicken. „Gut. Ich komme mit. Aber gib mir keinen Grund, diese Entscheidung zu bereuen.“`;
