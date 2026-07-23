@@ -64,6 +64,17 @@ export async function playTurn(game, provider, { choiceId, freeText }) {
     if (choice.skillCheck) checkResult = skillCheck(game.character, choice.skillCheck.skill, choice.skillCheck.dc, game.party);
   } else if (freeText && freeText.trim()) {
     playerAction = freeText.trim().slice(0, 500);
+    // Frei getippte Aktionen bekamen bisher NIE einen Skill-Check (nur
+    // vorformulierte Auswahlmöglichkeiten hatten skillCheck gesetzt) — das
+    // ließ Freitext folgenlos wirken, unabhängig vom KI-Provider: die Engine
+    // würfelt Folgen, nicht der Erzähler (siehe eavesdropping.js). Jetzt
+    // bekommt Freitext denselben impliziten Check wie eine strukturierte
+    // Auswahl mit vergleichbarer Handlung.
+    const inferred = inferFreeTextCheck(playerAction);
+    if (inferred) {
+      actionSkill = inferred.skill;
+      checkResult = skillCheck(game.character, inferred.skill, inferred.dc, game.party);
+    }
   } else {
     throw new Error("Weder Auswahl noch Freitext angegeben.");
   }
@@ -513,6 +524,40 @@ function slug(name) {
   return (
     String(name).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40) || "item"
   );
+}
+
+// Ordnet frei getippten Aktionen deterministisch einen Skill+DC zu, analog zu
+// den skillCheck-Feldern, die vorformulierte Auswahlmöglichkeiten schon immer
+// hatten. Zurückhaltende/sichere Formulierungen (abwarten, zurückziehen)
+// bekommen bewusst KEINEN Check — genau wie manche Auswahlmöglichkeiten des
+// Spielleiters absichtlich skillCheck: null haben. Alles andere bekommt
+// mindestens eine kleine, faire Hürde statt komplett folgenlos zu bleiben.
+const FREE_TEXT_SKILL_PATTERNS = [
+  // "zurückziehen" ist ebenfalls trennbar ("ich ziehe mich zurück").
+  { pattern: /\b(warte|abwarte|geh(?:e)? weg|verlasse|nichts (?:tun|tue)|halte abstand|bleib(?:e)? ruhig)\w*|\bzurückzieh\w*|\bzurueckzieh\w*|\bzieh\w*(?:\s+\S+){0,3}\s+zur(?:ü|ue)ck\b/i, skill: null },
+  // "angreifen" ist ein trennbares Verb und taucht in echten Sätzen oft
+  // zerlegt auf ("ich greife den Wachposten an") -> zweite Alternative fängt
+  // das ab, auch wenn "greif" und "an" durch andere Wörter getrennt sind.
+  { pattern: /\b(kämpf|kaempf|schlag|angreif|attackier|prügel|pruegel|verteidig)\w*|\bgreif\w*(?:\s+\S+){0,4}\s+an\b/i, skill: "nahkampf", dc: 13 },
+  { pattern: /\b(schwert|klinge|säbel|saebel)\w*/i, skill: "schwertkunst", dc: 13 },
+  { pattern: /\b(schieß|schiess|feuer[e]?\b|ziel(?:e|en))\w*/i, skill: "schiessen", dc: 13 },
+  { pattern: /\b(droh|einschüchter|einschuechter|erpress)\w*/i, skill: "einschuechtern", dc: 12 },
+  { pattern: /\b(schleich|versteck|heimlich|unbemerkt)\w*/i, skill: "heimlichkeit", dc: 12 },
+  { pattern: /\b(überzeug|ueberzeug|verhandl|verhandel|überred|ueberred|beschwatz|frag(?:e|st)?)\w*/i, skill: "ueberzeugen", dc: 11 },
+  { pattern: /\b(heil|verarzt|verbind|medizin)\w*/i, skill: "medizin", dc: 12 },
+  { pattern: /\b(repariere|baue|bastel|schmiede)\w*/i, skill: "handwerk", dc: 12 },
+  { pattern: /\b(koch|braue|mixe)\w*/i, skill: "kochen", dc: 10 },
+  { pattern: /\b(schwimm|tauch)\w*/i, skill: "schwimmen", dc: 12 },
+  { pattern: /\b(navigier|steuere|kurs|kartiere)\w*/i, skill: "navigation", dc: 12 },
+  { pattern: /\b(beobacht|lausch|untersuch|durchsuch|erforsch|horch)\w*/i, skill: "wahrnehmung", dc: 11 },
+];
+
+function inferFreeTextCheck(text) {
+  const t = String(text || "");
+  for (const entry of FREE_TEXT_SKILL_PATTERNS) {
+    if (entry.pattern.test(t)) return entry.skill ? { skill: entry.skill, dc: entry.dc } : null;
+  }
+  return { skill: "wahrnehmung", dc: 10 }; // unklare Aktion -> kleine, faire Standard-Hürde statt gar kein Risiko
 }
 
 // "Bisher geschah..."-Rückblick beim (Wieder-)Einstieg. Rein deterministisch

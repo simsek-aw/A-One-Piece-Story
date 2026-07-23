@@ -204,6 +204,36 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 19) — Skill-Check für Freitext-Aktionen
+
+Spieler-Feedback: frei getippte Aktionen fühlten sich folgenlos an ("hat
+keinen Wert, was man eingibt"). Root Cause gefunden — nicht die KI-Qualität:
+`playTurn()` würfelte einen Skill-Check NUR, wenn eine vorformulierte
+Auswahlmöglichkeit ein `skillCheck`-Feld hatte. Freitext hatte so ein Feld nie
+und bekam deshalb NIE einen Wurf, unabhängig vom Provider (Mock wie auch
+echte KI) — "Die Engine würfelt Folgen, nicht der Erzähler" (siehe
+eavesdropping.js) galt für Freitext schlicht nicht.
+
+- [x] `server/engine/turn.js`: `inferFreeTextCheck(text)` ordnet Freitext
+      deterministisch per Stichwort-Muster einen Skill+DC zu (Kampf,
+      Schleichen, Überzeugen, Medizin, Kochen, Schwimmen, Navigation,
+      Wahrnehmung, …), inkl. einiger trennbarer Verben ("ich greife … an",
+      "ich ziehe mich … zurück"). Zurückhaltende/sichere Formulierungen
+      (abwarten, zurückziehen) bekommen bewusst keinen Check; alles andere
+      bekommt mindestens eine kleine, faire Standard-Hürde (Wahrnehmung DC 10)
+      statt komplett folgenlos zu bleiben.
+      Der Freitext-Pfad in `playTurn()` würfelt jetzt genau wie strukturierte
+      Auswahlmöglichkeiten VOR dem KI-Aufruf, sodass der Check-Banner,
+      kritische Erfolge/Patzer und die Konsequenz-Systeme (Verdacht, Ruf)
+      genauso greifen wie bei einer vorformulierten Auswahl.
+- [x] Nebenbei gefundenen Bug behoben: `eavesdropping.js` verglich
+      `actionSkill === "einschüchtern"` (mit Umlaut) gegen die tatsächliche
+      Skill-ID `einschuechtern` (ASCII) — der Vergleich war nie wahr.
+- [x] Per Node-Skript und Playwright verifiziert: Freitext löst jetzt
+      sichtbar den Check-Banner, die Erzählung des Wurfergebnisses und (bei
+      kritischem Erfolg/Kampf) die Manga-FX/Haptik aus — identisch zu
+      strukturierten Auswahlmöglichkeiten.
+
 ## Erledigt (Ausbaustufe 18) — NPC-Mini-Portraits ("Bekannte Gesichter")
 
 - [x] `server/public/app.js`: `npcFaceSvg(seed, disposition)` erzeugt einen

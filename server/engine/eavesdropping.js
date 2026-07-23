@@ -73,7 +73,7 @@ export function resolveEavesdroppingRisk(game, action) {
 
 function actionType(action, actionSkill) {
   if (actionSkill === "heimlichkeit") return "heimlichkeit";
-  if (actionSkill === "einschüchtern") return "drohung";
+  if (actionSkill === "einschuechtern") return "drohung";
   return Object.entries(ACTION_TYPES).find(([, config]) => config.pattern.test(action || ""))?.[0] || null;
 }
 
