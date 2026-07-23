@@ -68,6 +68,73 @@ test("Gemini exposes its local fallback instead of failing silently", async () =
   assert.ok(result.choices.length > 0);
 });
 
+const SCENE_CONTEXT = {
+  kind: "turn",
+  playerAction: "Ich gehe weiter.",
+  world: { location: "loguetown", locationName: "Loguetown", locationType: "hafenstadt" },
+  continuity: { presentNpcs: [] },
+  story: { active: [] },
+  status: {},
+  memory: { npcs: [] },
+};
+
+// Ein einmaliger Aussetzer (Timeout, Netzwerkhänger, kaputtes JSON) soll nicht
+// sofort die Immersion zerstören ("Szene wurde mit dem lokalen Ersatz-Erzähler
+// gesichert") — ein zweiter Versuch auf demselben Modell löst das oft schon.
+test("Gemini retries once on a transient error before falling back", async () => {
+  const provider = new GeminiProvider({ apiKey: "test", model: "test" });
+  let calls = 0;
+  provider._client = {
+    models: {
+      generateContent: async () => {
+        calls += 1;
+        if (calls === 1) throw new Error("timeout while waiting for response");
+        return { text: JSON.stringify({ narration: "Zweiter Versuch klappt.", choices: [] }) };
+      },
+    },
+  };
+
+  const result = await provider.generateScene(SCENE_CONTEXT);
+  assert.equal(calls, 2);
+  assert.equal(result.narration, "Zweiter Versuch klappt.");
+  assert.equal(result.providerNotice, undefined);
+});
+
+// Ein Auth-/Konfigurationsfehler wiederholt sich garantiert identisch — ein
+// Retry würde nur Zeit verschwenden und sollte übersprungen werden.
+test("Gemini skips the retry for a permanent auth/config error", async () => {
+  const provider = new GeminiProvider({ apiKey: "test", model: "test" });
+  let calls = 0;
+  provider._client = {
+    models: { generateContent: async () => { calls += 1; throw new Error("403 PERMISSION_DENIED: API key not valid"); } },
+  };
+
+  const result = await provider.generateScene(SCENE_CONTEXT);
+  assert.equal(calls, 1);
+  assert.equal(result.providerNotice.type, "fallback");
+});
+
+// Bleibt ein transienter Fehler auch nach dem Retry bestehen, soll die
+// bestehende Modell-Kaskade weiterhin greifen, statt sofort aufzugeben.
+test("Gemini falls through to the next model after exhausting retries on a transient error", async () => {
+  const provider = new GeminiProvider({ apiKey: "test", models: ["model-a", "model-b"] });
+  const callsPerModel = { "model-a": 0, "model-b": 0 };
+  provider._client = {
+    models: {
+      generateContent: async ({ model }) => {
+        callsPerModel[model] += 1;
+        if (model === "model-a") throw new Error("timeout while waiting for response");
+        return { text: JSON.stringify({ narration: "Modell b rettet die Szene.", choices: [] }) };
+      },
+    },
+  };
+
+  const result = await provider.generateScene(SCENE_CONTEXT);
+  assert.equal(callsPerModel["model-a"], 2); // 1 Versuch + 1 Retry
+  assert.equal(callsPerModel["model-b"], 1);
+  assert.equal(result.narration, "Modell b rettet die Szene.");
+});
+
 test("multiple OpenRouter models become separate selectable providers", () => {
   const original = {
     apiKey: config.openrouter.apiKey,

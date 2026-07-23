@@ -10,10 +10,16 @@
 // automatisch das nächste Modell der Liste versucht — Lite-Varianten haben
 // auf dem kostenlosen Tarif i. d. R. ein deutlich höheres Tageskontingent
 // (RPD) als das "Haupt"-Modell, sind also eine sinnvolle Ausweich-Stufe statt
-// gleich auf den lokalen Mock-Erzähler zurückzufallen. Andere Fehlerarten
-// (ungültige Antwort, Timeout, falscher Key) brechen sofort zum Mock ab —
-// die würden bei jedem Modell gleichermaßen auftreten, ein Modellwechsel
-// hilft dort nicht.
+// gleich auf den lokalen Mock-Erzähler zurückzufallen.
+//
+// Transiente Fehler (Timeout, ungültiges/abgeschnittenes JSON, sonstiger
+// Netzwerk-Hänger) bekommen zusätzlich EINEN Retry auf demselben Modell,
+// bevor zum nächsten Modell bzw. zum Mock gewechselt wird — ein Rückfall auf
+// den Mock-Erzähler reißt die Spieler:in mitten aus der Immersion (anderer
+// Erzählstil, kein Kontinuitäts-Wächter), während ein einfacher zweiter
+// Versuch viele nur einmalige Aussetzer schon löst. Nur echte Konfigurations-/
+// Auth-Fehler (falscher Key, fehlende Berechtigung) brechen weiterhin sofort
+// ab — die träten bei jedem weiteren Versuch identisch wieder auf.
 //
 // JSON-Modus über responseMimeType statt einem vollen JSON-Schema (Gemini nutzt
 // dafür ein eigenes, engeres Teilformat) — die Antwort wird wie bei den anderen
@@ -57,38 +63,48 @@ export class GeminiProvider {
 
   async generateScene(context) {
     const userMessage = this.buildUserMessage(context);
+    const ATTEMPTS_PER_MODEL = 2; // 1 Retry für transiente Fehler, bevor Modell/Mock gewechselt wird
     let lastError = null;
 
     for (let i = 0; i < this.models.length; i++) {
       const model = this.models[i];
-      try {
-        const client = await this.client();
-        const response = await client.models.generateContent({
-          model,
-          contents: userMessage,
-          config: {
-            systemInstruction: this.system,
-            responseMimeType: "application/json",
-            temperature: 0.7,
-          },
-        });
 
-        const text = response.text;
-        if (!text) throw new Error("Gemini-Antwort ohne Inhalt.");
+      for (let attempt = 1; attempt <= ATTEMPTS_PER_MODEL; attempt++) {
         try {
-          return JSON.parse(text);
-        } catch {
-          return JSON.parse(jsonrepair(text));
+          const client = await this.client();
+          const response = await client.models.generateContent({
+            model,
+            contents: userMessage,
+            config: {
+              systemInstruction: this.system,
+              responseMimeType: "application/json",
+              temperature: 0.7,
+            },
+          });
+
+          const text = response.text;
+          if (!text) throw new Error("Gemini-Antwort ohne Inhalt.");
+          try {
+            return JSON.parse(text);
+          } catch {
+            return JSON.parse(jsonrepair(text));
+          }
+        } catch (error) {
+          lastError = error;
+          if (isQuotaExceeded(error) || isPermanentError(error)) break; // Kontingent wechselt sofort das Modell, ein Auth-/Config-Fehler wiederholt sich ohnehin
+          if (attempt < ATTEMPTS_PER_MODEL) {
+            console.warn(`[ai] Gemini-Anfrage an ${model} fehlgeschlagen (${error.message}) — zweiter Versuch, bevor ausgewichen wird.`);
+          }
         }
-      } catch (error) {
-        lastError = error;
-        const isQuotaError = isQuotaExceeded(error);
-        const hasNextModel = i < this.models.length - 1;
-        if (isQuotaError && hasNextModel) {
-          console.warn(`[ai] Gemini-Modell ${model} limitiert (${error.message}), wechsle zu ${this.models[i + 1]}.`);
-          continue;
-        }
-        break; // andere Fehlerarten oder letztes Modell -> Mock-Fallback
+      }
+
+      if (isPermanentError(lastError)) break; // träte bei jedem weiteren Modell identisch auf -> direkt zum Mock
+      const hasNextModel = i < this.models.length - 1;
+      if (!hasNextModel) break;
+      if (isQuotaExceeded(lastError)) {
+        console.warn(`[ai] Gemini-Modell ${model} limitiert (${lastError.message}), wechsle zu ${this.models[i + 1]}.`);
+      } else {
+        console.warn(`[ai] Gemini-Modell ${model} bleibt fehlerhaft (${lastError.message}) nach ${ATTEMPTS_PER_MODEL} Versuchen, wechsle zu ${this.models[i + 1]}.`);
       }
     }
 
@@ -122,9 +138,16 @@ export class GeminiProvider {
 }
 
 const QUOTA_PATTERN = /429|quota|rate.?limit|resource_exhausted/i;
+// Konfigurations-/Auth-Fehler: träten bei einem Retry oder einem anderen
+// Modell identisch wieder auf, ein zweiter Versuch verschwendet nur Zeit.
+const PERMANENT_ERROR_PATTERN = /\b401\b|\b403\b|permission.?denied|unauthenticated|invalid.{0,20}(api.?key|argument)|api key not valid|nicht installiert/i;
 
 function isQuotaExceeded(error) {
   return QUOTA_PATTERN.test(String(error?.message || ""));
+}
+
+function isPermanentError(error) {
+  return PERMANENT_ERROR_PATTERN.test(String(error?.message || ""));
 }
 
 function friendlyFallbackReason(error) {

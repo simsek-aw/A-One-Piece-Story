@@ -204,6 +204,27 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 28) — Gemini: Retry vor dem Mock-Fallback
+
+Nutzerfeedback: ein Gemini-Fehler ("Anfrage konnte nicht verarbeitet werden")
+ließ die Szene sofort auf den lokalen Mock-Erzähler zurückfallen — anderer
+Erzählstil, kein Kontinuitäts-Wächter, reißt aus der Immersion. Viele solcher
+Fehler (Timeout, ein einmalig kaputtes/abgeschnittenes JSON) sind aber nur
+Aussetzer, die ein zweiter Versuch oft schon löst.
+
+- [x] `geminiProvider.js`: jedes Modell der Kontingent-Kette bekommt jetzt bis
+      zu 2 Versuche, bevor zum nächsten Modell bzw. zum Mock gewechselt wird.
+- [x] Kontingent-Fehler (429) wechseln weiterhin SOFORT zum nächsten Modell
+      (ein Retry auf demselben Modell würde ohnehin nichts bringen).
+- [x] Neue Erkennung für permanente Konfigurations-/Auth-Fehler (falscher Key,
+      403/401/PERMISSION_DENIED) — die träten bei jedem Modell und jedem
+      weiteren Versuch identisch wieder auf, darum wird dort weiterhin sofort
+      zum Mock gewechselt statt Zeit mit einem sinnlosen Retry zu verlieren.
+- [x] 3 neue Tests (`test/providerIntegrations.test.js`): Retry-Erfolg beim
+      zweiten Versuch, permanente Fehler überspringen den Retry, ein nach
+      beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
+      nächsten Modell der Kette.
+
 ## Erledigt (Ausbaustufe 27) — Mock-Spielleiter: Auswahlmöglichkeiten NPC-bewusst
 
 Konkretes Beispiel-Feedback per Screenshot: In einer Szene streiten sich zwei
