@@ -13,6 +13,10 @@
 // robustes Parsen mit Fallback (Markdown-Codezäune entfernen, ersten/letzten
 // geschweiften Klammer-Block herausschneiden), bevor engine/schema.js die
 // Antwort validiert/normalisiert.
+//
+// Prompt-Caching: hängt vom durchgereichten Modell/Anbieter hinter OpenRouter
+// ab (viele cachen automatisch identische Präfixe). Kein einheitlicher Hebel
+// hier, da OpenRouter selbst keine anbieterübergreifende Cache-Steuerung anbietet.
 
 import { buildSystemPrompt } from "./systemPrompt.js";
 import { MockProvider } from "./mockProvider.js";

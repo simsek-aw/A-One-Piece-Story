@@ -1,5 +1,10 @@
 // DeepSeek-Spielleiter über die OpenAI-kompatible Chat-Completions-API.
 // Im Auswahlmenü verfügbar, sobald DEEPSEEK_API_KEY gesetzt ist.
+//
+// Prompt-Caching: DeepSeek cacht wiederholte Prompt-Präfixe automatisch
+// (Context Caching on Disk) und meldet Cache-Treffer über
+// prompt_cache_hit_tokens/prompt_cache_miss_tokens im usage-Objekt — kein
+// eigener Code nötig, der stets identische System-Prompt profitiert von selbst.
 
 import { buildSystemPrompt } from "./systemPrompt.js";
 import { MockProvider } from "./mockProvider.js";

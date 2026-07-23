@@ -204,6 +204,25 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 21) — Prompt-Caching für den System-Prompt
+
+Der System-Prompt (Regeln/Formatvorgabe, ~4000 Token) ist bei jedem Zug
+identisch — nur der Spielzustand in der User-Message ändert sich. Cachen
+spart bei jedem Zug erneut dieselben Token an Kosten/Latenz.
+
+- [x] `server/ai/anthropicProvider.js`: System-Prompt als eigener
+      `cache_control: { type: "ephemeral", ttl: "1h" }`-Textblock statt
+      einfachem String — 1h-TTL statt 5-Minuten-Standard, weil zwischen zwei
+      Spielzügen (Nachdenken, Tippen) leicht mehr Zeit vergeht. Kurzes Log
+      bei Cache-Treffer/-Anlage über `usage.cache_read_input_tokens` /
+      `cache_creation_input_tokens`, sonst bliebe die Ersparnis unsichtbar.
+- [x] Andere Provider geprüft und dokumentiert statt blind Code ergänzt:
+      OpenAI cacht Präfixe ab 1024 Token automatisch (kein Code nötig),
+      Gemini 2.x cacht implizit automatisch, DeepSeek cacht automatisch
+      (Context Caching on Disk, meldet Treffer über
+      `prompt_cache_hit_tokens`). Nur Anthropics stabile API verlangt
+      explizites `cache_control` — deshalb einziger Code-Eingriff dort.
+
 ## Erledigt (Ausbaustufe 20) — Mehrere Gemini-Modelle einzeln wählbar
 
 Spieler-Feedback: das aktuelle Standard-Gemini-Modell ist im kostenlosen
@@ -341,7 +360,7 @@ einen bewusst deklarierten Retro-Stil setzen — "wie ein altes Pokémon-Game".
 ## Claude-Spielleiter härten
 
 - [ ] **Streaming** der Erzählung ins Frontend (schnelleres Gefühl).
-- [ ] **Prompt-Caching** des System-Prompts + Weltwissen (Kosten/Latenz).
+- [x] **Prompt-Caching** des System-Prompts (siehe Ausbaustufe 21).
 - [ ] **Kohärenz-Wächter**: gelegentliche Zusammenfassung langer Historien, damit
       der Kontext kompakt bleibt (Compaction/Context-Editing).
 - [ ] **Twist-Steuerung**: explizite Spannungs-/Twist-Kurve über Flags im Prompt.

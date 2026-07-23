@@ -8,6 +8,12 @@
 // JSON-Modus über responseMimeType statt einem vollen JSON-Schema (Gemini nutzt
 // dafür ein eigenes, engeres Teilformat) — die Antwort wird wie bei den anderen
 // Providern von engine/schema.js validiert/normalisiert.
+//
+// Prompt-Caching: Gemini 2.x cacht wiederholte Prompt-Präfixe implizit und
+// automatisch (kein Aufpreis fürs Anlegen, kein eigener Code nötig) — der
+// stets identische systemInstruction-Block profitiert davon von selbst.
+// Explizites Context-Caching (eigene CachedContent-Ressource) würde eine
+// separate Verwaltungslogik brauchen und lohnt sich hier nicht zusätzlich.
 
 import { buildSystemPrompt } from "./systemPrompt.js";
 import { MockProvider } from "./mockProvider.js";

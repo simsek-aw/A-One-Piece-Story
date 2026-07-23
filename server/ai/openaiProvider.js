@@ -9,6 +9,11 @@
 // wie beim Mock und bei Anthropic. Dadurch bleiben wir robust gegenüber kleinen
 // Abweichungen und müssen das Schema nicht auf den strengen Structured-Output-
 // Teilstandard von OpenAI trimmen.
+//
+// Prompt-Caching: OpenAI cacht Prompt-Präfixe ab 1024 Token automatisch, ohne
+// Code-Änderung nötig — der System-Prompt (system-Message) ist bei jedem Zug
+// identisch und damit ein stabiles Präfix. Kein manuelles cache_control wie
+// bei Anthropic nötig/verfügbar.
 
 import { buildSystemPrompt } from "./systemPrompt.js";
 

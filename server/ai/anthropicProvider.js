@@ -46,9 +46,17 @@ export class AnthropicProvider {
       output_config: {
         format: { type: "json_schema", schema: GM_JSON_SCHEMA },
       },
-      system: this.system,
+      // Prompt-Caching: der System-Prompt (~4000 Token Regeln/Formatvorgabe)
+      // ist bei JEDEM Zug identisch, nur der Spielzustand in der User-Message
+      // ändert sich. 1h-TTL statt der 5-Minuten-Default, weil zwischen zwei
+      // Spielzügen (Nachdenken, Tippen) leicht mehr Zeit vergeht als das.
+      system: [
+        { type: "text", text: this.system, cache_control: { type: "ephemeral", ttl: "1h" } },
+      ],
       messages: [{ role: "user", content: userMessage }],
     });
+
+    logCacheUsage(response.usage);
 
     // Bei output_config.format enthält der erste Text-Block gültiges JSON.
     const textBlock = response.content.find((b) => b.type === "text");
@@ -73,4 +81,14 @@ export class AnthropicProvider {
       "\n\nAntworte ausschließlich im vorgegebenen JSON-Format."
     );
   }
+}
+
+// Kurzes Log, ob der Cache griff — einzige Möglichkeit, das ohne eigenes
+// Dashboard zu beobachten (Kostenersparnis ist sonst unsichtbar).
+function logCacheUsage(usage) {
+  if (!usage) return;
+  const read = usage.cache_read_input_tokens || 0;
+  const created = usage.cache_creation_input_tokens || 0;
+  if (read) console.log(`[ai] Claude-Prompt-Cache-Treffer: ${read} Token aus dem Cache gelesen.`);
+  else if (created) console.log(`[ai] Claude-Prompt-Cache neu angelegt: ${created} Token (nächster Zug sollte treffen).`);
 }
