@@ -34,6 +34,22 @@ const configuredOpenRouterModels = commaList(process.env.OPENROUTER_MODELS);
 const defaultOpenRouterModel = process.env.OPENROUTER_MODEL || configuredOpenRouterModels[0] || "openai/gpt-4o-mini";
 const openRouterModels = [...new Set([defaultOpenRouterModel, ...configuredOpenRouterModels])];
 
+// Jedes Gemini-Modell hat auf Google AI Studio ein EIGENES kostenloses
+// Tageskontingent. Ist das Standardmodell gerade limitiert, hilft nur ein
+// Wechsel auf ein anderes Modell mit noch freier Quote — darum erscheinen
+// (wie bei OpenRouter) mehrere Modelle einzeln im Spielleiter-Menü statt nur
+// eines fix konfigurierten. GEMINI_MODELS um weitere/neuere Modell-IDs
+// ergänzen (z. B. eine neuere Generation, sobald in AI Studio verfügbar).
+const configuredGeminiModels = commaList(process.env.GEMINI_MODELS);
+const defaultGeminiModel = process.env.GEMINI_MODEL || configuredGeminiModels[0] || "gemini-2.5-flash";
+const geminiModels = [...new Set([
+  defaultGeminiModel,
+  ...configuredGeminiModels,
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash",
+])];
+
 export const config = {
   port: Number(process.env.PORT || 3000),
   aiProvider: (process.env.AI_PROVIDER || "mock").toLowerCase(),
@@ -51,7 +67,11 @@ export const config = {
   },
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "",
-    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    model: defaultGeminiModel,
+    // Mehrere Modelle erscheinen einzeln im Spielleiter-Menü (siehe oben) —
+    // jedes mit eigenem Kontingent. GEMINI_MODEL bleibt als Standard und für
+    // bestehende Deployments kompatibel.
+    models: geminiModels,
     // Bildgenerierung über Gemini (z. B. "gemini-2.5-flash-image"). Hat oft
     // ein eigenes, kleineres Kontingent als Text — separat zuschaltbar.
     images: process.env.GEMINI_IMAGES === "1" || process.env.GEMINI_IMAGES === "true",

@@ -204,6 +204,25 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 20) — Mehrere Gemini-Modelle einzeln wählbar
+
+Spieler-Feedback: das aktuelle Standard-Gemini-Modell ist im kostenlosen
+Kontingent von Google AI Studio schnell limitiert (429) — jedes Gemini-Modell
+hat dort aber ein EIGENES, unabhängiges Tageskontingent.
+
+- [x] `server/config.js`: `GEMINI_MODELS` (kommagetrennt, analog zu
+      `OPENROUTER_MODELS`) — Standard-Set `gemini-2.5-flash`,
+      `gemini-2.5-flash-lite`, `gemini-2.0-flash`, erweiterbar um neuere
+      Modell-IDs sobald in AI Studio verfügbar.
+- [x] `server/ai/provider.js`: `geminiProviderId()`/`geminiModelFromProvider()`
+      — dieselbe Mehrfach-Modell-Fabrik wie bei OpenRouter (`gemini:<model>`
+      als eigene Provider-ID). Jedes konfigurierte Modell erscheint einzeln
+      im Spielleiter-Menü; kein Frontend-Code nötig, die Provider-Liste im
+      UI war schon vollständig generisch.
+      Ist das eine Modell limitiert, einfach im Menü auf ein anderes
+      wechseln statt zu warten oder auf den lokalen Mock-Fallback
+      zurückzufallen.
+
 ## Erledigt (Ausbaustufe 19) — Skill-Check für Freitext-Aktionen
 
 Spieler-Feedback: frei getippte Aktionen fühlten sich folgenlos an ("hat

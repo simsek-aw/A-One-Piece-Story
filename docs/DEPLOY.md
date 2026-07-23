@@ -47,6 +47,13 @@ klassischer „kleiner Server" einfacher.
    - `AI_PROVIDER = gemini`
    - `GEMINI_API_KEY = <dein Schlüssel>` (als Secret)
    - `GEMINI_MODEL = gemini-2.5-flash` (optional; stabiles Flash-Modell)
+   - `GEMINI_MODELS = gemini-2.5-flash,gemini-2.5-flash-lite,gemini-2.0-flash`
+     (optional; kommagetrennt, jedes Modell erscheint EINZELN im Spielleiter-
+     Menü). Sinnvoll, weil jedes Gemini-Modell auf AI Studio ein eigenes,
+     unabhängiges Tageskontingent hat — ist eines gerade limitiert (429),
+     einfach im Menü auf ein anderes Modell wechseln, statt zu warten. Neuere
+     Modell-IDs aus [aistudio.google.com](https://aistudio.google.com) hier
+     einfach ergänzen.
 
    **Oder OpenRouter** — ein Key, Zugriff auf sehr viele Modelle (Claude, GPT,
    Gemini, Llama, DeepSeek, Mistral, …), darunter mehrere komplett kostenlose

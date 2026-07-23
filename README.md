@@ -38,6 +38,9 @@ cp .env.example .env
 #   AI_PROVIDER=gemini
 #   GEMINI_API_KEY=...        # https://aistudio.google.com/apikey
 #   GEMINI_MODEL=gemini-2.5-flash
+#   GEMINI_MODELS=gemini-2.5-flash,gemini-2.5-flash-lite,gemini-2.0-flash
+#     (jedes Modell erscheint einzeln im Menü — eigenes Tageskontingent pro
+#     Modell, bei 429/limitiert einfach im Menü wechseln statt zu warten)
 #
 # Oder OpenRouter (ein Key, viele Modelle, auch kostenlose ":free"-IDs):
 #   AI_PROVIDER=openrouter

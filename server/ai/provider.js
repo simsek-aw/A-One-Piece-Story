@@ -22,6 +22,7 @@ const LABELS = {
 };
 
 const OPENROUTER_PREFIX = "openrouter:";
+const GEMINI_PREFIX = "gemini:";
 
 export function openRouterProviderId(model = config.openrouter.model) {
   return `${OPENROUTER_PREFIX}${String(model).trim().toLowerCase()}`;
@@ -34,6 +35,18 @@ function openRouterModelFromProvider(providerName) {
 function openRouterLabel(model) {
   const slug = String(model).split("/").at(-1) || model;
   return `OpenRouter · ${slug.replace(/:free$/i, "")} ${/:free$/i.test(slug) ? "(free)" : ""}`.trim();
+}
+
+export function geminiProviderId(model = config.gemini.model) {
+  return `${GEMINI_PREFIX}${String(model).trim().toLowerCase()}`;
+}
+
+function geminiModelFromProvider(providerName) {
+  return providerName.startsWith(GEMINI_PREFIX) ? providerName.slice(GEMINI_PREFIX.length) : null;
+}
+
+function geminiLabel(model) {
+  return `Gemini · ${String(model).replace(/^gemini-/, "")}`;
 }
 
 export function createProvider(requestedProvider = config.aiProvider) {
@@ -56,14 +69,15 @@ export function createProvider(requestedProvider = config.aiProvider) {
     }
     return new OpenAIProvider(config.openai);
   }
-  if (providerName === "gemini") {
+  if (providerName === "gemini" || providerName.startsWith(GEMINI_PREFIX)) {
     if (!config.gemini.apiKey) {
       console.warn(
         "[ai] AI_PROVIDER=gemini, aber GEMINI_API_KEY fehlt. Fällt auf Mock zurück.",
       );
       return new MockProvider();
     }
-    return new GeminiProvider(config.gemini);
+    const model = geminiModelFromProvider(providerName) || config.gemini.model;
+    return new GeminiProvider({ ...config.gemini, model });
   }
   if (providerName === "openrouter" || providerName.startsWith(OPENROUTER_PREFIX)) {
     if (!config.openrouter.apiKey) {
@@ -88,7 +102,13 @@ export function createProvider(requestedProvider = config.aiProvider) {
 export function activeProviderName() {
   if (config.aiProvider === "anthropic" && config.anthropic.apiKey) return "anthropic";
   if (config.aiProvider === "openai" && config.openai.apiKey) return "openai";
-  if (config.aiProvider === "gemini" && config.gemini.apiKey) return "gemini";
+  if ((config.aiProvider === "gemini" || config.aiProvider.startsWith(GEMINI_PREFIX)) && config.gemini.apiKey) {
+    const requestedModel = geminiModelFromProvider(config.aiProvider);
+    const model = requestedModel && config.gemini.models.map((entry) => entry.toLowerCase()).includes(requestedModel)
+      ? requestedModel
+      : config.gemini.model;
+    return geminiProviderId(model);
+  }
   if ((config.aiProvider === "openrouter" || config.aiProvider.startsWith(OPENROUTER_PREFIX)) && config.openrouter.apiKey) {
     const requestedModel = openRouterModelFromProvider(config.aiProvider);
     const model = requestedModel && config.openrouter.models.map((entry) => entry.toLowerCase()).includes(requestedModel)
@@ -102,7 +122,9 @@ export function activeProviderName() {
 
 export function availableProviders() {
   const providers = [{ id: "mock", label: LABELS.mock, model: "regelbasierter Ersatz-Erzähler" }];
-  if (config.gemini.apiKey) providers.push({ id: "gemini", label: LABELS.gemini, model: config.gemini.model });
+  if (config.gemini.apiKey) {
+    config.gemini.models.forEach((model) => providers.push({ id: geminiProviderId(model), label: geminiLabel(model), model }));
+  }
   if (config.openrouter.apiKey) {
     config.openrouter.models.forEach((model) => providers.push({ id: openRouterProviderId(model), label: openRouterLabel(model), model }));
   }
