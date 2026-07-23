@@ -75,10 +75,15 @@ Mock-Spielleiter.
 
 ## Was schon funktioniert
 
-- **Charaktererstellung**: 3 Archetypen als Start (Marine-Soldat, angehender
-  Piratenkapitän, Barkeeper) – niemand ist an seine Rolle gebunden.
+- **Charaktererstellung als Schritt-für-Schritt-Assistent**: Name, Herkunft,
+  Attribute, Talent, Startort, Aussehen — je ein Bildschirm mit Fortschritts-
+  anzeige, Zurück/Weiter-Navigation und eigenen "🎲 Zufällig"-Knöpfen pro
+  Schritt. Alternativ "Schnellstart" würfelt den kompletten Charakter auf
+  einmal aus. 11 Archetypen als Start (u. a. Marine-Soldat, angehender
+  Piratenkapitän, Barkeeper, Schiffszimmerer, Gelehrte, Musikant, Fischer) –
+  niemand ist an seine Rolle gebunden.
 - **Attribute & Skills** (Fallout/Baldur's-Gate-Stil): 7 Attribute, Point-Buy,
-  Skill-Ränge, Perks.
+  Skill-Ränge, 19 Perks/Talente.
 - **Skill-Checks**: 1W20 + Attribut-Modifikator + Skill-Rang gegen DC,
   deterministisch von der Engine gewürfelt (nicht von der KI).
 - **Tageszeit-Ablauf**: statt „1 Aktion pro Tag" hast du einen realistischen

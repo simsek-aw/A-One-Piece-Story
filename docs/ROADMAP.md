@@ -204,6 +204,44 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 24) — Charaktererstellung als Schritt-für-Schritt-Assistent
+
+Bisher war die Charaktererstellung eine lange, scrollende Seite mit allen
+sechs Abschnitten gleichzeitig sichtbar. Jetzt ein echter Assistent: ein
+Schritt pro Bildschirm, Fortschrittsanzeige, Zurück/Weiter-Navigation und
+Validierung genau dort, wo sie hingehört.
+
+- [x] `server/public/index.html`: jede Karte (`.card`) ist jetzt ein
+      `.wizard-step[data-step="N"]`, nur der aktuelle sichtbar (`hidden`-
+      Attribut). Neue Fortschrittsanzeige (`#wizardProgress`) und eine feste
+      Zurück/Weiter-Navigationsleiste (`#wizardBack`/`#wizardNext`), auf dem
+      letzten Schritt ersetzt `#startBtn` den "Weiter"-Knopf.
+- [x] `server/public/app.js`: `goToWizardStep()`/`wizardValidationError()`
+      steuern Navigation und Validierung pro Schritt (Name ≥ 2 Zeichen,
+      Herkunft gewählt, Attributpunkte vollständig verteilt, Startort
+      gewählt — Talent und Aussehen bleiben optional, "Keiner" ist beim
+      Talent-Schritt als gültige Vorauswahl schon markiert).
+      Reihenfolge exakt wie gewünscht: 1 Name (+ Schnellstart direkt hier),
+      2 Herkunft, 3 Attribute, 4 Talent, 5 Startort, 6 Aussehen.
+- [x] Eigene "🎲 Zufällig"-Knöpfe je Schritt für Attribute, Talent und
+      Startort (würfeln NUR dieses Feld) — zusätzlich zum bestehenden
+      "Schnellstart", der weiterhin den kompletten Charakter auswürfelt und
+      jetzt direkt zum letzten Schritt springt, damit man Name/Aussehen vor
+      dem Start noch sieht/anpassen kann.
+- [x] Content erweitert (wie gewünscht "vielleicht auch noch weitere"):
+      **4 neue Archetypen** (Schiffszimmerer, Gelehrte, Musikant, Fischer,
+      macht 11 insgesamt) und **6 neue Talente** (Hünenblut, Tänzerklinge,
+      Tierflüsterer, Nagelfeste Hände, Gespür für alte Schrift, Klangzauber,
+      macht 19 insgesamt).
+- [x] Fortschritts-Dots bewusst OHNE Farbe unterschieden (aktuell/erledigt/
+      offen über Größe + Ring statt Farbton) — der Akzentton ist im Papier-
+      Theme praktisch identisch mit Tinte-Schwarz, ein farbbasierter Ansatz
+      wäre hier unsichtbar gewesen.
+- [x] Per Playwright verifiziert: jede Validierung blockiert/lässt korrekt
+      durch, alle Zufällig-Knöpfe funktionieren, Schnellstart landet auf
+      Schritt 6 und startet erfolgreich ein Spiel, Zurück-Navigation
+      funktioniert.
+
 ## Erledigt (Ausbaustufe 23) — Automatische Gemini-Kontingent-Kette
 
 Bisher musste man bei einem limitierten Gemini-Modell manuell im Menü ein

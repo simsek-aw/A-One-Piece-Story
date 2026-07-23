@@ -75,47 +75,61 @@
           Kurz nach der Hinrichtung des Piratenkönigs. Das große Piratenzeitalter
           bricht an. Wer wirst du sein?
         </p>
-        <section class="card randomize-card">
-          <h2>🎲 Schnellstart</h2>
-          <p class="hint">Name, Herkunft, Attribute, Talent, Startort und Aussehen automatisch auswürfeln.</p>
-          <button id="randomizeCharacterBtn" type="button" class="randomize-character">Zufälligen Charakter erstellen</button>
-        </section>
 
-        <section class="card">
+        <ol id="wizardProgress" class="wizard-progress"></ol>
+
+        <section class="card wizard-step" data-step="1">
           <h2>1 · Name</h2>
+          <div class="randomize-inline">
+            <button id="randomizeCharacterBtn" type="button" class="randomize-character">🎲 Schnellstart — alles auswürfeln</button>
+          </div>
+          <p class="hint">Oder leg selbst los, Schritt für Schritt:</p>
           <input id="charName" type="text" placeholder="Wie heißt du?" maxlength="40" />
         </section>
 
-        <section class="card">
+        <section class="card wizard-step" data-step="2" hidden>
           <h2>2 · Herkunft (nur ein Start – keine feste Rolle)</h2>
           <div id="archetypeList" class="option-grid"></div>
         </section>
 
-        <section class="card">
-          <h2>3 · Attribute</h2>
+        <section class="card wizard-step" data-step="3" hidden>
+          <div class="step-head">
+            <h2>3 · Attribute</h2>
+            <button type="button" class="randomize-step" data-randomize="attributes">🎲 Zufällig</button>
+          </div>
           <p class="hint" id="pointsHint"></p>
           <div id="attributeList" class="attr-grid"></div>
         </section>
 
-        <section class="card">
-          <h2>4 · Talent (Perk)</h2>
+        <section class="card wizard-step" data-step="4" hidden>
+          <div class="step-head">
+            <h2>4 · Talent (Perk)</h2>
+            <button type="button" class="randomize-step" data-randomize="perk">🎲 Zufällig</button>
+          </div>
           <div id="perkList" class="option-grid"></div>
         </section>
 
-        <section class="card">
-          <h2>5 · Startort</h2>
+        <section class="card wizard-step" data-step="5" hidden>
+          <div class="step-head">
+            <h2>5 · Startort</h2>
+            <button type="button" class="randomize-step" data-randomize="location">🎲 Zufällig</button>
+          </div>
           <div id="locationList" class="option-grid"></div>
         </section>
 
-        <section class="card">
+        <section class="card wizard-step" data-step="6" hidden>
           <h2>6 · Aussehen (optional)</h2>
           <p class="hint">Beschreibe deinen Charakter in Stichworten — daraus wird ein Manga-Profilbild (S/W) gezeichnet. Z. B. „junge Frau, kurze rote Haare, Narbe überm Auge, langer Mantel, freches Grinsen".</p>
           <input id="charAppearance" type="text" placeholder="z. B. wilder schwarzer Haarschopf, Strohhut, weite Weste …" maxlength="240" />
           <p class="hint" id="appearanceHint"></p>
         </section>
 
+        <div class="wizard-nav">
+          <button id="wizardBack" type="button" class="slot-forget wizard-back hidden">← Zurück</button>
+          <button id="wizardNext" type="button" class="primary big wizard-next">Weiter →</button>
+          <button id="startBtn" class="primary big hidden">Abenteuer starten</button>
+        </div>
         <div class="actions">
-          <button id="startBtn" class="primary big">Abenteuer starten</button>
           <button id="backToCharacters" type="button" class="slot-forget">Zur Charakterwahl</button>
           <span id="createError" class="error"></span>
         </div>

@@ -58,7 +58,10 @@ const state = {
   combatTarget: null,
   lastFxNarration: null,
   fxTimer: null,
+  wizardStep: 1,
 };
+const WIZARD_STEPS = 6;
+const WIZARD_LABELS = ["", "Name", "Herkunft", "Attribute", "Talent", "Startort", "Aussehen"];
 const SAVE_SLOTS_KEY = "aops-save-slots";
 const PROVIDER_KEY = "aops-provider";
 const RANDOM_NAMES = ["Aren", "Bela", "Ciro", "Dena", "Elio", "Fara", "Garo", "Ilya", "Juna", "Keno", "Lira", "Miro", "Nela", "Orin", "Rava", "Sena", "Taro", "Vika", "Yaro", "Zira"];
@@ -189,7 +192,7 @@ function buildCreation() {
 
   const pList = $("#perkList");
   pList.innerHTML = "";
-  const none = el("button", "option", `<div class="o-title">Keiner</div><div class="o-sub">Ohne Talent starten.</div>`);
+  const none = el("button", "option selected", `<div class="o-title">Keiner</div><div class="o-sub">Ohne Talent starten.</div>`);
   none.onclick = () => select("perk", null, pList, none);
   pList.appendChild(none);
   c.perks.forEach((p) => {
@@ -208,28 +211,112 @@ function buildCreation() {
 
   $("#startBtn").onclick = startGame;
   $("#randomizeCharacterBtn").onclick = randomizeCharacter;
+  $("#wizardNext").onclick = wizardGoNext;
+  $("#wizardBack").onclick = wizardGoBack;
+  document.querySelectorAll(".randomize-step").forEach((btn) => {
+    btn.onclick = () => STEP_RANDOMIZERS[btn.dataset.randomize]?.();
+  });
+
+  goToWizardStep(1);
 }
 
-function randomizeCharacter() {
-  const creation = state.meta.creation;
-  const archetypes = state.meta.archetypes;
-  const archetypeIndex = randomIndex(archetypes.length);
-  const archetype = archetypes[archetypeIndex];
-  const archetypeList = $("#archetypeList");
-  archetypeList.children[archetypeIndex].click();
+// ---------- Schritt-für-Schritt-Assistent ----------
+// Statt einer langen scrollenden Seite: ein Schritt pro Bildschirm, mit
+// Fortschrittsanzeige, Zurück/Weiter-Navigation und einer klaren Validierung
+// pro Schritt (z. B. "erst Herkunft wählen, dann weiter").
+function renderWizardProgress() {
+  const list = $("#wizardProgress");
+  list.innerHTML = "";
+  for (let step = 1; step <= WIZARD_STEPS; step += 1) {
+    const cls = step === state.wizardStep ? "current" : step < state.wizardStep ? "done" : "";
+    list.appendChild(el("li", cls, `<span class="dot">${step}</span><span class="wp-label">${WIZARD_LABELS[step]}</span>`));
+  }
+}
 
+function goToWizardStep(step) {
+  state.wizardStep = Math.max(1, Math.min(WIZARD_STEPS, step));
+  document.querySelectorAll(".wizard-step").forEach((section) => {
+    section.hidden = Number(section.dataset.step) !== state.wizardStep;
+  });
+  $("#wizardBack").classList.toggle("hidden", state.wizardStep === 1);
+  $("#wizardNext").classList.toggle("hidden", state.wizardStep === WIZARD_STEPS);
+  $("#startBtn").classList.toggle("hidden", state.wizardStep !== WIZARD_STEPS);
+  $("#createError").textContent = "";
+  renderWizardProgress();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Prüft, ob der AKTUELLE Schritt abgeschlossen ist. Gibt bei Bedarf eine
+// Fehlermeldung zurück (null = alles gut, weiter geht's).
+function wizardValidationError() {
+  const c = state.meta.creation;
+  switch (state.wizardStep) {
+    case 1:
+      return $("#charName").value.trim().length >= 2 ? null : "Bitte einen Namen (mind. 2 Zeichen) eingeben.";
+    case 2:
+      return state.sel.archetype ? null : "Bitte eine Herkunft wählen.";
+    case 3:
+      return spentPoints() === c.pointsToDistribute ? null : "Bitte alle Attributpunkte verteilen.";
+    case 5:
+      return state.sel.location ? null : "Bitte einen Startort wählen.";
+    default:
+      return null; // Talent (4) ist optional ("Keiner" ist gültig), Aussehen (6) auch
+  }
+}
+
+function wizardGoNext() {
+  const error = wizardValidationError();
+  if (error) { $("#createError").textContent = error; return; }
+  goToWizardStep(state.wizardStep + 1);
+}
+
+function wizardGoBack() {
+  goToWizardStep(state.wizardStep - 1);
+}
+
+// Pro-Schritt-Zufallsknöpfe: würfeln NUR das Feld dieses Schritts, statt wie
+// "Schnellstart" den ganzen Charakter neu aufzusetzen.
+const STEP_RANDOMIZERS = {
+  attributes: randomizeAttributesOnly,
+  perk: randomizePerkOnly,
+  location: randomizeLocationOnly,
+};
+
+function randomizeAttributesOnly() {
+  const creation = state.meta.creation;
+  const archetype = state.meta.archetypes.find((a) => a.id === state.sel.archetype);
   state.attrs = Object.fromEntries(creation.attributes.map((attr) => [attr.id, creation.baseAttribute]));
   for (let point = 0; point < creation.pointsToDistribute; point += 1) {
     const eligible = creation.attributes.filter((attr) => state.attrs[attr.id] < creation.maxAttribute);
-    const weighted = eligible.flatMap((attr) => Array(archetype.attributeBonus?.[attr.id] ? 3 : 1).fill(attr.id));
+    const weighted = eligible.flatMap((attr) => Array(archetype?.attributeBonus?.[attr.id] ? 3 : 1).fill(attr.id));
     state.attrs[pickRandom(weighted)] += 1;
   }
   updateAttrUI();
+}
 
-  const perkIndex = randomIndex(creation.perks.length);
+function randomizePerkOnly() {
+  const perkIndex = randomIndex(state.meta.creation.perks.length);
   $("#perkList").children[perkIndex + 1].click(); // +1: „Keiner" steht an Position 0
+}
+
+function randomizeLocationOnly() {
   const locationIndex = randomIndex(state.meta.startLocations.length);
   $("#locationList").children[locationIndex].click();
+}
+
+function randomizeArchetypeOnly() {
+  const archetypeIndex = randomIndex(state.meta.archetypes.length);
+  $("#archetypeList").children[archetypeIndex].click();
+}
+
+// "Schnellstart": würfelt den kompletten Charakter (Name, Herkunft, Attribute,
+// Talent, Startort, Aussehen) und springt direkt zum letzten Schritt, damit
+// man das Ergebnis noch anpassen/ansehen kann, bevor man startet.
+function randomizeCharacter() {
+  randomizeArchetypeOnly();
+  randomizeAttributesOnly();
+  randomizePerkOnly();
+  randomizeLocationOnly();
 
   $("#charName").value = pickRandom(RANDOM_NAMES);
   $("#charAppearance").value = [
@@ -237,6 +324,7 @@ function randomizeCharacter() {
     pickRandom(RANDOM_APPEARANCES.feature),
     pickRandom(RANDOM_APPEARANCES.clothing),
   ].join(", ");
+  goToWizardStep(WIZARD_STEPS); // löscht createError -> Hinweis erst danach setzen
   $("#createError").textContent = "🎲 Charakter ausgewürfelt – du kannst alles noch ändern.";
 }
 
