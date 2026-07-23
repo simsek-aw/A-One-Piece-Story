@@ -204,6 +204,62 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 26) — Logbuch-Tabs, Kopfleisten-Icons, echte Beitritts-/Reise-Gates
+
+Direktes Nutzerfeedback zu sechs Punkten: eine gefühlt immer identische
+Startmission, eine noch unbefriedigende Nav-Leiste, weiterhin ein
+Umlaut-Anzeigefehler (diesmal bei Attributen/Skills), ein mit 13 Buttons
+überladenes Logbuch-Menü, und One-Klick-Reisen/Beitritte, die keine
+Rücksicht auf die tatsächliche Spielsituation nehmen.
+
+- [x] **Kuriermission-Ursache behoben**: `storyDirector.js` wies jedem
+      Startort GENAU EINEN fest kodierten Haupt-Handlungsfaden zu (Loguetown
+      = immer "Der verschwundene Kurier") — das ist keine Zufallslaune,
+      sondern eine deterministische Lookup-Tabelle, die die KI nicht
+      beeinflusst (sie erzählt nur die Konsequenzen). Jeder Ort hat jetzt
+      2 Varianten; bei der ersten Ankunft wird zufällig eine gezogen.
+- [x] **Attribut-/Skill-Anzeigefehler behoben**: dieselbe Umlaut-Bug-Klasse
+      wie beim Archetyp-Fix aus Ausbaustufe 25, diesmal im Charakter- und
+      Kampf-Panel — `c.attributes`/`c.skills` sind nach interner ID indiziert
+      ("glueck", "ueberzeugen"), wurden aber roh statt über die Metadaten
+      aufgelöst angezeigt. `attrLabel()`/`skillLabel()` lösen jetzt konsequent
+      auf den echten Namen auf ("Glück", "Überzeugen").
+- [x] **Kopfleiste neu geordnet**: zwei neue Icons neben dem Burger-Button —
+      ein Profil-Icon (kompakter Popover mit Name/TP/EP/Heat/Kopfgeld, ohne
+      erst das ganze Logbuch öffnen zu müssen) und ein Fähigkeits-Icon (Punkt
+      leuchtet auf, sobald ein Skillpunkt zu verteilen ist, Klick springt
+      direkt zum Skills-Tab). Im Burger-Menü selbst wandern Spielleiter-Auswahl
+      und Tag/Nacht-Umschalter als "Einstellungen" ans Ende, unter einen
+      Trenner — "Logbuch & Spielwerte" bleibt oben die Hauptaktion.
+- [x] **Logbuch von 13 gestapelten Panels auf Tabs umgestellt**: vorher waren
+      alle 13 Panels gleichzeitig sichtbar (viel Scrollen), die Schnellzugriff-
+      Leiste sprang nur mit kurzem Aufblitzen dazwischen. Jetzt ist die
+      Schnellzugriff-Leiste eine echte Tab-Leiste (`activateLogPanel()`) —
+      immer genau ein Panel sichtbar, der Rest ausgeblendet. Das Spielmenü
+      bleibt als Fußzeile immer sichtbar.
+- [x] **Kein Beitritt mehr vom Sofa aus**: `crewRelation` ("begegnet") war
+      eine einmal erreichte, dauerhafte Erinnerung — wer je an einem
+      Marine-Standort war, sah "Beitreten versuchen" von da an von JEDEM Ort
+      der Karte aus (Kommentar im Code beschrieb bereits die gegenteilige
+      Absicht). Neue Funktion `joinOpportunityNow()` verlangt einen GERADE
+      lebendigen Ansprechpartner: ortsgebundene Fraktionen (Marine) nur am
+      passenden Standorttyp, story-vermittelte Crews nur bei einem gerade
+      aktiven Angebot (`canonOffer`) — beides läuft beim Weiterreisen ab.
+      Serverseitig in `attemptJoinCanon` erzwungen, nicht nur im UI versteckt.
+- [x] **Reisen bei Gefangenschaft blockiert**: `sceneLocation` erkennt Zellen/
+      Gefängnis-Szenen bereits deterministisch (für die Unterort-Anzeige) —
+      dieses Signal war aber folgenlos. `isImprisoned()` nutzt es jetzt, um
+      `doTravel` serverseitig zu verweigern; die Karte zeigt die Reise-Chips
+      dann sichtbar gesperrt mit Begründung statt sie einfach klicken zu lassen.
+- [x] 5 neue Tests (`test/canonAndTravel.test.js`) für die Beitritts-/Reise-
+      Gates, 2 bestehende Story-Director-Tests robust gegen die neue
+      Varianten-Auswahl gemacht (matchen jetzt aufs tatsächliche `hook` statt
+      auf eine hartkodierte Formulierung).
+- [x] Per Playwright verifiziert: Profil-Popover, Fähigkeits-Ping (Icon +
+      Skills-Tab), Logbuch zeigt nur noch ein Panel gleichzeitig (Desktop &
+      Mobil), Attribut-/Skill-Anzeige mit korrekten Umlauten, Nav-Menü mit
+      Spielleiter/Tag-Nacht am Ende.
+
 ## Erledigt (Ausbaustufe 25) — Assistent-Feinschliff, Kopfleiste, Aufräumen
 
 Direktes Feedback nach dem ersten Wizard-Durchlauf: eine Übersicht vor dem

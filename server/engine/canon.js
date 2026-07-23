@@ -6,6 +6,7 @@
 import { skillCheck } from "./dice.js";
 import { bountyTier } from "./bounty.js";
 import { CANON_CREWS } from "../content/canonCrews.js";
+import { LOCATIONS } from "../content/map.js";
 import { discoverCrew, demoteCrew, crewRelation, metCrewIds, heardOfCrewIds } from "./knowledge.js";
 
 // DC aus Offenheit: openness 90 -> 7 (leicht), 65 -> 12, 5 -> 24 (fast unmöglich).
@@ -30,6 +31,22 @@ export function joinAvailability(game, crew) {
   if (req.maxBounty != null && (c.bounty || 0) > req.maxBounty)
     return { available: false, reason: `Mit einem Kopfgeld nimmt dich ${crew.name} nicht auf.` };
   return { available: true, reason: "" };
+}
+
+// "Begegnet" (crewRelation) ist eine EINMAL erreichte, dauerhafte Erinnerung —
+// einmal an einem Marine-Standort gewesen, bleibt "Beitreten versuchen" sonst
+// für immer verfügbar, von jedem beliebigen Ort der Karte aus. Das war nie so
+// gedacht (siehe Kommentar bei recruitLocationTypes in canonCrews.js): ein
+// Beitritt braucht einen GERADE JETZT lebendigen Ansprechpartner, nicht nur
+// eine alte Erinnerung. Ortsgebundene Fraktionen (Marine) brauchen daher den
+// aktuellen Aufenthaltsort; story-vermittelte Crews brauchen ein gerade aktives
+// Angebot des Spielleiters (canonOffer) — beides läuft ab, sobald man weiterzieht.
+export function joinOpportunityNow(game, crew) {
+  if (crew.recruitLocationTypes?.length) {
+    const here = LOCATIONS[game.world.location];
+    return !!here && crew.recruitLocationTypes.includes(here.type);
+  }
+  return game.world.canonOffer?.crewId === crew.id;
 }
 
 // Ruf-Bonus: Bei Piratencrews hilft ein Name (Kopfgeld-Stufe). Marine nicht.
@@ -67,6 +84,7 @@ function crewStatus(game, crew) {
     joinable: crew.joinable,
     available: av.available,
     reason: av.reason,
+    canJoinNow: joinOpportunityNow(game, crew),
     effectiveDc: effectiveJoinDC(crew, game.character),
     affiliated: game.character.canonAffiliation?.crewId === crew.id,
     relation: crewRelation(game, crew.id),
@@ -97,6 +115,9 @@ export function attemptJoinCanon(game, crewId) {
   if (!crew) throw new Error("Unbekannte Crew.");
   const av = joinAvailability(game, crew);
   if (!av.available) throw new Error(av.reason);
+  if (!joinOpportunityNow(game, crew)) {
+    throw new Error(`Gerade ist niemand da, der deine Aufnahme bei ${crew.name} einleiten könnte.`);
+  }
 
   const c = game.character;
   const dc = effectiveJoinDC(crew, c);

@@ -150,10 +150,16 @@ export async function doActivity(game, provider, { activityId }) {
 // Reise zu einem verbundenen Ort (See-Route: Schiff oder Passage nötig).
 export async function doTravel(game, provider, { destId }) {
   requireAction(game);
+  if (isImprisoned(game)) {
+    throw new Error("Du sitzt gerade fest — erst raus aus der Zelle, bevor du reisen kannst.");
+  }
   const departureScene = game.world.sceneLocation; // vor der Reise merken (echter Ausgangspunkt)
   const info = travelTo(game, destId); // ändert Ort, zieht Passage ab, Tage vergehen
   game.world.sceneLocation = game.world.locationName; // alten Innenraum nicht an den Zielort mitnehmen
   const travelJump = recordLocationTrail(game, departureScene, game.world.sceneLocation);
+  // Ein Beitritts-Angebot war an eine Person am ALTEN Ort gebunden — reist man
+  // weiter, kann sie es nicht mehr einlösen (siehe canon.js: joinOpportunityNow).
+  game.world.canonOffer = null;
   const modeTxt = info.mode === "eigenes_schiff" ? "mit meinem eigenen Schiff" : "als Passagier auf einem fremden Schiff";
   const playerAction = `Ich reise ${modeTxt} nach ${game.world.locationName} (${info.days} Tage auf See).`;
 
@@ -300,6 +306,15 @@ export async function doEatFruit(game, provider, { fruitId }) {
 }
 
 // --- interne Helfer ---------------------------------------------------------
+
+// Erkennt Gefangenschaft rein an der schon vorhandenen, deterministischen
+// Unterort-Zuordnung (siehe inferSceneLocation unten) — kein neuer Zustand,
+// nur eine bislang ungenutzte Konsequenz eines bereits erkannten Signals:
+// Wer gerade in einer Zelle sitzt, kann nicht einfach per Klick abreisen.
+const IMPRISONED_PATTERN = /gefängnis|gefaengnis|zelle|kerker/i;
+export function isImprisoned(game) {
+  return IMPRISONED_PATTERN.test(game.world.sceneLocation || "");
+}
 
 function requireNoCombat(game) {
   if (game.combat && game.combat.active && !game.combat.over) {
@@ -700,6 +715,7 @@ export function currentSceneView(game) {
     party: game.party,
     memory: memorySummary(game, 20),
     travelOptions: travelOptions(game),
+    travelLocked: isImprisoned(game),
     activities: listActivities(),
     canon: perspectiveCanon(game), // nur was der Charakter kennt (Spielersicht)
     canonOffer: game.world.canonOffer || null,

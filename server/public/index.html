@@ -44,16 +44,37 @@
     <header class="topbar">
       <div class="brand">🏴‍☠️ <span>AOPS</span></div>
       <div id="topbarContext" class="topbar-context"></div>
-      <button id="menuToggle" class="hamburger" aria-label="Menü öffnen" aria-expanded="false">☰</button>
+      <div class="topbar-icons">
+        <button id="profileBtn" class="icon-btn hidden" type="button" aria-label="Profil" aria-expanded="false">👤</button>
+        <button id="skillReadyBtn" class="icon-btn hidden" type="button" aria-label="Fertigkeiten">
+          📈<span id="skillReadyDot" class="ping-dot hidden"></span>
+        </button>
+        <button id="menuToggle" class="hamburger" aria-label="Menü öffnen" aria-expanded="false">☰</button>
+      </div>
     </header>
+    <div id="profilePopover" class="profile-popover hidden" role="dialog" aria-label="Charakterprofil">
+      <div class="pp-head">
+        <span id="ppName"></span>
+        <span id="ppDay" class="day-badge"></span>
+      </div>
+      <div class="bars">
+        <div class="bar-row"><span>❤️ TP</span><div class="bar"><div id="ppHpBar" class="bar-fill hp"></div></div><span id="ppHpText"></span></div>
+        <div class="bar-row"><span>⭐ EP</span><div class="bar"><div id="ppXpBar" class="bar-fill xp"></div></div><span id="ppXpText"></span></div>
+        <div class="bar-row"><span>🔥 Heat</span><div class="bar"><div id="ppHeatBar" class="bar-fill heat"></div></div><span id="ppHeatText"></span></div>
+      </div>
+      <div id="ppStanding" class="standing"></div>
+      <div id="ppBounty" class="bounty"></div>
+    </div>
     <nav id="navMenu" class="nav-menu" aria-label="Schnellmenü">
       <div class="era" id="eraLabel"></div>
-      <label class="provider" for="providerSelect">
-        <span>Spielleiter</span>
-        <select id="providerSelect" aria-label="Spielleiter auswählen"></select>
-      </label>
-      <button id="themeToggle" class="theme-toggle" type="button">◑ Tag / Nacht</button>
       <button id="openLogbook" class="nav-menu-button hidden" type="button">☰ Logbuch &amp; Spielwerte</button>
+      <div class="nav-menu-footer">
+        <label class="provider" for="providerSelect">
+          <span>Spielleiter</span>
+          <select id="providerSelect" aria-label="Spielleiter auswählen"></select>
+        </label>
+        <button id="themeToggle" class="theme-toggle" type="button">◑ Tag / Nacht</button>
+      </div>
     </nav>
     <div id="drawerOverlay" class="drawer-overlay"></div>
 
@@ -202,20 +223,20 @@
         </section>
 
         <aside class="sidebar">
-          <nav class="quick-nav" aria-label="Schnellzugriff Logbuch">
-            <button type="button" data-jump="panelCharacter"><span aria-hidden="true">🧍</span><small>Charakter</small></button>
-            <button type="button" data-jump="panelNews"><span aria-hidden="true">🗞️</span><small>Windrose</small></button>
-            <button type="button" data-jump="panelThreads"><span aria-hidden="true">🧭</span><small>Fäden</small></button>
-            <button type="button" data-jump="panelFactions"><span aria-hidden="true">⚖️</span><small>Ruf</small></button>
-            <button type="button" data-jump="panelMap"><span aria-hidden="true">🗺️</span><small>Karte</small></button>
-            <button type="button" data-jump="panelActivities"><span aria-hidden="true">🎯</span><small>Aktiv.</small></button>
-            <button type="button" data-jump="panelSkills"><span aria-hidden="true">📈</span><small>Skills</small></button>
-            <button type="button" data-jump="panelLore"><span aria-hidden="true">📜</span><small>Chronik</small></button>
-            <button type="button" data-jump="panelParty"><span aria-hidden="true">🤝</span><small>Crew</small></button>
-            <button type="button" data-jump="panelCanon"><span aria-hidden="true">🏴</span><small>Fraktion</small></button>
-            <button type="button" data-jump="panelMemory"><span aria-hidden="true">👥</span><small>Gesichter</small></button>
-            <button type="button" data-jump="panelInventory"><span aria-hidden="true">🎒</span><small>Inventar</small></button>
-            <button type="button" data-jump="panelDenDen"><span aria-hidden="true">📞</span><small>Mushi</small></button>
+          <nav class="quick-nav" aria-label="Schnellzugriff Logbuch" role="tablist">
+            <button type="button" data-jump="panelCharacter" role="tab" aria-selected="true"><span aria-hidden="true">🧍</span><small>Charakter</small></button>
+            <button type="button" data-jump="panelNews" role="tab" aria-selected="false"><span aria-hidden="true">🗞️</span><small>Windrose</small></button>
+            <button type="button" data-jump="panelThreads" role="tab" aria-selected="false"><span aria-hidden="true">🧭</span><small>Fäden</small></button>
+            <button type="button" data-jump="panelFactions" role="tab" aria-selected="false"><span aria-hidden="true">⚖️</span><small>Ruf</small></button>
+            <button type="button" data-jump="panelMap" role="tab" aria-selected="false"><span aria-hidden="true">🗺️</span><small>Karte</small></button>
+            <button type="button" data-jump="panelActivities" role="tab" aria-selected="false"><span aria-hidden="true">🎯</span><small>Aktiv.</small></button>
+            <button type="button" data-jump="panelSkills" role="tab" aria-selected="false"><span aria-hidden="true">📈</span><small>Skills</small></button>
+            <button type="button" data-jump="panelLore" role="tab" aria-selected="false"><span aria-hidden="true">📜</span><small>Chronik</small></button>
+            <button type="button" data-jump="panelParty" role="tab" aria-selected="false"><span aria-hidden="true">🤝</span><small>Crew</small></button>
+            <button type="button" data-jump="panelCanon" role="tab" aria-selected="false"><span aria-hidden="true">🏴</span><small>Fraktion</small></button>
+            <button type="button" data-jump="panelMemory" role="tab" aria-selected="false"><span aria-hidden="true">👥</span><small>Gesichter</small></button>
+            <button type="button" data-jump="panelInventory" role="tab" aria-selected="false"><span aria-hidden="true">🎒</span><small>Inventar</small></button>
+            <button type="button" data-jump="panelDenDen" role="tab" aria-selected="false"><span aria-hidden="true">📞</span><small>Mushi</small></button>
           </nav>
 
           <div id="panelCharacter" class="panel">
@@ -239,52 +260,52 @@
             <div id="attrs" class="stat-block"></div>
           </div>
 
-          <div id="panelNews" class="panel">
+          <div id="panelNews" class="panel hidden">
             <h3>🗞️ Die Windrose <span id="newsFresh" class="news-fresh hidden">neu</span></h3>
             <div id="newsList" class="news-list"></div>
           </div>
 
-          <div id="panelThreads" class="panel">
+          <div id="panelThreads" class="panel hidden">
             <h3>🧭 Offene Fäden</h3>
             <div id="storyThreads" class="list"></div>
           </div>
 
-          <div id="panelFactions" class="panel">
+          <div id="panelFactions" class="panel hidden">
             <h3>⚖️ Ruf</h3>
             <div id="factionList" class="list"></div>
           </div>
 
-          <div id="panelMap" class="panel">
+          <div id="panelMap" class="panel hidden">
             <h3>Karte · <span id="travelModeLabel"></span></h3>
             <div id="mapWrap" class="map-wrap"></div>
             <div class="panel-sub">Reisen</div>
             <div id="travelList" class="btn-list"></div>
           </div>
 
-          <div id="panelActivities" class="panel">
+          <div id="panelActivities" class="panel hidden">
             <h3>Aktivitäten (kosten 1 Tagesaktion)</h3>
             <div id="activityList" class="btn-list"></div>
           </div>
 
-          <div id="panelSkills" class="panel">
+          <div id="panelSkills" class="panel hidden">
             <h3>Fertigkeiten</h3>
             <div id="skillPointsHint" class="sp-hint hidden"></div>
             <div id="skillAlloc" class="skill-alloc hidden"></div>
             <div id="skills" class="stat-block small"></div>
           </div>
 
-          <div id="panelLore" class="panel">
+          <div id="panelLore" class="panel hidden">
             <h3>📜 Chronik · Die Lücke in der Geschichte</h3>
             <div id="loreBar" class="lore-bar"></div>
             <div id="loreList" class="list"></div>
           </div>
 
-          <div id="panelParty" class="panel">
+          <div id="panelParty" class="panel hidden">
             <h3>Crew / Party</h3>
             <div id="party" class="list"></div>
           </div>
 
-          <div id="panelCanon" class="panel">
+          <div id="panelCanon" class="panel hidden">
             <h3>🏴 Crews & Fraktionen</h3>
             <div id="canonAffil" class="canon-affil"></div>
             <div id="canonOffer" class="canon-offer hidden"></div>
@@ -297,17 +318,17 @@
             <div id="canonEmpty" class="hint hidden">Noch niemandem begegnet. Du erfährst von Crews durch die Nachrichten, Gerüchte und eigene Begegnungen.</div>
           </div>
 
-          <div id="panelMemory" class="panel">
+          <div id="panelMemory" class="panel hidden">
             <h3>Bekannte Gesichter</h3>
             <div id="memory" class="list"></div>
           </div>
 
-          <div id="panelInventory" class="panel">
+          <div id="panelInventory" class="panel hidden">
             <h3>Inventar · <span id="beri"></span> Ⓑ</h3>
             <div id="inventory" class="list"></div>
           </div>
 
-          <div id="panelDenDen" class="panel">
+          <div id="panelDenDen" class="panel hidden">
             <h3>📞 Den-Den-Mushi</h3>
             <div id="denden" class="list"></div>
             <div class="hint">Spielstand-/Einladungs-Link:</div>

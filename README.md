@@ -107,6 +107,8 @@ Mock-Spielleiter.
   trainieren Skills bis zum Rang-Aufstieg, mit Nebeneffekten (Beri/Heat/Lore).
 - **Karte & Reisen**: Ortsnetz mit Koordinaten; Seereisen brauchen ein eigenes
   Schiff oder bezahlte Passage. UI zeigt Position, Fortbewegungsart und Crew.
+  Sitzt du gerade in einer Zelle/im Gefängnis fest, ist Reisen serverseitig
+  gesperrt (kein Klick-Ausbruch per Karten-Chip).
 - **8-Bit-Retro-Panel pro Szene**: ortsabhängige Pixel-Grafik im Game-Boy-Look
   (160×144, 4-Ton-Schwarz-Weiß-Palette passend zum Tusche-Manga-Look,
   Tag/Nacht-Umschaltung) — deterministisch als inline SVG erzeugt, bewusst
@@ -144,9 +146,12 @@ Mock-Spielleiter.
 - **Perspektiven-/Wissenssystem**: du siehst nur, wem du begegnet bist oder von
   wem du gehört hast (Zeitung/Gerücht) — Einbahn-Wissen: du weißt von Kaido/Big
   Mom & Co., sie wissen nicht von dir, solange keine echte Begegnung stattfand.
-  Ein Beitritt (auch bei der Marine) braucht deshalb eine echte Begegnung —
-  den richtigen Ort aufsuchen oder eine Story-Begegnung — kein Sofort-Beitritt
-  per Klick ohne jede Vorgeschichte.
+  Ein Beitritt (auch bei der Marine) braucht deshalb einen GERADE lebendigen
+  Ansprechpartner, nicht nur eine alte Erinnerung: ortsgebundene Fraktionen wie
+  die Marine nur, solange du tatsächlich an einem ihrer Standorte bist,
+  story-vermittelte Crews nur bei einem gerade aktiven Angebot des
+  Spielleiters — beides läuft ab, sobald du weiterreist. Kein Sofort-Beitritt
+  per Klick von irgendwo auf der Karte aus.
 - **Weltgeschehen & News-Möwe**: eine Tageszeitung ("Die Windrose") berichtet,
   was außerhalb deiner Bubble im Kanon passiert (Kaiser, Marine, Riesen, das
   "fehlende Jahrhundert") — plus dein eigenes Kopfgeld und deine Crew. Der
@@ -178,6 +183,12 @@ Mock-Spielleiter.
   App-Icons) — Grundlage für späteres 2-Spieler-Handy-Multiplayer. Kritische/
   gefährliche Momente (Kampf, kritischer Erfolg/Patzer, entdecktes Risiko)
   geben auf unterstützten Geräten kurzes Haptik-Feedback (`navigator.vibrate`).
+- **Kopfleiste & Logbuch**: zwei Icons neben dem Burger-Menü — ein Profil-Icon
+  (Kurzstatus als Popover: Name/TP/EP/Heat/Kopfgeld, ohne die ganze Schublade
+  zu öffnen) und ein Fähigkeits-Icon, das aufleuchtet, sobald ein Skillpunkt
+  zu verteilen ist. Im Logbuch selbst ist die Schnellzugriff-Leiste eine echte
+  Tab-Leiste: von den 13 Bereichen (Charakter, Karte, Skills, Crew, Fraktionen,
+  Inventar, …) ist immer nur einer sichtbar statt alle gleichzeitig gestapelt.
 - **Multiplayer vorbereitet**: geteilter Tages-Takt, Den-Den-Mushi- & Raum-
   Datenmodell, UI-Slots — noch ohne Echtzeit-Vernetzung (siehe Roadmap).
 - **Persistenz**: Spielstände als JSON; Fortsetzen per `?game=<id>`-Link.

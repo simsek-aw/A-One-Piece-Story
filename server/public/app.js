@@ -81,6 +81,17 @@ function renderTopbarContext() {
     box.textContent = state.meta?.era?.label || "";
   }
 }
+// Charakter-Attribute/-Skills sind objektweise nach interner ID (z. B.
+// "glueck", "ueberzeugen") indiziert, ohne Umlaute. Fürs UI immer über die
+// Metadaten auf den echten Anzeigenamen ("Glück", "Überzeugen") auflösen,
+// statt die rohe ID direkt anzuzeigen.
+function attrLabel(id) {
+  return state.meta.creation.attributes.find((a) => a.id === id)?.name || id;
+}
+function skillLabel(id) {
+  return state.meta.creation.skills.find((s) => s.id === id)?.name || id;
+}
+
 const SAVE_SLOTS_KEY = "aops-save-slots";
 const PROVIDER_KEY = "aops-provider";
 const RANDOM_NAMES = ["Aren", "Bela", "Ciro", "Dena", "Elio", "Fara", "Garo", "Ilya", "Juna", "Keno", "Lira", "Miro", "Nela", "Orin", "Rava", "Sena", "Taro", "Vika", "Yaro", "Zira"];
@@ -465,6 +476,9 @@ function enterGame(view) {
   $("#screen-create").classList.add("hidden");
   $("#screen-game").classList.remove("hidden");
   $("#openLogbook").classList.remove("hidden");
+  $("#profileBtn").classList.remove("hidden");
+  $("#skillReadyBtn").classList.remove("hidden");
+  activateLogPanel("panelCharacter");
   storyBuffer = [];
   lastChapterDay = null;
   renderScene(view);
@@ -505,6 +519,9 @@ function beginNewCharacter() {
   $("#createError").textContent = "";
   $("#screen-game").classList.add("hidden");
   $("#openLogbook").classList.add("hidden");
+  $("#profileBtn").classList.add("hidden");
+  $("#skillReadyBtn").classList.add("hidden");
+  $("#profilePopover").classList.add("hidden");
   $("#screen-create").classList.remove("hidden");
   history.replaceState(null, "", location.pathname);
   renderTopbarContext();
@@ -714,6 +731,8 @@ function renderScene(view) {
   renderChoices(view);
   renderRecruit(view);
   renderSidebar(view);
+  renderProfilePopover(view);
+  renderSkillReadyIndicator(view);
   renderMap(view);
   renderTravel(view);
   renderActivities(view);
@@ -1153,7 +1172,7 @@ function renderCombat(view) {
   const btns = $("#combatButtons");
   btns.innerHTML = "";
   cm.options.attackSkills.forEach((sk) => {
-    const b = el("button", "combat-btn", `⚔️ ${sk}`);
+    const b = el("button", "combat-btn", `⚔️ ${escapeHtml(skillLabel(sk))}`);
     b.onclick = () => combatAction({ action: "attack", skill: sk, targetId: state.combatTarget });
     btns.appendChild(b);
   });
@@ -1180,6 +1199,36 @@ function renderCombat(view) {
   const flee = el("button", "combat-btn", "🏃 Fliehen");
   flee.onclick = () => combatAction({ action: "flee" });
   btns.appendChild(flee);
+}
+
+// Kompakter Kurzstatus in der Kopfleiste (Profil-Icon) — dieselben Werte wie
+// im Charakter-Panel des Logbuchs, aber ohne erst die ganze Schublade öffnen
+// zu müssen.
+function renderProfilePopover(view) {
+  const c = view.character;
+  $("#ppName").textContent = `${c.name} · Lvl ${c.level}`;
+  $("#ppDay").textContent = `Tag ${view.day}`;
+  $("#ppHpBar").style.width = pct(c.hp, c.maxHp) + "%";
+  $("#ppHpText").textContent = `${c.hp}/${c.maxHp}`;
+  const xpNext = 100 * c.level;
+  $("#ppXpBar").style.width = pct(c.xp, xpNext) + "%";
+  $("#ppXpText").textContent = `${c.xp}/${xpNext}`;
+  $("#ppHeatBar").style.width = pct(c.heat, 100) + "%";
+  $("#ppHeatText").textContent = `${c.heat}`;
+  const st = c.standing;
+  $("#ppStanding").textContent =
+    st.typ === "marine_rang" ? `Marine-Rang: ${st.wert}` :
+    st.typ === "ruf" ? `Ruf: ${st.wert}` : `Status: ${c.bountyTier.label}`;
+  $("#ppBounty").innerHTML = `💰 Kopfgeld: <b>${c.bounty.toLocaleString("de-DE")} Ⓑ</b> <span class="tier t${c.bountyTier.level}">${c.bountyTier.label}</span>`;
+}
+
+// Fähigkeits-Icon in der Kopfleiste leuchtet auf, sobald ein Skillpunkt zu
+// verteilen ist — derselbe Signalgeber wie der Punkt auf dem Skills-Tab.
+function renderSkillReadyIndicator(view) {
+  const points = view.character.unspentSkillPoints || 0;
+  $("#skillReadyDot").classList.toggle("hidden", points <= 0);
+  $("#skillReadyBtn").title = points > 0 ? `${points} Fähigkeitspunkt(e) verfügbar` : "Fertigkeiten";
+  document.querySelector('.quick-nav [data-jump="panelSkills"]')?.classList.toggle("has-ping", points > 0);
 }
 
 function renderSidebar(view) {
@@ -1214,13 +1263,13 @@ function renderSidebar(view) {
 
   const attrs = $("#attrs");
   attrs.innerHTML = "";
-  Object.entries(c.attributes).forEach(([k, v]) => attrs.appendChild(el("div", "s-row", `<span>${k}</span><b>${v}</b>`)));
+  Object.entries(c.attributes).forEach(([k, v]) => attrs.appendChild(el("div", "s-row", `<span>${escapeHtml(attrLabel(k))}</span><b>${v}</b>`)));
 
   const skills = $("#skills");
   skills.innerHTML = "";
   Object.entries(c.skills).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).forEach(([k, v]) => {
     const prog = c.skillProgress?.[k] ? ` <small>(+${c.skillProgress[k]}/3)</small>` : "";
-    skills.appendChild(el("div", "s-row", `<span>${k}</span><b>${v}${prog}</b>`));
+    skills.appendChild(el("div", "s-row", `<span>${escapeHtml(skillLabel(k))}</span><b>${v}${prog}</b>`));
   });
   if (!skills.children.length) skills.textContent = "—";
 
@@ -1295,16 +1344,18 @@ function renderMap(view) {
 function renderTravel(view) {
   const list = $("#travelList");
   list.innerHTML = "";
-  const isLocked = actionsBlocked(view);
+  const isLocked = actionsBlocked(view) || view.travelLocked;
   (view.travelOptions || []).forEach((o) => {
     const cost = o.hasShip ? "eigenes Schiff" : `${o.passageCost} Ⓑ`;
     const btn = el("button", "chip", `${escapeHtml(o.name)} · ${o.days}T · ${cost}`);
     btn.disabled = isLocked || !o.affordable;
-    if (!o.affordable) btn.title = "Passage zu teuer";
+    if (view.travelLocked) btn.title = "Du sitzt gerade fest — erst raus aus der Zelle.";
+    else if (!o.affordable) btn.title = "Passage zu teuer";
     btn.onclick = () => post("/travel", { destId: o.to }, `Ich reise nach ${o.name}.`);
     list.appendChild(btn);
   });
   if (!list.children.length) list.textContent = "Keine Verbindungen.";
+  if (view.travelLocked) list.appendChild(el("div", "hint", "🔒 Gerade nicht möglich — du sitzt fest."));
 }
 
 function renderActivities(view) {
@@ -1425,11 +1476,18 @@ function renderCanon(view) {
     else if (crew.available) status = `<span class="hint">Ziel-DC ${crew.effectiveDc}</span>`;
     else status = `<span class="hint">${escapeHtml(crew.reason)}</span>`;
     row.innerHTML = `<b>${escapeHtml(crew.name)}</b> ${canonTag} <span class="tier t1">${openTxt}</span><small>${escapeHtml(crew.blurb)}</small><div class="canon-row-status">${status}</div>`;
+    // Kein Beitritt vom Sofa aus: nur wenn gerade ein echter Ansprechpartner da
+    // ist (aktuell am richtigen Ort oder ein gerade lebendiges Angebot) — eine
+    // Begegnung von vor Tagen reicht dafür allein nicht mehr aus.
     if (!aff && crew.available && !crew.affiliated) {
-      const btn = el("button", "chip", "Beitreten versuchen");
-      btn.disabled = disabled;
-      btn.onclick = () => post("/join-canon", { crewId: crew.id }, `Ich suche ${crew.name} auf und bitte um Aufnahme.`);
-      row.appendChild(btn);
+      if (crew.canJoinNow) {
+        const btn = el("button", "chip", "Beitreten versuchen");
+        btn.disabled = disabled;
+        btn.onclick = () => post("/join-canon", { crewId: crew.id }, `Ich suche ${crew.name} auf und bitte um Aufnahme.`);
+        row.appendChild(btn);
+      } else {
+        row.appendChild(el("div", "hint", "Nur möglich, wenn du gerade dort bist oder mit einem Vermittler sprichst."));
+      }
     }
     listEl.appendChild(row);
   });
@@ -1497,8 +1555,13 @@ function closeNavMenu() {
   document.body.classList.remove("nav-menu-open");
   $("#menuToggle").setAttribute("aria-expanded", "false");
 }
+function closeProfilePopover() {
+  $("#profilePopover").classList.add("hidden");
+  $("#profileBtn").setAttribute("aria-expanded", "false");
+}
 function openDrawer() {
   closeNavMenu();
+  closeProfilePopover();
   document.body.classList.add("drawer-open");
 }
 function closeDrawer() { document.body.classList.remove("drawer-open"); }
@@ -1506,6 +1569,7 @@ function closeDrawer() { document.body.classList.remove("drawer-open"); }
 $("#menuToggle").addEventListener("click", () => {
   const willOpen = !document.body.classList.contains("nav-menu-open");
   closeDrawer();
+  closeProfilePopover();
   document.body.classList.toggle("nav-menu-open", willOpen);
   $("#menuToggle").setAttribute("aria-expanded", String(willOpen));
 });
@@ -1521,19 +1585,53 @@ document.addEventListener("click", (event) => {
   closeNavMenu();
 });
 
-// Schnellzugriff-Leiste im Logbuch: springt statt zu scrollen und blitzt das
-// Ziel-Panel kurz auf, damit man es im langen Logbuch sofort wiederfindet.
-document.querySelectorAll(".quick-nav [data-jump]").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const target = document.getElementById(btn.dataset.jump);
-    if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-    target.classList.remove("jump-flash");
-    // Reflow erzwingen, damit die Animation bei wiederholtem Klick neu startet.
-    void target.offsetWidth;
-    target.classList.add("jump-flash");
-    setTimeout(() => target.classList.remove("jump-flash"), 900);
+// Schnellzugriff-Leiste im Logbuch: fungiert als Tab-Leiste statt als
+// Sprungmarken-Liste. Vorher waren alle 13 Panels gleichzeitig gestapelt und
+// die Leiste sprang nur (mit Aufblitzen) zwischen ihnen hin und her — das
+// machte die Schublade sehr lang. Jetzt ist immer nur ein Panel sichtbar.
+const LOG_TABS = [
+  "panelCharacter", "panelNews", "panelThreads", "panelFactions", "panelMap",
+  "panelActivities", "panelSkills", "panelLore", "panelParty", "panelCanon",
+  "panelMemory", "panelInventory", "panelDenDen",
+];
+let activeLogTab = LOG_TABS[0];
+
+function activateLogPanel(id) {
+  if (!LOG_TABS.includes(id)) return;
+  activeLogTab = id;
+  LOG_TABS.forEach((pid) => $("#" + pid)?.classList.toggle("hidden", pid !== id));
+  document.querySelectorAll(".quick-nav [data-jump]").forEach((btn) => {
+    btn.setAttribute("aria-selected", String(btn.dataset.jump === id));
   });
+}
+
+document.querySelectorAll(".quick-nav [data-jump]").forEach((btn) => {
+  btn.addEventListener("click", () => activateLogPanel(btn.dataset.jump));
+});
+
+// Profil-Icon: kompakter Popover mit Kurzstatus, ohne die ganze Schublade
+// öffnen zu müssen.
+$("#profileBtn").addEventListener("click", () => {
+  const willOpen = $("#profilePopover").classList.contains("hidden");
+  closeNavMenu();
+  if (willOpen) {
+    $("#profilePopover").classList.remove("hidden");
+    $("#profileBtn").setAttribute("aria-expanded", "true");
+  } else {
+    closeProfilePopover();
+  }
+});
+document.addEventListener("click", (event) => {
+  if ($("#profilePopover").classList.contains("hidden")) return;
+  if (event.target.closest("#profilePopover, #profileBtn")) return;
+  closeProfilePopover();
+});
+
+// Fähigkeits-Icon: öffnet das Logbuch direkt auf dem Skills-Tab.
+$("#skillReadyBtn").addEventListener("click", () => {
+  if ($("#screen-game").classList.contains("hidden")) return;
+  activateLogPanel("panelSkills");
+  openDrawer();
 });
 
 // Schwarz-Weiß invertieren (paper <-> ink), Wahl merken.

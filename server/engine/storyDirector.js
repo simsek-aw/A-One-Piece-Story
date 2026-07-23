@@ -3,14 +3,41 @@
 // bestehen. Die KI erzählt die Folgen; Fortschritt und Eskalation gehören der
 // Engine und sind daher bei allen Providern gleich.
 
+// Jeder Ort hat MEHRERE mögliche Haupt-Handlungsfäden statt nur eines einzigen
+// fest kodierten — sonst bekäme man bei jedem Durchlauf, der z. B. in Loguetown
+// startet, exakt denselben Aufhänger serviert. Bei der ersten Ankunft an einem
+// Ort wird eine Variante zufällig gezogen (siehe pickThreadSource).
 const THREADS_BY_LOCATION = {
-  loguetown: { title: "Der verschwundene Kurier", hook: "Ein Kurier mit einer versiegelten Nachricht ist am Hafen verschwunden." },
-  shells_town: { title: "Die gefälschten Drillpläne", hook: "Jemand verkauft Pläne der Garnison an die falschen Leute." },
-  hafendorf_sirup: { title: "Das stille Schiff", hook: "Ein herrenloses Schiff liegt seit Tagen vor der Küste – doch nachts brennt Licht an Bord." },
-  klippen_vorposten: { title: "Befehle aus der Tiefe", hook: "Der Kommandant erhält geheime Befehle, die selbst seine Soldaten fürchten." },
-  orangen_hafen: { title: "Die fehlende Ladung", hook: "Eine Kiste mit wertvoller Ware verschwand zwischen Kai und Lagerhaus." },
-  windmuehlendorf: { title: "Das zerrissene Logbuch", hook: "In der Bibliothek fehlt genau die Seite, die von einem fremden Schiff erzählt." },
+  loguetown: [
+    { title: "Der verschwundene Kurier", hook: "Ein Kurier mit einer versiegelten Nachricht ist am Hafen verschwunden." },
+    { title: "Die zweite Planke", hook: "Am Richtplatz, wo der Piratenkönig starb, wurde über Nacht ein zweites Schafott aufgebaut – für wen?" },
+  ],
+  shells_town: [
+    { title: "Die gefälschten Drillpläne", hook: "Jemand verkauft Pläne der Garnison an die falschen Leute." },
+    { title: "Der Deserteur", hook: "Ein Marine-Soldat ist über Nacht verschwunden, seine Uniform blutverschmiert zurückgelassen." },
+  ],
+  hafendorf_sirup: [
+    { title: "Das stille Schiff", hook: "Ein herrenloses Schiff liegt seit Tagen vor der Küste – doch nachts brennt Licht an Bord." },
+    { title: "Die fremde Landkarte", hook: "Im Spülwasser der Dorfkneipe treibt eine zerfetzte Karte mit einem Ort, den niemand kennt." },
+  ],
+  klippen_vorposten: [
+    { title: "Befehle aus der Tiefe", hook: "Der Kommandant erhält geheime Befehle, die selbst seine Soldaten fürchten." },
+    { title: "Das Signalfeuer", hook: "Nachts brennt auf einer unbewohnten Klippe ein Feuer, das niemand entzündet haben will." },
+  ],
+  orangen_hafen: [
+    { title: "Die fehlende Ladung", hook: "Eine Kiste mit wertvoller Ware verschwand zwischen Kai und Lagerhaus." },
+    { title: "Der Fremde mit der Liste", hook: "Ein gut gekleideter Fremder fragt im Hafen gezielt nach bestimmten Namen." },
+  ],
+  windmuehlendorf: [
+    { title: "Das zerrissene Logbuch", hook: "In der Bibliothek fehlt genau die Seite, die von einem fremden Schiff erzählt." },
+    { title: "Der nächtliche Besucher", hook: "Jede Nacht dreht sich eine der Windmühlen, obwohl kein Wind weht." },
+  ],
 };
+
+function pickThreadSource(location) {
+  const variants = THREADS_BY_LOCATION[location] || THREADS_BY_LOCATION.loguetown;
+  return variants[Math.floor(Math.random() * variants.length)];
+}
 
 const INVESTIGATE_PATTERN = /\b(nachforsch(?:e|en|t|st)?|herausfind(?:e|en|t|st)?|frag(?:e|en|t|st)?|such(?:e|en|t|st)?|spur(?:e|en|t|st)?|verfolg(?:e|en|t|st)?|lausch(?:e|en|t|st)?|zuhor(?:e|en|t|st)?|beobacht(?:e|en|t|st)?)\b/i;
 const THREAD_FOCUS_PATTERN = /\b(spur|hinweis|faden|ratsel|geheimnis|auftrag|ermittlung)\w*/i;
@@ -22,7 +49,7 @@ const THREAD_STOP_WORDS = new Set([
 export function ensureStoryDirector(game) {
   const director = game.world.storyDirector || (game.world.storyDirector = { threads: [], lastEvent: null });
   if (!director.threads.some((t) => t.status === "aktiv" && t.location === game.world.location)) {
-    const source = THREADS_BY_LOCATION[game.world.location] || THREADS_BY_LOCATION.loguetown;
+    const source = pickThreadSource(game.world.location);
     director.threads.push({
       id: `faden_${game.world.location}_${game.world.day}`,
       location: game.world.location,

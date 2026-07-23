@@ -82,12 +82,29 @@ body {
 .provider { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 0.8rem; color: var(--muted); border: 2px solid var(--line); padding: 8px 10px; }
 .provider select { max-width: 150px; border: 0; background: transparent; color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
 .provider select:disabled { cursor: default; opacity: 0.75; }
+
+/* Kopfleisten-Icons neben dem Burger: Profil (Kurzstatus) und Fähigkeits-
+   Bereitschaft (Punkt zum Verteilen). Beide nur sichtbar, solange ein Spiel
+   läuft — wie #openLogbook per .hidden-Klasse geschaltet. */
+.topbar-icons { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.icon-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 9px; font-size: 1.1rem; line-height: 1; padding: 6px 10px; cursor: pointer; }
+.icon-btn:hover { background: var(--ink); color: var(--on-accent); }
+.ping-dot { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 2px var(--panel2); }
+.icon-btn:hover .ping-dot { box-shadow: 0 0 0 2px var(--ink); background: var(--on-accent); }
+
+.profile-popover { position: fixed; z-index: 46; top: calc(var(--topbar-height) + 8px); right: 14px; width: min(260px, calc(100vw - 28px)); display: grid; gap: 10px; padding: 14px; background: var(--panel); border: 3px solid var(--line); box-shadow: 7px 7px 0 var(--shadow); }
+.profile-popover.hidden { display: none; }
+.pp-head { display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
+
 .nav-menu { position: fixed; z-index: 45; top: calc(var(--topbar-height) + 8px); right: 14px; width: min(310px, calc(100vw - 28px)); display: grid; gap: 9px; padding: 14px; background: var(--panel); border: 3px solid var(--line); box-shadow: 7px 7px 0 var(--shadow); transform: translateY(-8px) scale(.98); transform-origin: 100% 0; opacity: 0; pointer-events: none; transition: opacity .12s ease, transform .12s ease; }
 body.nav-menu-open .nav-menu { opacity: 1; pointer-events: auto; transform: none; }
 .nav-menu .era { padding: 0 2px 5px; color: var(--muted); }
 .nav-menu .provider select { max-width: 190px; }
 .nav-menu-button { width: 100%; padding: 10px; background: var(--bg2); color: var(--ink); border: 2px solid var(--line); text-align: left; font-weight: 800; cursor: pointer; }
 .nav-menu-button:hover { background: var(--ink); color: var(--on-accent); }
+/* Spielleiter-Auswahl & Tag/Nacht sind Einstellungen, keine Kernaktionen —
+   darum sichtbar abgesetzt am Ende des Menüs statt gleichrangig oben. */
+.nav-menu-footer { display: grid; gap: 9px; padding-top: 9px; margin-top: 2px; border-top: 2px dashed var(--line); }
 
 .screen { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
 .hidden { display: none !important; }
@@ -314,8 +331,10 @@ button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
 /* Sidebar */
 .sidebar { display: flex; flex-direction: column; gap: 14px; }
 
-/* Schnellzugriff-Leiste: Icon-Raster statt "alles durchscrollen" fürs lange
-   Logbuch. Springt per data-jump zum jeweiligen Panel (siehe app.js). */
+/* Schnellzugriff-Leiste: fungiert als Tab-Leiste fürs Logbuch (siehe app.js
+   activateLogPanel) — von 13 gleichzeitig gestapelten Panels (viel Platz,
+   viel Scrollen) auf immer genau EIN sichtbares Panel umgestellt. Die Reihe
+   bleibt gleich groß, aber der Inhalt darunter schrumpft auf ein Dreizehntel. */
 .quick-nav {
   position: sticky; top: var(--topbar-height); z-index: 3;
   display: grid; grid-template-columns: repeat(auto-fit, minmax(58px, 1fr)); gap: 6px;
@@ -324,6 +343,7 @@ button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
   box-shadow: 3px 3px 0 var(--shadow);
 }
 .quick-nav button {
+  position: relative;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   padding: 8px 2px; border: 2px solid var(--line); border-radius: var(--radius);
   background: var(--panel); color: var(--ink); cursor: pointer;
@@ -335,14 +355,20 @@ button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
   background: var(--ink); color: var(--on-accent);
   transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--shadow);
 }
+.quick-nav button[aria-selected="true"] {
+  background: var(--ink); color: var(--on-accent);
+  transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--shadow);
+}
+.quick-nav button.has-ping::after {
+  content: ""; position: absolute; top: 3px; right: 3px; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 2px var(--panel);
+}
+.quick-nav button[aria-selected="true"].has-ping::after { background: var(--on-accent); box-shadow: 0 0 0 2px var(--ink); }
 
-/* Kurzes Aufblitzen des Ziel-Panels nach einem Sprung. */
-@keyframes jump-flash { 0%, 100% { box-shadow: 4px 4px 0 var(--shadow); } 20%, 60% { box-shadow: 4px 4px 0 var(--shadow), 0 0 0 3px var(--accent); } }
-.panel.jump-flash { animation: jump-flash 0.9s ease; }
+/* Kurzes Einblenden beim Tab-Wechsel statt eines abrupten Umschaltens. */
+@keyframes panel-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.panel:not(.hidden) { animation: panel-in 0.15s ease; }
 
-/* Platz für das sticky Quick-Nav lassen, damit scrollIntoView() den
-   Panel-Titel nicht dahinter versteckt (Topbar + 3 Icon-Reihen). */
-.panel { scroll-margin-top: 250px; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
 .panel h3 { margin: 0 0 10px; font-size: 0.95rem; color: var(--accent); }
 .game-menu { margin-top: auto; border-width: 3px; }
@@ -533,14 +559,14 @@ button.choice:disabled { opacity: 0.45; cursor: not-allowed; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Hamburger + Drawer-Overlay */
-.hamburger { display: inline-flex; align-items: center; justify-content: center; margin-left: auto; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 9px; font-size: 1.2rem; line-height: 1; padding: 6px 11px; cursor: pointer; }
+.hamburger { display: inline-flex; align-items: center; justify-content: center; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 9px; font-size: 1.2rem; line-height: 1; padding: 6px 11px; cursor: pointer; }
 .drawer-overlay { display: none; }
 
 /* ============ MOBILE ============ */
 @media (max-width: 900px) {
   .topbar { z-index: 30; padding: 10px 14px; gap: 10px; padding-top: calc(10px + env(safe-area-inset-top)); }
   .brand { font-size: 1rem; }
-  .nav-menu { top: calc(var(--topbar-height) + env(safe-area-inset-top) + 6px); }
+  .nav-menu, .profile-popover { top: calc(var(--topbar-height) + env(safe-area-inset-top) + 6px); }
 
   .screen { padding: 14px 12px 40px; }
   .game-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
@@ -725,8 +751,9 @@ input:focus { outline: 2px solid var(--ink); }
 .check-banner.bad { border-style: dashed; }
 .check-banner.ok, .check-banner.bad { background: var(--bg2); }
 
-/* Hamburger */
-.hamburger { border: 2px solid var(--line); border-radius: var(--radius); background: var(--bg2); box-shadow: 2px 2px 0 var(--shadow); }
+/* Hamburger + Kopfleisten-Icons */
+.hamburger, .icon-btn { border: 2px solid var(--line); border-radius: var(--radius); background: var(--bg2); box-shadow: 2px 2px 0 var(--shadow); }
+.profile-popover { border-radius: var(--radius); }
 
 /* Ladeschirm + Spinner in S/W */
 .loading { background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: none; }

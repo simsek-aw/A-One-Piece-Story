@@ -30,7 +30,11 @@ test("an investigation tied to the active hook advances the thread", () => {
   const game = outpostGame();
   const thread = game.world.storyDirector.threads[0];
 
-  const event = advanceStoryDirector(game, "Ich beobachte den Kommandanten und suche nach seinen geheimen Befehlen.");
+  // Der Ort hat mehrere mögliche Fäden (siehe storyDirector.js), darum hier
+  // bewusst NICHT den Wortlaut einer bestimmten Variante hardcoden, sondern
+  // "Hinweise" nutzen — trifft THREAD_FOCUS_PATTERN unabhängig davon, welche
+  // Variante gerade gezogen wurde.
+  const event = advanceStoryDirector(game, `Ich beobachte alles und suche nach Hinweisen zu: ${thread.hook}`);
   assert.equal(event.type, "fortschritt");
   assert.equal(thread.progress, 1);
   assert.equal(thread.neglect, 0);
@@ -43,9 +47,9 @@ test("an investigation cannot advance a thread from another island", () => {
   game.world.locationName = "Loguetown";
 
   ensureStoryDirector(game);
-  advanceStoryDirector(game, "Ich suche am Hafen nach dem verschwundenen Kurier.");
-
   const localThread = game.world.storyDirector.threads.find((thread) => thread.location === "loguetown");
+  advanceStoryDirector(game, `Ich suche vor Ort nach Hinweisen zu: ${localThread.hook}`);
+
   assert.equal(outpostThread.progress, 0);
   assert.equal(localThread.progress, 1);
 });
