@@ -230,10 +230,13 @@ export class MockProvider {
         `${flavor}\n\n${archLine}\n\n` +
         (rumor ? `Am Rande hörst du ein Gerücht: „${rumor}“\n\n` : "") +
         `${introduceNpc(npc, context)}` + (thread ? `\n\nEin Gedanke bleibt hängen: ${thread.hook}` : ""),
+      // Wie in genericChoices: die eingeführte Person braucht eine eigene,
+      // sie NAMENTLICH nennende Option — sonst wirkt "Den Hinweis zu ... gezielt
+      // untersuchen" wie ein Non-Sequitur direkt neben ihrer Einführung.
       choices: [
         { id: "a", text: thread ? `Den Hinweis zu „${thread.title}“ gezielt untersuchen.` : "Zuhören und herausfinden, was los ist.", skillCheck: { skill: "wahrnehmung", dc: 10 } },
-        { id: "b", text: "Selbstbewusst das Gespräch übernehmen.", skillCheck: { skill: "ueberzeugen", dc: 12 } },
-        { id: "c", text: "Vorsichtig Abstand halten und beobachten.", skillCheck: null },
+        { id: "b", text: `Das Gespräch mit ${npc.name} entschlossen aufnehmen.`, skillCheck: { skill: "ueberzeugen", dc: 12 } },
+        { id: "c", text: `${npc.name} vorsichtig aus der Distanz beobachten.`, skillCheck: null },
       ],
       stateChanges: { ...this.emptyChanges(), sceneLocation: this.defaultSceneLocation(context) },
       npcs: [{ id: npc.id, name: npc.name, role: npc.role, disposition: 0, note: "Zum ersten Mal getroffen." }],
@@ -352,6 +355,12 @@ export class MockProvider {
       parts.push(`An ${actor.name}s kurzer Reaktion merkst du, dass die Situation mehr verbirgt, als ${actor.name} offen zugibt.`);
     }
 
+    // Wer hier gerade im Text eingeführt wurde/anwesend ist, braucht auch eine
+    // eigene Auswahlmöglichkeit — sonst taucht z. B. ein "maskierter Fremder"
+    // in der Erzählung auf, ohne dass eine der Optionen je auf ihn eingeht
+    // (siehe genericChoices unten).
+    const focusNpc = npcs[0] || null;
+
     const changes = this.emptyChanges();
     changes.sceneLocation = this.sceneLocationFor(context);
     changes.xpDelta = check?.success ? 20 : 10;
@@ -441,7 +450,9 @@ export class MockProvider {
 
     return {
       narration: parts.join("\n\n") + "\n\nWie gehst du vor?",
-      choices: this.genericChoices(context),
+      // Bei Kampfbeginn übernimmt die Kampfbox die Entscheidung — dann keine
+      // separate "ansprechen"-Option mehr anbieten, die ins Leere liefe.
+      choices: this.genericChoices(context, extra.combatStart ? null : focusNpc),
       stateChanges: changes,
       npcs,
       recruitable,
@@ -477,7 +488,13 @@ export class MockProvider {
   // (nachforschen/verhandeln/handeln/weiterziehen) klingen sonst über viele
   // Züge hinweg fast wortgleich — genau das Muster, das sich wie Stillstand
   // anfühlt und den Kontinuitäts-Wächter zu Recht auslöst.
-  genericChoices(context) {
+  //
+  // focusNpc: die Person, die in DIESER Szene tatsächlich eingeführt ist/
+  // anwesend bleibt (z. B. ein "maskierter Fremder"). Ohne eigene Option für
+  // sie wirkt die "nachhaken"-Option (die IMMER den aktiven Story-Faden
+  // referenziert, unabhängig vom sonstigen Szeneninhalt) wie ein Non-Sequitur
+  // — und die auffällige Person aus dem Text bleibt folgenlos unadressiert.
+  genericChoices(context, focusNpc = null) {
     const thread = context.story?.active?.[0];
     const investigate = thread
       ? [
@@ -505,11 +522,28 @@ export class MockProvider {
       "Den Ort vorerst hinter dir lassen.",
       "Dich zurückziehen und später wiederkommen.",
     ];
+    // Steht eine Person im Fokus, ersetzt "Verhandeln" eine garantiert
+    // gezeigte Option (Slot b) statt nur um eine austauschbare vierte zu
+    // ergänzen — sonst würde die NPC-Option in 60 % der Fälle (siehe
+    // slice unten) gleich wieder herausfallen und am eigentlichen Problem
+    // nichts ändern. "Verhandeln" rutscht dafür auf den optionalen vierten
+    // Platz; "Weiterziehen" tritt in dem Fall ganz zurück.
+    const focusOption = focusNpc && {
+      id: "b",
+      text: pick([
+        `${focusNpc.name} direkt ansprechen.`,
+        `Auf ${focusNpc.name} zugehen und nachfragen, was es damit auf sich hat.`,
+        `${focusNpc.name} im Auge behalten, ohne die eigene Deckung aufzugeben.`,
+      ]),
+      skillCheck: { skill: pick(["ueberzeugen", "wahrnehmung"]), dc: 11 },
+    };
     const options = [
       { id: "a", text: pick(investigate), skillCheck: { skill: "wahrnehmung", dc: 11 } },
-      { id: "b", text: pick(negotiate), skillCheck: { skill: "ueberzeugen", dc: 12 } },
+      focusOption || { id: "b", text: pick(negotiate), skillCheck: { skill: "ueberzeugen", dc: 12 } },
       { id: "c", text: pick(act), skillCheck: { skill: pick(["nahkampf", "schwertkunst", "geschick"]) === "geschick" ? "heimlichkeit" : "nahkampf", dc: 13 } },
-      { id: "d", text: pick(leave), skillCheck: null },
+      focusNpc
+        ? { id: "d", text: pick(negotiate), skillCheck: { skill: "ueberzeugen", dc: 12 } }
+        : { id: "d", text: pick(leave), skillCheck: null },
     ];
     // 3 zufällige, aber stabile IDs a–d
     return options.slice(0, 3 + (chance(0.4) ? 1 : 0));

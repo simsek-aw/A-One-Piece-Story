@@ -204,6 +204,42 @@ Kontext in einer laufenden Geschichte.
       jedem Zug. Verschwindet automatisch, sobald der Spieler die erste
       echte Aktion ausführt, oder per ×-Button sofort.
 
+## Erledigt (Ausbaustufe 27) — Mock-Spielleiter: Auswahlmöglichkeiten NPC-bewusst
+
+Konkretes Beispiel-Feedback per Screenshot: In einer Szene streiten sich zwei
+Händler, ein maskierter Fremder beobachtet aufmerksam — aber Option 1
+referenziert stattdessen (scheinbar beliebig) den aktiven Story-Faden "Der
+verschwundene Kurier", und keine Option geht auf den auffälligen Fremden ein.
+
+- [x] **Root Cause**: `genericChoices()` im Mock-Provider baute 4 generische
+      Rollen-Optionen (nachforschen/verhandeln/handeln/weiterziehen) völlig
+      unabhängig von den Textbausteinen, die für dieselbe Szene zusammen-
+      gewürfelt wurden. Die "nachforschen"-Option referenziert dabei IMMER den
+      aktuell aktiven Story-Faden — unabhängig davon, ob die Szene inhaltlich
+      etwas damit zu tun hat. Ein neu eingeführter oder anwesender NPC bekam
+      nie eine eigene Option, komplett unabhängig davon, wie prominent er in
+      der Erzählung auftrat.
+- [x] **Fix**: `turnScene` reicht jetzt die tatsächlich in dieser Szene
+      präsente/eingeführte Person (`focusNpc`) an `genericChoices()` durch.
+      Ist eine da, ersetzt eine sie NAMENTLICH ansprechende Option (ansprechen/
+      nachfragen/im Auge behalten) einen der drei GARANTIERT gezeigten Slots
+      (nicht nur den optionalen vierten, sonst wäre sie in 60 % der Fälle
+      gleich wieder weg) — "Weiterziehen" tritt in dem Fall zurück. Bei
+      Kampfbeginn wird keine NPC-Option mehr angeboten (würde ins Leere laufen).
+- [x] Derselbe Bug steckte auch in der allerersten Szene des Spiels
+      (`startScene`): Optionen b/c benennen den dort immer eingeführten NPC
+      jetzt explizit, statt generisch "Selbstbewusst das Gespräch übernehmen"
+      zu sagen.
+- [x] `systemPrompt.js` um eine Regel ergänzt: führt ein echter KI-Spielleiter
+      (Claude/GPT/Gemini/DeepSeek/OpenRouter) eine auffällige neue Person ein,
+      MUSS mindestens eine Auswahlmöglichkeit konkret auf sie eingehen —
+      derselbe Grundsatz, nur für Provider, die selbst verstehen, was sie
+      erzählen, statt es aus Textbausteinen zusammenzusetzen.
+- [x] 4 neue Tests (`test/mockProviderChoices.test.js`); per Playwright über
+      25 simulierte Spielzüge verifiziert: NPC in der Szene erwähnt → in 10
+      von 11 Fällen (Rest: Dialog-/Kampfzustand ohne reguläre Auswahlliste)
+      durch eine Option ansprechbar, davor 0 von 15.
+
 ## Erledigt (Ausbaustufe 26) — Logbuch-Tabs, Kopfleisten-Icons, echte Beitritts-/Reise-Gates
 
 Direktes Nutzerfeedback zu sechs Punkten: eine gefühlt immer identische
