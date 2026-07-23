@@ -50,6 +50,14 @@ export const PERKS = {
   fassweise: { id: "fassweise", name: "Fassweise", desc: "Dich trinkt niemand unter den Tisch. Zungen lösen sich, Geheimnisse tropfen — ideal für Tresen und Taverne." },
   vorahnung: { id: "vorahnung", name: "Vorahnung", desc: "Manchmal spürst du Gefahr, bevor sie zuschlägt — ein erster Hauch von Beobachtungs-Haki." },
   froehlicher_roger: { id: "froehlicher_roger", name: "Grinsen am Galgen", desc: "Selbst mit dem Strick um den Hals würdest du lachen. Furchtlosigkeit, die andere ansteckt — und einschüchtert." },
+
+  // --- Weitere sechs Talente ---
+  huenenblut: { id: "huenenblut", name: "Hünenblut", desc: "Von großem Wuchs oder großem Willen — Kraftproben und Einschüchtern durch pure Präsenz fallen dir leichter." },
+  taenzerklinge: { id: "taenzerklinge", name: "Tänzerklinge", desc: "Dein Schwert tanzt, statt zu hacken — elegante Finten statt roher Kraft, Bonus auf Schwertkunst durch Geschick." },
+  tierfluesterer: { id: "tierfluesterer", name: "Tierflüsterer", desc: "Wilde Tiere spüren, dass du keine Bedrohung bist — entschärft Begegnungen mit wilden Tieren, kleiner Bonus auf Wahrnehmung in der Wildnis." },
+  schiffszimmerer_gespuer: { id: "schiffszimmerer_gespuer", name: "Nagelfeste Hände", desc: "Holz, Nägel, Nerven aus Stahl — dein Handwerk hält auch grobe See aus. Bonus auf Handwerk, günstigere Schiffsreparaturen." },
+  altschrift_gespuer: { id: "altschrift_gespuer", name: "Gespür für alte Schrift", desc: "Verwitterte Inschriften, Ponaglyphen und vergessene Chroniken sprechen zu dir. Bonus auf Wahrnehmung/Verstand bei Ruinen und Geheimnissen der Vergangenheit." },
+  klangzauber: { id: "klangzauber", name: "Klangzauber", desc: "Ein Lied zur richtigen Zeit hebt jede Stimmung — Bonus auf Überzeugen in Gruppen, hilft der ganzen Crew, das Grauen kurz zu vergessen." },
 };
 
 const BASE_ATTRIBUTE = 4;

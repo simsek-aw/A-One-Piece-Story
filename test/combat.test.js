@@ -43,14 +43,18 @@ test("heal action targets a living party member by id, otherwise heals the playe
   const game = baseGame();
   game.character.hp = 20;
   game.character.maxHp = 50;
-  game.party = [{ id: "p1", name: "Kolo", role: "navigator", loyalty: 60, hp: 5, maxHp: 30 }];
+  // HP hoch genug, dass ein einzelner Bandit-Treffer diese Runde (auch mit
+  // Kritischem Treffer) Kolo nicht schon vor der Heilung auf 0 bringt — sonst
+  // würde der Ziel-Check in combat.js auf "Spieler heilt sich selbst"
+  // ausweichen und der Test wäre vom Initiative-Wurf abhängig (flaky).
+  game.party = [{ id: "p1", name: "Kolo", role: "navigator", loyalty: 60, hp: 20, maxHp: 30 }];
   startCombat(game, [{ kind: "bandit" }]);
 
   const view = combatTurn(game, { action: "heal", targetId: "p1" });
   // Der Spieler heilt Kolo statt sich selbst -> die eigene HP kann durch den
   // Gegner-Angriff dieser Runde sinken, aber nie durch den Verarzten-Effekt
   // selbst steigen (der ging an Kolo).
-  assert.ok(view.party[0].hp > 5, "ally hp should increase");
+  assert.ok(view.party[0].hp > 20, "ally hp should increase");
   assert.ok(view.player.hp <= 20, "player hp should not increase when healing an ally instead of self");
 });
 
