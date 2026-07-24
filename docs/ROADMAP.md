@@ -225,6 +225,42 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 39) — Geschlecht bei der Charaktererstellung + Spieleraktion optisch abgehoben
+
+Zwei unabhängige Nutzerwünsche in einem Durchgang.
+
+- [x] `character.js`: neues `GENDERS`-Register (Männlich/Weiblich/Divers je
+      Namensfeld) — im Schritt "1 · Name" direkt unter dem Namen wählbar, da
+      der Spielleiter daraus im Erzähltext passende Pronomen/Beschreibungen
+      für die dritte Person ableiten soll (die Ansprache an den Spieler
+      bleibt immer beim "Du"). Fehlt/ungültig, fällt der Server defensiv auf
+      "divers" zurück statt zu werfen — der Wizard verlangt die Auswahl aber
+      schon vor dem Start.
+- [x] `gameState.js`/`turn.js` reichen das Geschlecht an den Spielleiter-
+      Kontext (`memory`-Digest) bzw. die Szenen-Ansicht durch;
+      `systemPrompt.js` erklärt die neue Regel; `imageProvider.js` nutzt es
+      für ein passenderes Avatar-Porträt.
+- [x] Frontend: kompakte Auswahl-Chips neben dem Namensfeld, Zufalls-Wert bei
+      "Schnellstart", eigene Zeile in der Übersicht, Pflichtfeld-Validierung.
+- [x] Die Spieleraktion im Logbuch (`.entry.action`) hebt sich jetzt klar vom
+      Erzähltext ab: schwarzer Hintergrund, weiße kursive Schrift, `>` statt
+      des bisherigen `›`-Zeichens als Präfix.
+- [x] 5 neue Tests (`test/character.test.js`): Options-Liste, gültige Auswahl,
+      Fallback bei fehlendem/ungültigem Wert, Digest- und Szenen-Ansicht-
+      Durchreichung.
+
+## Erledigt (Ausbaustufe 38) — Sprachausgabe: Fehler nicht mehr lautlos verschlucken
+
+Nutzerrückmeldung "Ich höre leider noch nichts" ließ sich von hier aus nicht
+direkt diagnostizieren, weil jeder TTS-Fehler (fehlendes Audio, Autoplay-
+Sperre, Netzwerkfehler) bisher komplett lautlos verschluckt wurde.
+
+- [x] `app.js`: `speak()` unterscheidet jetzt per `console.warn` zwischen
+      "Server lieferte keine Audiodaten" (Kontingent/Config/Modellname),
+      "Wiedergabe blockiert" (Browser-Autoplay-Sperre) und "Anfrage
+      fehlgeschlagen" (Netzwerk) — diagnostizierbar über die Browser-Konsole
+      und die Server-Logs, ohne den Spielfluss zu berühren.
+
 ## Erledigt (Ausbaustufe 37) — Ortsangaben-Entlastung + D&D-Vortragsstil für die Sprachausgabe
 
 Zwei kleine, zusammenhängende Nachbesserungen im direkten Anschluss an

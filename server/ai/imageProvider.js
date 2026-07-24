@@ -73,16 +73,19 @@ function momentPrompt(kind) {
   return { key: `moment_${kind || "spannung"}`, prompt: `${desc}. ${STYLE}.` };
 }
 
+const GENDER_LOOK = { maennlich: "male", weiblich: "female" };
+
 function avatarPrompt(game) {
   const c = game.character || {};
+  const genderWord = GENDER_LOOK[c.gender] || "";
   const look = c.appearance && c.appearance.trim()
     ? c.appearance.trim()
-    : `a determined young ${c.archetype || "adventurer"}`;
+    : `a determined young ${genderWord ? genderWord + " " : ""}${c.archetype || "adventurer"}`;
   // Pro Charakter ein eigenes Porträt (Schlüssel = Spiel-ID).
   return {
     key: `avatar_${game.id}`,
     prompt:
-      `Character portrait, shoulder-up, facing the viewer: ${look}. ` +
+      `Character portrait, shoulder-up, facing the viewer: ${genderWord ? `a ${genderWord} character, ` : ""}${look}. ` +
       `One Piece anime/manga style, expressive face, ${STYLE}.`,
     size: "1024x1024",
   };

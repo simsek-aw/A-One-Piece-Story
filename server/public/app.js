@@ -50,7 +50,7 @@ function npcFaceEl(seed, disposition) {
 
 const state = {
   meta: null,
-  sel: { archetype: null, perk: null, location: null },
+  sel: { archetype: null, perk: null, location: null, gender: null },
   attrs: {},
   gameId: null,
   view: null,
@@ -206,6 +206,19 @@ function buildCreation() {
     aList.appendChild(node);
   });
 
+  const gList = $("#genderList");
+  gList.innerHTML = "";
+  state.meta.creation.genders.forEach((g) => {
+    const node = el("button", "chip", escapeHtml(g.name));
+    node.type = "button";
+    node.onclick = () => {
+      state.sel.gender = g.id;
+      [...gList.children].forEach((ch) => ch.classList.remove("sel"));
+      node.classList.add("sel");
+    };
+    gList.appendChild(node);
+  });
+
   const c = state.meta.creation;
   state.attrs = {};
   c.attributes.forEach((attr) => (state.attrs[attr.id] = c.baseAttribute));
@@ -312,8 +325,10 @@ function renderSummary() {
   const location = state.meta.startLocations.find((l) => l.id === state.sel.location);
   const attrText = state.meta.creation.attributes.map((attr) => `${attr.name} ${state.attrs[attr.id]}`).join(" · ");
 
+  const gender = state.meta.creation.genders.find((g) => g.id === state.sel.gender);
   const rows = [
     { step: 1, label: "Name", value: $("#charName").value.trim() || "—" },
+    { step: 1, label: "Geschlecht", value: gender?.name || "—" },
     { step: 2, label: "Herkunft", value: archetype?.name || "—" },
     { step: 3, label: "Attribute", value: attrText || "—" },
     { step: 4, label: "Talent", value: perk?.name || "Keiner" },
@@ -334,7 +349,8 @@ function wizardValidationError() {
   const c = state.meta.creation;
   switch (state.wizardStep) {
     case 1:
-      return $("#charName").value.trim().length >= 2 ? null : "Bitte einen Namen (mind. 2 Zeichen) eingeben.";
+      if ($("#charName").value.trim().length < 2) return "Bitte einen Namen (mind. 2 Zeichen) eingeben.";
+      return state.sel.gender ? null : "Bitte ein Geschlecht wählen.";
     case 2:
       return state.sel.archetype ? null : "Bitte eine Herkunft wählen.";
     case 3:
@@ -401,6 +417,7 @@ function randomizeCharacter() {
   randomizeLocationOnly();
 
   $("#charName").value = pickRandom(RANDOM_NAMES);
+  $("#genderList").children[randomIndex(state.meta.creation.genders.length)].click();
   $("#charAppearance").value = [
     pickRandom(RANDOM_APPEARANCES.hair),
     pickRandom(RANDOM_APPEARANCES.feature),
@@ -453,6 +470,7 @@ async function startGame() {
   const err = $("#createError");
   err.textContent = "";
   if (!name) return (err.textContent = "Bitte einen Namen eingeben.");
+  if (!state.sel.gender) return (err.textContent = "Bitte ein Geschlecht wählen.");
   if (!state.sel.archetype) return (err.textContent = "Bitte eine Herkunft wählen.");
   if (!state.sel.location) return (err.textContent = "Bitte einen Startort wählen.");
   if (spentPoints() !== state.meta.creation.pointsToDistribute) return (err.textContent = "Bitte alle Attributpunkte verteilen.");
@@ -460,7 +478,7 @@ async function startGame() {
     const view = await api("/api/games", {
       method: "POST",
       body: JSON.stringify({
-        character: { name, archetype: state.sel.archetype, attributes: state.attrs, perk: state.sel.perk, appearance: $("#charAppearance")?.value.trim() || "" },
+        character: { name, gender: state.sel.gender, archetype: state.sel.archetype, attributes: state.attrs, perk: state.sel.perk, appearance: $("#charAppearance")?.value.trim() || "" },
         startLocationId: state.sel.location,
         aiProvider: $("#providerSelect").value,
       }),
@@ -519,7 +537,7 @@ function beginNewCharacter() {
   state.gameId = null;
   state.view = null;
   state.lastFxNarration = null;
-  state.sel = { archetype: null, perk: null, location: null };
+  state.sel = { archetype: null, perk: null, location: null, gender: null };
   buildCreation();
   renderSavedCharacters();
   $("#charName").value = "";
@@ -594,7 +612,7 @@ async function post(path, body, actionLabel) {
   $("#turnError").textContent = "";
   closeDrawer(); // auf Mobil: Menü schließen, damit man die Szene sieht
   hideRecapBanner(); // Rückblick war nur für den Einstieg gedacht, nicht während des Spiels
-  if (actionLabel) storyBuffer.push({ type: "action", text: "› " + actionLabel });
+  if (actionLabel) storyBuffer.push({ type: "action", text: "> " + actionLabel });
   try {
     const view = await api(`/api/games/${state.gameId}${path}`, { method: "POST", body: JSON.stringify(body) });
     renderScene(view);

@@ -75,8 +75,9 @@ Mock-Spielleiter.
 
 ## Was schon funktioniert
 
-- **Charaktererstellung als Schritt-für-Schritt-Assistent**: Name, Herkunft,
-  Attribute, Talent, Startort, Aussehen, dann eine **Übersicht** — je ein
+- **Charaktererstellung als Schritt-für-Schritt-Assistent**: Name (samt
+  Geschlecht — für passende Pronomen/Beschreibungen durch den Spielleiter),
+  Herkunft, Attribute, Talent, Startort, Aussehen, dann eine **Übersicht** — je ein
   Bildschirm mit Fortschrittsanzeige (Zahlen sind klickbar, um direkt zu
   einem bereits erreichten Schritt zurückzuspringen), Zurück/Weiter-
   Navigation und eigenen "🎲 Zufällig"-Knöpfen pro Schritt. Die Übersicht

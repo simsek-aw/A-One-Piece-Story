@@ -687,6 +687,7 @@ export function currentSceneView(game) {
     story: storyDirectorView(game),
     character: {
       name: c.name,
+      gender: c.gender,
       archetype: c.archetype,
       appearance: c.appearance || "",
       avatar: c.avatar || null,

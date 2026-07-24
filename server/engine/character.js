@@ -60,6 +60,16 @@ export const PERKS = {
   klangzauber: { id: "klangzauber", name: "Klangzauber", desc: "Ein Lied zur richtigen Zeit hebt jede Stimmung — Bonus auf Überzeugen in Gruppen, hilft der ganzen Crew, das Grauen kurz zu vergessen." },
 };
 
+// Für den Spielleiter (passende Pronomen/Beschreibungen, falls NPCs oder die
+// Erzählung den Spieler in der dritten Person erwähnen — die Ansprache an den
+// Spieler selbst bleibt ohnehin bei "Du"). Direkt bei der Namenswahl abgefragt.
+export const GENDERS = {
+  maennlich: { id: "maennlich", name: "Männlich" },
+  weiblich: { id: "weiblich", name: "Weiblich" },
+  divers: { id: "divers", name: "Divers / keine Angabe" },
+};
+const DEFAULT_GENDER = "divers";
+
 const BASE_ATTRIBUTE = 4;
 const POINTS_TO_DISTRIBUTE = 8;
 const MIN_ATTR = 1;
@@ -80,6 +90,7 @@ export function creationRules() {
     attributes: Object.values(ATTRIBUTES),
     skills: Object.values(SKILLS),
     perks: Object.values(PERKS),
+    genders: Object.values(GENDERS),
   };
 }
 
@@ -89,7 +100,7 @@ function maxHp(character) {
 
 // Validiert Spieler-Input aus der Charaktererstellung und baut die Figur.
 // Wirft bei ungültigen Eingaben (der Server fängt das ab).
-export function createCharacter({ name, archetype, attributes, perk, appearance }) {
+export function createCharacter({ name, archetype, attributes, perk, appearance, gender }) {
   if (!name || typeof name !== "string" || name.trim().length < 2) {
     throw new Error("Bitte einen Namen (mind. 2 Zeichen) angeben.");
   }
@@ -131,6 +142,11 @@ export function createCharacter({ name, archetype, attributes, perk, appearance 
   const character = {
     name: name.trim(),
     archetype: arch.id,
+    // Für den Spielleiter-Kontext (Pronomen/Beschreibungen in der dritten
+    // Person) — unbekannte/fehlende Werte fallen defensiv auf "divers" statt
+    // einen Fehler zu werfen, das Wizard-Frontend verlangt die Auswahl aber
+    // schon vor dem Start.
+    gender: GENDERS[gender] ? gender : DEFAULT_GENDER,
     // Freitext-Beschreibung fürs generierte Manga-Profilbild (optional).
     appearance: (typeof appearance === "string" ? appearance.trim().slice(0, 400) : ""),
     avatar: null, // Pfad zum generierten Porträt (/panels/...), sobald vorhanden

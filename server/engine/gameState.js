@@ -3,7 +3,7 @@
 // Historie. Die KI bekommt daraus jeweils nur eine kompakte Zusammenfassung.
 
 import { nanoid } from "nanoid";
-import { createCharacter } from "./character.js";
+import { createCharacter, GENDERS } from "./character.js";
 import { START_LOCATIONS } from "../content/startingScenarios.js";
 import { ensureMemory } from "./memory.js";
 import { initClock } from "./clock.js";
@@ -57,6 +57,7 @@ export function characterDigest(game) {
   const c = game.character;
   return {
     name: c.name,
+    geschlecht: GENDERS[c.gender]?.name || "keine Angabe",
     archetyp: c.archetype,
     aussehen: c.appearance || "",
     level: c.level,

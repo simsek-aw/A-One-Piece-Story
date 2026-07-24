@@ -222,7 +222,7 @@ button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .story-log { display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; }
 .entry { border-radius: 10px; padding: 14px 16px; line-height: 1.55; white-space: pre-wrap; }
 .entry.narration { background: var(--panel); border: 1px solid var(--line); }
-.entry.action { background: transparent; border-left: 3px solid var(--accent2); color: var(--muted); font-style: italic; padding-left: 12px; }
+.entry.action { background: #000; border-left: 3px solid var(--accent2); color: #fff; font-style: italic; padding-left: 12px; }
 .entry.event { background: var(--ink); color: var(--on-accent); border: 3px solid var(--line); box-shadow: 5px 5px 0 var(--shadow); font-family: "Bangers", "Arial Black", Impact, system-ui, sans-serif; font-size: 1.12rem; line-height: 1.25; letter-spacing: .06em; text-transform: uppercase; }
 .entry.narration.latest { border-color: var(--accent); }
 .entry.narration.latest { animation: panel-snap-in .28s cubic-bezier(.2,.8,.25,1) both; transform-origin: 50% 0; }
@@ -635,7 +635,7 @@ button.choice:disabled { opacity: 0.45; cursor: not-allowed; }
 /* Erzähl-Panel = das große Bildfeld */
 .entry.narration { background: var(--panel); border: 2.5px solid var(--line); border-radius: var(--radius); box-shadow: 5px 5px 0 var(--shadow); }
 .entry.narration.latest { border-width: 3px; }
-.entry.action { border-left: 4px solid var(--line); color: var(--muted); }
+.entry.action { border-left: 4px solid var(--line); background: #000; color: #fff; }
 
 /* Kapitel-Überschrift: deterministischer Tag/Ort-Titel, kein Fließtext —
    gliedert das Logbuch wie ein Manga-Bandtitel statt einer reinen Zug-Liste. */
