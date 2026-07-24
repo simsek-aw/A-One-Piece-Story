@@ -14,6 +14,12 @@ const DISCOVERY_ACTION = /\b(such|untersuch|durchstöber|durchsuch|öffn|kiste|t
 const SHIP_ACTION = /\b(schiff|boot|kahn|kai|dock)\w*.{0,40}\b(kauf|nehm|beanspruch|reparier|übernehm|stehl)\w*|\b(kauf|nehm|beanspruch|reparier|übernehm|stehl)\w*.{0,40}\b(schiff|boot|kahn)\w*/i;
 const EXPLICIT_REWARD = /\b(überreicht|übergibt|schenkt|belohnt|als belohnung|vermacht|gibt dir|bietet dir)/i;
 const LEAVE_INTENT = /\b(weiterzieh|weitergeh|weggeh|fortgeh|verlass|aufbrech|ziehe weiter|gehe weiter|sache ruhen lassen)/i;
+// systemPrompt.js verlangt ausdrücklich, dass der Name eines NPCs verborgen
+// bleibt, solange 'nameBekannt=false' ist ("maskierter Fremder" ist genau
+// dieses Muster) — ein Erst-Auftritt darf also namenlos erzählt werden. Diese
+// generische Präsenz-Formulierung gilt dann als Nachweis, dass die Person
+// wirklich im Text auftaucht, statt strikt Name/Rollenwort zu verlangen.
+const GENERIC_PRESENCE = /\b(jemand|eine? (?:gestalt|person|stimme)|ein(?:e)? (?:fremd\w*|maskiert\w*|unbekannt\w*)|ein (?:mann|reisend\w*|händler)|eine (?:frau|reisende)|tritt (?:heran|hinzu|näher|ein)|spricht dich an|mustert dich|blickt dich an|wendet sich (?:an dich|dir zu)|näher(?:t|st)? sich dir|beobachtet (?:dich|aufmerksam)|sieht dich an)\b/i;
 
 export function continuityContext(game) {
   const present = new Set(game.scene?.presentNpcIds || []);
@@ -126,7 +132,11 @@ export function auditContinuity(game, context, gm) {
   const confined = /(boot|schiff|kajüte|zelle|gefängnis|kerker|verhörraum)/i.test(continuity.sceneLocation || "");
 
   for (const npc of gm.npcs) {
-    if (!npcMentioned(gm.narration, npc)) {
+    // Erst-Auftritt = dem Spieler noch nie zuvor begegnet (kein Gedächtnis-
+    // Eintrag). Nur DANN darf eine generische Präsenz-Formulierung statt
+    // Name/Rollenwort als Nachweis reichen — siehe GENERIC_PRESENCE oben.
+    const isFirstAppearance = !game.world.npcs?.[npc.id];
+    if (!npcMentioned(gm.narration, npc, isFirstAppearance)) {
       issues.push(`NPC „${npc.name}“ steht in der Szene, wird im Erzähltext aber nicht eingeführt.`);
     }
     if (confined && !placeChanged && !oldIds.has(npc.id) && !partyIds.has(npc.id) && !actorTransitionExplained(gm.narration, npc, ARRIVAL)) {
@@ -260,11 +270,13 @@ function wordSimilarity(a, b) {
   return shared / Math.max(left.size, right.size);
 }
 
-function npcMentioned(narration, npc) {
+function npcMentioned(narration, npc, isFirstAppearance = false) {
   const text = normalize(narration);
   const name = normalize(npc.name);
   if (name.length >= 3 && text.includes(name)) return true;
-  return String(npc.role || "").split(/[^\p{L}\p{N}]+/u).map(normalize).some((word) => word.length >= 5 && text.includes(word));
+  const roleMatch = String(npc.role || "").split(/[^\p{L}\p{N}]+/u).map(normalize).some((word) => word.length >= 5 && text.includes(word));
+  if (roleMatch) return true;
+  return isFirstAppearance && GENERIC_PRESENCE.test(narration);
 }
 
 function combatantsGrounded(narration, enemies, presentNpcs) {

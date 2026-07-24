@@ -162,6 +162,52 @@ test("turning away cannot leave the player trapped in the same scene", async () 
   assert.ok(result.choices.length >= 2);
 });
 
+// systemPrompt.js verlangt ausdrücklich, dass der Name eines NPCs verborgen
+// bleibt, solange er dem Spieler noch nicht bekannt ist (nameBekannt=false) -
+// ein "maskierter Fremder" o. ä. ist genau dieses Muster. Der Continuity-
+// Check darf eine solche, absichtlich anonyme Einführung nicht als Fehler
+// werten, nur weil Name/Rollenwort nicht wörtlich im Text stehen.
+test("accepts an anonymous first-time NPC introduced without naming them", () => {
+  const game = gameOnBoat();
+  game.world.sceneLocation = "Loguetown – Marktplatz"; // offener Ort, sonst greift separat die Zugangs-Regel für abgeschlossene Räume (Boot)
+  game.scene.presentNpcIds = [];
+  const context = { kind: "turn", playerAction: "Ich sehe mich um.", continuity: continuityContext(game) };
+  const anon = scene({
+    narration: "Ein maskierter Fremder beobachtet dich aufmerksam vom Rand der Menge aus.",
+    npcs: [{ id: "mister_york", name: "Mister York", role: "Butler", disposition: 0, note: "Erster Auftritt, noch unbenannt." }],
+  });
+  assert.deepEqual(auditContinuity(game, context, anon), []);
+});
+
+// Die Lockerung gilt NUR für einen echten Erst-Auftritt. Taucht ein NPC ganz
+// ohne jede textliche Spur auf (kein Name, kein Rollenwort, keine generische
+// Präsenz-Formulierung), bleibt das weiterhin ein echter Kontinuitätsfehler.
+test("still rejects a new NPC with no textual trace at all", () => {
+  const game = gameOnBoat();
+  game.scene.presentNpcIds = [];
+  const context = { kind: "turn", playerAction: "Ich sehe mich um.", continuity: continuityContext(game) };
+  const ghost = scene({
+    narration: "Du siehst dich in Ruhe um. Nichts Ungewöhnliches fällt dir auf.",
+    npcs: [{ id: "mister_york", name: "Mister York", role: "Butler", disposition: 0, note: "Taucht einfach so auf." }],
+  });
+  assert.ok(auditContinuity(game, context, ghost).some((issue) => issue.includes("Mister York") && issue.includes("nicht eingeführt")));
+});
+
+// Bereits bekannte Figuren (schon einmal namentlich eingeführt) muessen
+// weiterhin per Name/Rollenwort wiedererkennbar sein - eine generische
+// Praesenz-Formulierung allein darf die Lockerung hier NICHT greifen lassen,
+// sonst koennte eine laengst benannte Person plötzlich wieder anonym auftauchen.
+test("still requires a returning, already-known NPC to be named or role-matched", () => {
+  const game = gameOnBoat(); // "seller"/Taro ist bereits in game.world.npcs bekannt
+  game.scene.presentNpcIds = [];
+  const context = { kind: "turn", playerAction: "Ich sehe mich um.", continuity: continuityContext(game) };
+  const vague = scene({
+    narration: "Jemand beobachtet dich aufmerksam.",
+    npcs: [{ id: "seller", name: "Taro", role: "Verkäufer", disposition: 5, note: "..." }],
+  });
+  assert.ok(auditContinuity(game, context, vague).some((issue) => issue.includes("Taro") && issue.includes("nicht eingeführt")));
+});
+
 test("rejects a non-combat scene without any choices", () => {
   const game = gameOnBoat();
   const context = { kind: "turn", playerAction: "Ich sehe mich um.", continuity: continuityContext(game) };

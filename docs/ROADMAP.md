@@ -225,6 +225,32 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 29) — Continuity-Check: kein Fehlalarm bei unbenannten Erst-Auftritten
+
+Konkreter Vorfall: gleich beim Spielstart verwarf der Kontinuitäts-Wächter
+eine Gemini-Szene mit "NPC „Mister York“ steht in der Szene, wird im
+Erzähltext aber nicht eingeführt." und ersetzte sie durch die neutrale
+Übergangs-Szene.
+
+- [x] **Root Cause gefunden**: ein echter Widerspruch zwischen zwei Regeln.
+      `systemPrompt.js` verlangt ausdrücklich: "Solange nameBekannt=false ist,
+      darf der Erzähler den Namen nicht im Erzähltext verraten" (genau das
+      "maskierter Fremder"-Muster, das dieses Spiel selbst als Stilmittel
+      nutzt). `continuityDirector.js`s `npcMentioned()` verlangte aber
+      unbedingt, dass Name ODER ein Rollenwort wörtlich im Text steht — bei
+      einer absichtlich anonymen Einführung (wie vom Systemprompt verlangt)
+      schlägt das immer fehl, und eine eigentlich korrekte Szene wird verworfen.
+- [x] **Fix**: Bei einem echten Erst-Auftritt (NPC-ID noch nie zuvor in
+      `game.world.npcs` bekannt) akzeptiert `npcMentioned()` jetzt zusätzlich
+      eine generische Präsenz-Formulierung ("ein maskierter Fremder",
+      "jemand beobachtet dich", "tritt heran" …) als Nachweis. Bereits
+      bekannte, zurückkehrende NPCs bleiben weiterhin an Name/Rollenwort
+      gebunden — eine längst benannte Person darf nicht plötzlich wieder
+      anonym auftauchen.
+- [x] 3 neue Tests: anonymer Erst-Auftritt wird akzeptiert, ein NPC ganz ohne
+      jede Textspur bleibt weiterhin ein echter Fehler, eine bereits bekannte
+      Figur braucht weiterhin Name/Rollenwort.
+
 ## Erledigt (Ausbaustufe 27) — Mock-Spielleiter: Auswahlmöglichkeiten NPC-bewusst
 
 Konkretes Beispiel-Feedback per Screenshot: In einer Szene streiten sich zwei
