@@ -19,11 +19,28 @@ const LEAVE_INTENT = /\b(weiterzieh|weitergeh|weggeh|fortgeh|verlass|aufbrech|zi
 // dieses Muster) — ein Erst-Auftritt darf also namenlos erzählt werden. Diese
 // generische Präsenz-Formulierung gilt dann als Nachweis, dass die Person
 // wirklich im Text auftaucht, statt strikt Name/Rollenwort zu verlangen.
-// Deckt bewusst mehrere Arten ab, wie ein anonymer Auftritt beschrieben sein
-// kann — nicht nur "taucht auf/beobachtet", sondern auch "flieht/verschwindet"
-// (ein "flüchtiger Komplize" wird ja meist beim Weglaufen eingeführt, nicht
-// beim Ankommen) und die besitzanzeigende Form ("sein Komplize", "ihr Helfer").
-const GENERIC_PRESENCE = /\b(jemand|eine? (?:gestalt|person|stimme|silhouette|figur)|ein(?:e)? (?:fremd\w*|maskiert\w*|unbekannt\w*|zweite\w*|weitere\w*)|ein (?:mann|reisend\w*|händler|komplize|helfer|begleiter|angreifer|verfolger)|eine (?:frau|reisende|komplizin)|(?:sein|ihr) (?:komplize|begleiter|helfer)|tritt (?:heran|hinzu|näher|ein)|spricht dich an|mustert dich|blickt dich an|wendet sich (?:an dich|dir zu)|näher(?:t|st)? sich dir|beobachtet (?:dich|aufmerksam)|sieht dich an|flieht|flüchtet|rennt (?:davon|weg)|läuft (?:davon|weg)|ergreift die flucht|entkommt|verschwindet (?:in|hinter|um)|taucht (?:unter|ab)|duckt sich weg)\b/i;
+//
+// WICHTIG (Lehre aus mehreren Fehlalarmen: "maskierter Fremder", "flüchtiger
+// Komplize", "vermummter Fremder"): eine anonyme Person wird im Deutschen so
+// gut wie immer über ein BESCHREIBENDES ADJEKTIV eingeführt, das zwischen
+// Artikel und Nomen steht ("ein vermummter Fremder", "eine seltsam reglose,
+// dunkel gekleidete Gestalt") — eine feste Wortliste, die Artikel und Nomen
+// als DIREKT benachbart erwartet, geht an dieser Konstruktion vorbei und
+// verlangt bei jedem neuen Adjektiv einen weiteren Flicken. Die Nomen-Gruppen
+// unten erlauben deshalb eine beliebige, aber auf denselben Satz begrenzte
+// Zeichenspanne dazwischen (`[^.!?]{0,45}?`), statt weiter einzelne
+// Adjektive aufzuzählen.
+const ANON_NOUN = "(?:fremd\\w*|maskiert\\w*|unbekannt\\w*|vermummt\\w*|verhüllt\\w*|zweite\\w*|weitere\\w*|mann\\w*|frau\\w*|gestalt\\w*|person\\w*|figur\\w*|stimme\\w*|silhouette\\w*|reisend\\w*|händler\\w*|komplize\\w*|komplizin\\w*|helfer\\w*|begleiter\\w*|angreifer\\w*|verfolger\\w*)";
+const GENERIC_PRESENCE = new RegExp(
+  "\\b(jemand|niemand anders|irgendwer" +
+  `|ein(?:e)?\\b[^.!?]{0,45}?\\b${ANON_NOUN}` +
+  "|(?:sein|ihr)\\b[^.!?]{0,30}?\\b(?:komplize|begleiter|helfer)\\w*" +
+  "|tritt (?:heran|hinzu|näher|ein)|löst sich (?:aus|von)|spricht dich an|mustert dich|blickt dich an" +
+  "|wendet sich (?:an dich|dir zu)|näher(?:t|st)? sich dir|beobachtet (?:dich|aufmerksam)|sieht dich an" +
+  "|flieht|flüchtet|rennt (?:davon|weg)|läuft (?:davon|weg)|ergreift die flucht|entkommt" +
+  "|verschwindet (?:in|hinter|um)|taucht (?:unter|ab)|duckt sich weg)\\b",
+  "i",
+);
 
 export function continuityContext(game) {
   const present = new Set(game.scene?.presentNpcIds || []);

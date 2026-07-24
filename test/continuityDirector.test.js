@@ -195,6 +195,38 @@ test("accepts an anonymous first-time NPC introduced while fleeing the scene", (
   assert.deepEqual(auditContinuity(game, context, anon), []);
 });
 
+// Konkreter Nutzer-Vorfall: "ein VERMUMMTER Fremder" — das einschiebende
+// Adjektiv zwischen Artikel und Nomen ließ die alte, auf direkte
+// Nachbarschaft angewiesene Regex ins Leere laufen. Diese Konstruktion
+// (Artikel + Adjektiv + Nomen) ist im Deutschen der NORMALFALL, nicht die
+// Ausnahme, wenn eine anonyme Person beschrieben wird.
+test("accepts an anonymous first-time NPC described with an adjective between article and noun", () => {
+  const game = gameOnBoat();
+  game.world.sceneLocation = "Loguetown – Marktplatz";
+  game.scene.presentNpcIds = [];
+  const context = { kind: "turn", playerAction: "Ich sehe mich um.", continuity: continuityContext(game) };
+  const anon = scene({
+    narration: "Ein vermummter Fremder lehnt regungslos an der Hauswand und beobachtet das Treiben.",
+    npcs: [{ id: "npc_vermummt", name: "Vermummter Fremder", role: "", disposition: 0, note: "Erster Auftritt." }],
+  });
+  assert.deepEqual(auditContinuity(game, context, anon), []);
+});
+
+// Dieselbe Konstruktion mit MEHREREN Wörtern zwischen Artikel und Nomen —
+// der Test soll nicht nur ein einzelnes Adjektiv bestätigen, sondern die
+// generelle Toleranz gegenüber beliebig eingeschobenen Beschreibungen.
+test("tolerates several words between article and noun when describing an anonymous NPC", () => {
+  const game = gameOnBoat();
+  game.world.sceneLocation = "Loguetown – Marktplatz";
+  game.scene.presentNpcIds = [];
+  const context = { kind: "turn", playerAction: "Ich sehe mich um.", continuity: continuityContext(game) };
+  const anon = scene({
+    narration: "Eine seltsam reglose, verhüllte Gestalt kauert am Rand des Platzes.",
+    npcs: [{ id: "npc_gestalt", name: "Verhüllte Gestalt", role: "", disposition: 0, note: "Erster Auftritt." }],
+  });
+  assert.deepEqual(auditContinuity(game, context, anon), []);
+});
+
 // Ein mehrteiliger Name wird im Erzähltext oft nur in EINEM seiner Wörter
 // wieder aufgegriffen, nicht als zusammenhängender Substring — das darf
 // nicht als "nicht eingeführt" gewertet werden.

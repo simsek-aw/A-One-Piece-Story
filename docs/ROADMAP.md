@@ -225,6 +225,30 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 34) — Continuity-Check: strukturelle Ursache der NPC-Falsch-Positive behoben
+
+Nach dem dritten Fehlalarm derselben Art ("Vermummter Fremder steht in der
+Szene, wird im Erzähltext aber nicht eingeführt.") wurde klar: das war kein
+weiteres fehlendes Vokabel, sondern ein struktureller Fehler in der Regex
+selbst — jetzt behoben, statt wieder nur ein Wort zu ergänzen.
+
+- [x] **Root Cause**: `GENERIC_PRESENCE` verlangte, dass Artikel ("ein"/
+      "eine") und Nomen ("Fremder", "Gestalt" …) DIREKT benachbart stehen.
+      Im Deutschen wird eine anonyme Person aber so gut wie immer über ein
+      dazwischenstehendes Adjektiv beschrieben ("ein **vermummter** Fremder",
+      "eine **geheimnisvolle** Gestalt") — Artikel+Nomen direkt nebeneinander
+      ist die Ausnahme, nicht der Normalfall. Jedes neue Adjektiv brauchte
+      bisher einen eigenen Flicken (vgl. Ausbaustufe 29/33).
+- [x] **Fix**: die Nomen-Gruppen erlauben jetzt eine beliebige, aber auf
+      denselben Satz begrenzte Zeichenspanne zwischen Artikel und Nomen
+      (`ein(?:e)?\b[^.!?]{0,45}?\b(?:fremd|gestalt|...)`) statt fester
+      Wortabstände — löst die Adjektiv-Einschub-Konstruktion grundsätzlich,
+      nicht nur für ein bestimmtes Adjektiv.
+- [x] 2 neue Tests: ein einzelnes eingeschobenes Adjektiv ("vermummter") und
+      mehrere Wörter dazwischen werden beide akzeptiert; die bestehenden
+      "kein Fehlalarm nötig"-Tests bestätigen weiterhin, dass ein NPC ganz
+      ohne jede Textspur ein echter Fehler bleibt.
+
 ## Erledigt (Ausbaustufe 33) — Continuity-Check: weitere NPC-Falsch-Positive behoben
 
 Derselbe Fehlalarm wie bei "Mister York" (Ausbaustufe 29) trat erneut auf:
