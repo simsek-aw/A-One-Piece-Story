@@ -180,8 +180,10 @@ Mock-Spielleiter.
 - **Sprachausgabe (optional)**: liest neue Erzähltexte per Gemini-TTS
   (Stimme "Orus") vor, sobald der 🔊-Umschalter im Menü aktiv ist — nicht-
   blockierend wie die KI-Bild-Panels: der Text steht sofort da, die Stimme
-  trifft kurz danach ein. Braucht `GEMINI_TTS=1` + `GEMINI_API_KEY` auf dem
-  Server; die Wahl des Spielers wird lokal gemerkt.
+  trifft kurz danach ein. Vorträgt im Stil eines Dungeons-and-Dragons-
+  Spielleiters (Regieanweisung, konfigurierbar über `GEMINI_TTS_STYLE`).
+  Braucht `GEMINI_TTS=1` + `GEMINI_API_KEY` auf dem Server; die Wahl des
+  Spielers wird lokal gemerkt.
 - **Mobil & installierbar (PWA)**: touch-freundliches Layout; oben links per
   Hamburger oder per Swipe-Left öffnet sich das Menü als Off-Canvas-Drawer.
   Als Web-App installierbar (`manifest.json` + Service-Worker mit Offline-Shell,

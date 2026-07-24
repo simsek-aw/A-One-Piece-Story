@@ -132,6 +132,9 @@ klassischer „kleiner Server" einfacher.
      unabhängig von der Text-Kontingent-Kette — Stand Sommer 2026 z. B.
      500 Anfragen/Tag im kostenlosen Tarif, in Google AI Studio prüfen)
    - `GEMINI_TTS_VOICE = Orus` (optional; eine der 30 Gemini-Stimmen)
+   - `GEMINI_TTS_STYLE` (optional; Regieanweisung, die Gemini-TTS vor dem
+     Vortragen befolgt statt sie vorzulesen — Standard lässt es wie einen
+     D&D-Spielleiter am Tisch klingen)
 
    Diese Variable schaltet die Option nur serverseitig frei — jeder Spieler
    entscheidet zusätzlich per 🔊-Umschalter im Menü, ob er sie hören will

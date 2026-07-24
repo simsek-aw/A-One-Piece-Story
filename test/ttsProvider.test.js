@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { config } from "../server/config.js";
-import { ttsEnabled, trimForSpeech, pcmToWav, synthesizeSpeech } from "../server/ai/ttsProvider.js";
+import { ttsEnabled, trimForSpeech, pcmToWav, buildSpeechPrompt, synthesizeSpeech } from "../server/ai/ttsProvider.js";
 
 test("ttsEnabled requires both the GEMINI_TTS flag and an API key", () => {
   const original = { tts: config.gemini.tts, apiKey: config.gemini.apiKey };
@@ -69,4 +69,21 @@ test("pcmToWav falls back to 24000Hz when the mimeType has no rate", () => {
   const wavBase64 = pcmToWav(Buffer.from([9, 9]).toString("base64"), "audio/L16");
   const wav = Buffer.from(wavBase64, "base64");
   assert.equal(wav.readUInt32LE(24), 24000);
+});
+
+// Nutzerwunsch: die Sprachausgabe soll wie ein D&D-Spielleiter vorgetragen
+// werden. Gemini-TTS liest eine vorangestellte Regieanweisung nicht wörtlich
+// vor, sondern befolgt sie als Vortragsstil — die Anweisung muss also VOR
+// dem eigentlichen Erzähltext stehen, nicht danach oder vermischt.
+test("buildSpeechPrompt prepends the configured narration style before the text", () => {
+  const original = config.gemini.ttsStyle;
+  try {
+    config.gemini.ttsStyle = "Sprich wie ein Dungeons-and-Dragons-Spielleiter.";
+    const prompt = buildSpeechPrompt("Der Hafen liegt ruhig im Morgenlicht.");
+    assert.ok(prompt.startsWith(config.gemini.ttsStyle));
+    assert.ok(prompt.endsWith("Der Hafen liegt ruhig im Morgenlicht."));
+    assert.ok(prompt.indexOf(config.gemini.ttsStyle) < prompt.indexOf("Der Hafen"));
+  } finally {
+    config.gemini.ttsStyle = original;
+  }
 });

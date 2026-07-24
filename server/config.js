@@ -97,6 +97,11 @@ export const config = {
     tts: process.env.GEMINI_TTS === "1" || process.env.GEMINI_TTS === "true",
     ttsModel: process.env.GEMINI_TTS_MODEL || "gemini-3.1-flash-tts",
     ttsVoice: process.env.GEMINI_TTS_VOICE || "Orus",
+    // Stil-Vorgabe, die der Sprachausgabe als Regieanweisung vorangestellt
+    // wird (Gemini-TTS liest sie nicht vor, sondern befolgt sie beim
+    // Vortragen) — vgl. server/ai/ttsProvider.js.
+    ttsStyle: process.env.GEMINI_TTS_STYLE
+      || "Sprich wie ein erfahrener Dungeons-and-Dragons-Spielleiter am Tisch, der seiner Gruppe eine Szene vorliest: atmosphärisch, mit spürbarer Spannung, dramatischem Timing und wechselnder Betonung je nach Stimmung — lebendig erzählt statt monoton vorgelesen.",
   },
   openrouter: {
     apiKey: process.env.OPENROUTER_API_KEY || "",

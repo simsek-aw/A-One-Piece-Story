@@ -26,6 +26,15 @@ export function trimForSpeech(text) {
   return lastSentenceEnd > 200 ? cut.slice(0, lastSentenceEnd + 1) : cut;
 }
 
+// Gemini-TTS liest eine vorangestellte Regieanweisung nicht wörtlich vor,
+// sondern befolgt sie als Vortragsstil (dieselbe "Say cheerfully: ..."-
+// Steuerung, mit der Gemini seine TTS-Modelle "steuerbar" macht). Ein
+// Absatzumbruch trennt Anweisung und Erzähltext klar voneinander.
+// Exportiert für Tests.
+export function buildSpeechPrompt(text) {
+  return `${config.gemini.ttsStyle}\n\n${text}`;
+}
+
 let _client = null;
 async function client() {
   if (_client) return _client;
@@ -73,7 +82,7 @@ export async function synthesizeSpeech(text) {
     const c = await client();
     const response = await c.models.generateContent({
       model: config.gemini.ttsModel,
-      contents: [{ parts: [{ text: spoken }] }],
+      contents: [{ parts: [{ text: buildSpeechPrompt(spoken) }] }],
       config: {
         responseModalities: ["AUDIO"],
         speechConfig: {

@@ -225,6 +225,28 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 37) — Ortsangaben-Entlastung + D&D-Vortragsstil für die Sprachausgabe
+
+Zwei kleine, zusammenhängende Nachbesserungen im direkten Anschluss an
+Ausbaustufe 36/35.
+
+- [x] `systemPrompt.js`: die Pflicht, den Schauplatz in JEDEM Absatz erneut
+      wörtlich zu nennen, ist entfallen — die Kopfleiste zeigt Ort und Weg
+      bereits dauerhaft an, das war die ursprüngliche Motivation für die
+      Regel. `stateChanges.sceneLocation` muss weiterhin bei jedem echten
+      Ortswechsel korrekt gesetzt werden (steuert die Anzeige unabhängig vom
+      Fließtext); nur die REDUNDANTE Wiederholung im Erzähltext entfällt,
+      das gesparte Wortbudget geht an neue Substanz.
+- [x] `ttsProvider.js`: neue `buildSpeechPrompt()` stellt der Sprachausgabe
+      eine konfigurierbare Regieanweisung voran (`GEMINI_TTS_STYLE`,
+      Standard: Vortrag wie ein Dungeons-and-Dragons-Spielleiter am Tisch —
+      atmosphärisch, mit Spannung und dramatischem Timing). Gemini-TTS liest
+      eine solche vorangestellte Anweisung nicht wörtlich vor, sondern
+      befolgt sie als Stil ("Say cheerfully: ..."-Steuerung).
+- [x] 1 neuer Test für `buildSpeechPrompt`; per Live-Aufruf (ungültiger
+      Test-Key) verifiziert, dass die um den Stil-Prefix erweiterte Anfrage
+      weiterhin korrekt bei Google ankommt.
+
 ## Erledigt (Ausbaustufe 36) — Sprachausgabe (Gemini-TTS, umschaltbar)
 
 Nutzerwunsch: eine Sprachausgabe für die Erzählung, umschaltbar, über
