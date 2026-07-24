@@ -225,6 +225,34 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 31) — NPC-Gedächtnis: Auswahl-Logik, Loyalität-Sync, Zugehörigkeit
+
+Nutzerfrage: lohnt sich eine eigene SQL-Tabelle für begegnete NPCs, um
+Konsistenz zu schaffen (Crew-Zugehörigkeit, Beziehungsstatus, für den
+Spielleiter immer abrufbar)? Antwort: der Spielstand liegt in Supabase
+ohnehin schon als `jsonb`-Spalte — abfragbar ist er also längst. Das
+eigentliche Problem lag woanders, an drei konkreten Stellen:
+
+- [x] **`memorySummary()` war rein nach Aktualität sortiert**: bei vielen
+      Begegnungen fielen ältere, aber weiterhin wichtige NPCs (Crew, eine
+      gefestigte Freund-/Feindschaft, gerade anwesende Personen) einfach aus
+      dem Prompt-Ausschnitt (`limit=12`) heraus. Jetzt garantieren anwesende
+      NPCs, Crew-Mitglieder und Personen mit gefestigter Gesinnung (±20,
+      dieselbe Schwelle wie das "Bekannte Gesichter"-Panel) sich zuerst einen
+      Platz; erst danach füllt Aktualität den Rest auf.
+- [x] **Party-Loyalität war eingefroren**: `game.party[].loyalty` wurde beim
+      Beitritt einmalig gesetzt und nie wieder aktualisiert, während
+      `game.world.npcs[].disposition` (Gesinnung) über jede Szene weiter
+      einlief — zwei für dieselbe Beziehung auseinanderlaufende Zahlen.
+      `upsertNpc()` zieht die Loyalität eines Crewmitglieds jetzt anteilig
+      (¼) mit, sobald sich die erzählte Gesinnung merklich ändert.
+- [x] **Neues, rein abgeleitetes `zugehoerigkeit`-Feld** in `memorySummary()`
+      ("crew" / "verbuendet" / "feindlich" / "neutral") — kein zusätzlicher
+      gespeicherter Zustand, kann also nie mit Party/Gesinnung auseinander-
+      laufen. `systemPrompt.js` weist den Spielleiter explizit darauf hin,
+      es für konsistente Reaktionen zu nutzen.
+- [x] 7 neue Tests (`test/memory.test.js`).
+
 ## Erledigt (Ausbaustufe 30) — Gemini-Kontingent-Kette um die 3.x-Generation erweitert
 
 Nutzerfrage: eine neuere Gemini-Generation (3.5 Flash, 3 Flash je ~20/Tag;
