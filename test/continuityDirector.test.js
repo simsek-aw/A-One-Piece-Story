@@ -208,6 +208,48 @@ test("still requires a returning, already-known NPC to be named or role-matched"
   assert.ok(auditContinuity(game, context, vague).some((issue) => issue.includes("Taro") && issue.includes("nicht eingeführt")));
 });
 
+// Konkreter Nutzer-Vorfall: eine vorformulierte Auswahlmöglichkeit ("Reagieren.")
+// enthält selbst kein Bewegungsverb, obwohl der Ortswechsel bereits in der
+// VORIGEN Szene angelegt wurde ("ein Pfad führt zum Hinterhof"). systemPrompt.js
+// verbietet ausdrücklich, das in der neuen Szene zu wiederholen — die Prüfung
+// muss die vorige Szene also mit einbeziehen, sonst wirkt eine völlig
+// plausible Fortsetzung wie ein unbegründeter Teleport.
+test("accepts a place change set up in the previous scene, even if the chosen option and new narration don't repeat a movement verb", () => {
+  const game = gameOnBoat();
+  game.world.sceneLocation = "Windmühlendorf – Straßen";
+  game.scene = {
+    narration: "Rauch steigt hinter den Häusern auf. Ein schmaler Pfad führt dich am schnellsten zum Hinterhof des Archivs.",
+    choices: [{ id: "a", text: "Reagieren, bevor es zu spät ist.", skillCheck: null }],
+    panels: [], presentNpcIds: [],
+  };
+  const context = { kind: "turn", playerAction: "Reagieren, bevor es zu spät ist.", continuity: continuityContext(game) };
+  const plausible = scene({
+    narration: "Die Hitze schlägt dir entgegen. Zwischen zerfetzten Regalen liegen brennende Aktenstapel; irgendwo hustet jemand.",
+    stateChanges: { ...STATE_CHANGES, sceneLocation: "Windmühlendorf – Hinterhof des brennenden Archivs" },
+    npcs: [],
+  });
+  assert.deepEqual(auditContinuity(game, context, plausible), []);
+});
+
+// Regressions-Gegenprobe: fehlt jede Bewegungs-Rechtfertigung — weder vorher
+// noch jetzt —, bleibt ein Ortswechsel weiterhin ein echter Fehler.
+test("still rejects a place change with no movement justification anywhere, previous or current", () => {
+  const game = gameOnBoat();
+  game.world.sceneLocation = "Windmühlendorf – Straßen";
+  game.scene = {
+    narration: "Auf dem Marktplatz feilschen zwei Händler lautstark um Fischpreise.",
+    choices: [{ id: "a", text: "Zuhören.", skillCheck: null }],
+    panels: [], presentNpcIds: [],
+  };
+  const context = { kind: "turn", playerAction: "Zuhören.", continuity: continuityContext(game) };
+  const ungrounded = scene({
+    narration: "Du stehst plötzlich im Hinterhof eines brennenden Archivs.",
+    stateChanges: { ...STATE_CHANGES, sceneLocation: "Windmühlendorf – Hinterhof des brennenden Archivs" },
+    npcs: [],
+  });
+  assert.ok(auditContinuity(game, context, ungrounded).some((issue) => issue.includes("Unbegründeter Ortswechsel")));
+});
+
 test("rejects a non-combat scene without any choices", () => {
   const game = gameOnBoat();
   const context = { kind: "turn", playerAction: "Ich sehe mich um.", continuity: continuityContext(game) };

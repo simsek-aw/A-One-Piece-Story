@@ -4,7 +4,7 @@
 
 import { validateGmResponse } from "./schema.js";
 
-const MOVEMENT = /\b(geh|lauf|renn|fahr|segel|reise|ankomm|rud|kletter|spring|betret|verlass|steig|bring|führ|folg|kehr|gelang|flieh|schleich|anleg|ableg|nehme mir .{0,20}zimmer|suche .{0,30}schlafplatz)/i;
+const MOVEMENT = /\b(geh|lauf|renn|fahr|segel|reise|ankomm|rud|kletter|spring|betret|verlass|steig|bring|führ|folg|kehr|gelang|flieh|schleich|anleg|ableg|eil|hast(?:e|et|en|ete)?|stürm|hetz|sprint|begib\w* dich|mach\w* dich auf|nehme mir .{0,20}zimmer|suche .{0,30}schlafplatz)/i;
 const ARRIVAL = /\b(kommt? an bord|klettert|springt (?:an|auf)|legt an|rudert heran|tritt ein|öffnet .{0,24}tür|wird .{0,24}(?:gebracht|geführt)|folgt dir|war .{0,30}versteckt|aus der (?:kajüte|luke|zelle)|erscheint in der tür)/i;
 const DEPARTURE = /\b(geht|verlässt|verschwindet|zieht sich zurück|steigt aus|springt von bord|wird abgeführt|läuft davon|verabschiedet sich)/i;
 const VIOLENT_ACTION = /\b(angreif|schlag|trete|schieß|erstech|bedroh|provozier|ziehe .*waffe|kämpf)/i;
@@ -98,7 +98,16 @@ export function auditContinuity(game, context, gm) {
   const continuity = context.continuity || continuityContext(game);
   const oldPlace = normalize(continuity.sceneLocation);
   const newPlace = normalize(gm.stateChanges.sceneLocation || continuity.sceneLocation);
-  const combined = `${context.playerAction || ""}\n${gm.narration}`;
+  // Die Bewegungs-Rechtfertigung darf auch aus der VORHERIGEN Szene stammen:
+  // der Spielleiter baut einen Ortswechsel oft schon in der Szene auf, die zur
+  // gewählten Option führte ("Rauch steigt auf – ein Weg führt zum
+  // Hinterhof"), und erzählt die Ankunft danach, ohne die Bewegung selbst ein
+  // zweites Mal zu beschreiben (systemPrompt.js verbietet ausdrücklich, die
+  // vorige Szene zu wiederholen). Ohne diesen Kontext sähe eine völlig
+  // plausible Fortsetzung wie ein unbegründeter Teleport aus — besonders bei
+  // einer vorformulierten Auswahlmöglichkeit, deren Wortlaut selbst kein
+  // Bewegungsverb enthalten muss (z. B. "Reagieren." statt "Hingehen.").
+  const combined = `${continuity.previousNarration || ""}\n${context.playerAction || ""}\n${gm.narration}`;
   const placeChanged = !!newPlace && newPlace !== oldPlace && !newPlace.includes(oldPlace) && !oldPlace.includes(newPlace);
 
   if (!gm.combatStart && gm.choices.length < 1) {

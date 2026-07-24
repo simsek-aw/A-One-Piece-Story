@@ -225,6 +225,31 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 32) — Continuity-Check: Ortswechsel-Rechtfertigung aus der Vorszene
+
+Konkreter Vorfall (per vorformulierter Auswahlmöglichkeit, nicht Freitext):
+"Unbegründeter Ortswechsel von „Windmühlendorf – Straßen“ zu „Windmühlendorf –
+Hinterhof des brennenden Archivs“." — dieselbe Klasse Falsch-Positiv wie
+Ausbaustufe 29 (Mister York), diesmal beim Ortswechsel-Check statt beim NPC-
+Check.
+
+- [x] **Root Cause**: die Bewegungs-Prüfung (`MOVEMENT`-Regex) betrachtete nur
+      die aktuell gewählte Aktion + die neue Szene, nie die VORIGE Szene. Der
+      Spielleiter baut einen Ortswechsel aber oft schon dort auf ("Rauch
+      steigt auf – ein Pfad führt zum Hinterhof"), bevor die Auswahlmöglichkeit
+      angeboten wird — und erzählt die Ankunft danach, ohne die Bewegung ein
+      zweites Mal zu beschreiben (systemPrompt.js verbietet ausdrücklich, die
+      vorige Szene zu wiederholen). Eine vorformulierte Option wie "Reagieren."
+      muss selbst kein Bewegungsverb enthalten, wenn der Weg schon klar war.
+- [x] **Fix**: der Bewegungs-Check bezieht jetzt auch `continuity.previousNarration`
+      mit ein, nicht nur Spieleraktion + neue Szene.
+- [x] Zusätzlich ein paar fehlende Bewegungsverben ergänzt (eilen, hasten,
+      stürmen, hetzen, sprinten, sich aufmachen) — genau die Wortwahl, die
+      bei einem plötzlichen Ereignis (Feuer, Alarm) naheliegt.
+- [x] 2 neue Tests: ein in der Vorszene angelegter Ortswechsel wird jetzt
+      akzeptiert; ein wirklich unbegründeter Teleport (nirgends eine
+      Bewegungs-Spur) bleibt weiterhin ein echter Fehler.
+
 ## Erledigt (Ausbaustufe 31) — NPC-Gedächtnis: Auswahl-Logik, Loyalität-Sync, Zugehörigkeit
 
 Nutzerfrage: lohnt sich eine eigene SQL-Tabelle für begegnete NPCs, um
