@@ -40,11 +40,25 @@ const openRouterModels = [...new Set([defaultOpenRouterModel, ...configuredOpenR
 // (wie bei OpenRouter) mehrere Modelle einzeln im Spielleiter-Menü statt nur
 // eines fix konfigurierten. GEMINI_MODELS um weitere/neuere Modell-IDs
 // ergänzen (z. B. eine neuere Generation, sobald in AI Studio verfügbar).
+//
+// Stand Sommer 2026 zusätzlich zur bewährten 2.5-Generation: die neuere
+// 3.x-Generation, bei der (wie schon bei 2.5) die "Lite"-Varianten ein
+// deutlich höheres Tageskontingent haben als die Hauptmodelle. Reihenfolge:
+// beste Qualität zuerst (3.5/3 Flash), dann die kontingentstarken Lite-
+// Varianten, dann die 2.5/2.0-Generation als letztes Sicherheitsnetz, bevor
+// überhaupt auf den lokalen Mock-Erzähler zurückgefallen wird. Die genauen
+// Modell-IDs sind nach Googles Namensmuster abgeleitet (siehe das
+// "gemini-3-pro-image-preview"-Beispiel im @google/genai-SDK) — bei
+// Abweichung in Google AI Studio nachsehen und per GEMINI_MODELS überschreiben.
 const configuredGeminiModels = commaList(process.env.GEMINI_MODELS);
-const defaultGeminiModel = process.env.GEMINI_MODEL || configuredGeminiModels[0] || "gemini-2.5-flash";
+const defaultGeminiModel = process.env.GEMINI_MODEL || configuredGeminiModels[0] || "gemini-3.5-flash";
 const geminiModels = [...new Set([
   defaultGeminiModel,
   ...configuredGeminiModels,
+  "gemini-3.5-flash",
+  "gemini-3-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.1-flash-lite",
   "gemini-2.5-flash",
   "gemini-2.5-flash-lite",
   "gemini-2.0-flash",

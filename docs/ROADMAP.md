@@ -225,6 +225,27 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 30) — Gemini-Kontingent-Kette um die 3.x-Generation erweitert
+
+Nutzerfrage: eine neuere Gemini-Generation (3.5 Flash, 3 Flash je ~20/Tag;
+3.5 Flash-Lite, 3.1 Flash-Lite je ~500/Tag) war bislang nicht in der
+Kontingent-Kette hinterlegt — `config.js` kannte nur die 2.5/2.0-Generation.
+Nutzerbestätigung: jedes echte Gemini-Modell ist weiterhin einer Mock-
+Fallback-Szene vorzuziehen, also lohnt sich eine möglichst lange Kette.
+
+- [x] `config.js`: Standard-Kette jetzt `gemini-3.5-flash → gemini-3-flash →
+      gemini-3.5-flash-lite → gemini-3.1-flash-lite → gemini-2.5-flash →
+      gemini-2.5-flash-lite → gemini-2.0-flash` — beste Qualität zuerst, dann
+      die kontingentstarken Lite-Varianten, dann die bewährte 2.5/2.0-
+      Generation als letztes Sicherheitsnetz vor dem Mock-Erzähler.
+- [x] Die genauen 3.x-Modell-IDs sind nach Googles Namensmuster abgeleitet
+      (bestätigt u. a. durch das `gemini-3-pro-image-preview`-Beispiel im
+      installierten `@google/genai`-SDK) — Googles eigene Rate-Limit-Seite
+      war für einen automatisierten Abruf nicht erreichbar (403), darum bei
+      Zweifel in Google AI Studio gegenprüfen und per `GEMINI_MODELS`
+      überschreiben.
+- [x] `.env.example` und `docs/DEPLOY.md` entsprechend aktualisiert.
+
 ## Erledigt (Ausbaustufe 29) — Continuity-Check: kein Fehlalarm bei unbenannten Erst-Auftritten
 
 Konkreter Vorfall: gleich beim Spielstart verwarf der Kontinuitäts-Wächter
