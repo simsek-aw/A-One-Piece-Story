@@ -1688,12 +1688,24 @@ async function speak(text) {
       body: JSON.stringify({ text }),
     });
     const data = await res.json();
-    if (!data?.audio) return;
+    if (!data?.audio) {
+      // Serverseitig fehlgeschlagen (Kontingent, falscher Modellname, TTS
+      // nicht konfiguriert, ...) — Detailgrund steht im SERVER-Log
+      // ("[tts] Sprachausgabe fehlgeschlagen: ..."), hier nur sichtbar
+      // machen, DASS nichts kam, damit es sich von einem Client-Fehler
+      // unterscheiden lässt.
+      console.warn("[tts] Server lieferte keine Audiodaten (siehe Server-Log für den Grund).");
+      return;
+    }
     const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
     currentSpeech = audio;
-    audio.play().catch(() => {}); // Autoplay-Sperren o. Ä. -> einfach still bleiben
-  } catch {
-    /* Sprachausgabe ist ein Bonus, kein Kernfeature — Fehler bleiben leise. */
+    audio.play().catch((err) => {
+      // Browser blockieren Autoplay ohne vorherige Nutzerinteraktion auf der
+      // Seite — das ist der häufigste Grund für lautlos bleibende Sprachausgabe.
+      console.warn("[tts] Wiedergabe blockiert (vermutlich Autoplay-Sperre des Browsers):", err.message);
+    });
+  } catch (err) {
+    console.warn("[tts] Anfrage fehlgeschlagen:", err.message);
   }
 }
 
