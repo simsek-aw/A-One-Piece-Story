@@ -95,7 +95,7 @@ export const config = {
     // Tarif). Standard aus; der Spieler schaltet client-seitig per Umschalter
     // zusätzlich um (dieses Flag entscheidet nur, ob die Option angeboten wird).
     tts: process.env.GEMINI_TTS === "1" || process.env.GEMINI_TTS === "true",
-    ttsModel: process.env.GEMINI_TTS_MODEL || "gemini-3.1-flash-tts",
+    ttsModel: process.env.GEMINI_TTS_MODEL || "gemini-3.1-flash-tts-preview",
     ttsVoice: process.env.GEMINI_TTS_VOICE || "Orus",
     // Stil-Vorgabe, die der Sprachausgabe als Regieanweisung vorangestellt
     // wird (Gemini-TTS liest sie nicht vor, sondern befolgt sie beim

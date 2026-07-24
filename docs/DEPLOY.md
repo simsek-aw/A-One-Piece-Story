@@ -128,9 +128,14 @@ klassischer „kleiner Server" einfacher.
 6. Optional **Sprachausgabe** (Gemini-TTS liest die Erzählung vor):
    - `GEMINI_TTS = 1`
    - `GEMINI_API_KEY` (derselbe Schlüssel wie oben reicht)
-   - `GEMINI_TTS_MODEL = gemini-3.1-flash-tts` (optional; eigenes Kontingent,
-     unabhängig von der Text-Kontingent-Kette — Stand Sommer 2026 z. B.
-     500 Anfragen/Tag im kostenlosen Tarif, in Google AI Studio prüfen)
+   - `GEMINI_TTS_MODEL = gemini-3.1-flash-tts-preview` (optional; eigenes
+     Kontingent, unabhängig von der Text-Kontingent-Kette — Stand Sommer 2026
+     z. B. 500 Anfragen/Tag im kostenlosen Tarif, in Google AI Studio
+     prüfen). Wichtig: der Modellname braucht das `-preview`-Suffix, sonst
+     liefert Google einen 404 ("is not found ... or is not supported for
+     generateContent") — falls diese Variable bei dir noch ohne `-preview`
+     gesetzt ist, bitte aktualisieren oder ganz entfernen (der Server-Default
+     ist bereits korrekt).
    - `GEMINI_TTS_VOICE = Orus` (optional; eine der 30 Gemini-Stimmen)
    - `GEMINI_TTS_STYLE` (optional; Regieanweisung, die Gemini-TTS vor dem
      Vortragen befolgt statt sie vorzulesen — Standard lässt es wie einen

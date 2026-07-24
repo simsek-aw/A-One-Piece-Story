@@ -225,6 +225,20 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 41) — Sprachausgabe: falscher TTS-Modellname korrigiert
+
+Das neue Server-Log aus Ausbaustufe 40 zeigte den echten Grund: Google
+lieferte für `gemini-3.1-flash-tts` einen 404 ("is not found ... or is not
+supported for generateContent"). Der Modellname brauchte das `-preview`-
+Suffix, das beim ursprünglichen Aufbau der Funktion (ohne Möglichkeit eines
+echten Live-Tests) nicht bekannt war.
+
+- [x] `config.js`: Default für `ttsModel` korrigiert auf
+      `gemini-3.1-flash-tts-preview`.
+- [x] `docs/DEPLOY.md`: Beispielwert für `GEMINI_TTS_MODEL` korrigiert +
+      Hinweis ergänzt, bei bereits gesetzter Render-Umgebungsvariable ohne
+      `-preview` diese zu aktualisieren oder zu entfernen.
+
 ## Erledigt (Ausbaustufe 40) — Sprachausgabe: verbleibende stille Fehlerpfade geloggt
 
 Nutzerrückmeldung "Ich höre leider noch nichts" zeigte in der Browser-Konsole
