@@ -75,7 +75,10 @@ export function pcmToWav(base64Pcm, mimeType) {
 // Liefert { audio: "<base64 WAV>" } oder { audio: null } bei Aus/Fehler —
 // nie eine Exception, damit ein TTS-Ausfall niemals den Spielfluss stört.
 export async function synthesizeSpeech(text) {
-  if (!ttsEnabled()) return { audio: null };
+  if (!ttsEnabled()) {
+    console.warn("[tts] Deaktiviert: GEMINI_TTS und/oder GEMINI_API_KEY sind serverseitig nicht gesetzt.");
+    return { audio: null };
+  }
   const spoken = trimForSpeech(text);
   if (!spoken) return { audio: null };
   try {
@@ -92,7 +95,16 @@ export async function synthesizeSpeech(text) {
       },
     });
     const part = response?.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
-    if (!part?.inlineData?.data) return { audio: null };
+    if (!part?.inlineData?.data) {
+      const candidate = response?.candidates?.[0];
+      console.warn(
+        "[tts] Gemini lieferte keine Audiodaten zurück.",
+        `finishReason=${candidate?.finishReason || "?"}`,
+        `blockReason=${response?.promptFeedback?.blockReason || "-"}`,
+        `parts=${JSON.stringify(candidate?.content?.parts || [])}`,
+      );
+      return { audio: null };
+    }
     return { audio: pcmToWav(part.inlineData.data, part.inlineData.mimeType) };
   } catch (err) {
     console.warn("[tts] Sprachausgabe fehlgeschlagen:", err.message);

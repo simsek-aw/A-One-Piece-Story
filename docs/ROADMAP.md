@@ -225,6 +225,22 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 40) — Sprachausgabe: verbleibende stille Fehlerpfade geloggt
+
+Nutzerrückmeldung "Ich höre leider noch nichts" zeigte in der Browser-Konsole
+genau die in Ausbaustufe 38 neu eingeführte Meldung "Server lieferte keine
+Audiodaten (siehe Server-Log für den Grund)" — aber zwei Rückgabepfade in
+`ttsProvider.js` waren selbst noch komplett stumm, sodass der Verweis auf das
+Server-Log ins Leere lief.
+
+- [x] `synthesizeSpeech()`: der Deaktiviert-Pfad (`GEMINI_TTS`/`GEMINI_API_KEY`
+      fehlt serverseitig) loggt jetzt explizit.
+- [x] Liefert Gemini keine `inlineData` zurück (z. B. Sicherheits-Blockade,
+      falscher/nicht unterstützter Modellname, Antwort ohne Audio-Anteil),
+      loggt der Server jetzt `finishReason`, `blockReason` und die
+      zurückgelieferten `parts` — damit sich der tatsächliche Grund erstmals
+      aus den Server-Logs ablesen lässt, statt nur "kein Audio" ohne Kontext.
+
 ## Erledigt (Ausbaustufe 39) — Geschlecht bei der Charaktererstellung + Spieleraktion optisch abgehoben
 
 Zwei unabhängige Nutzerwünsche in einem Durchgang.
