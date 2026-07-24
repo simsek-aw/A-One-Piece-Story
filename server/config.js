@@ -90,6 +90,13 @@ export const config = {
     // ein eigenes, kleineres Kontingent als Text — separat zuschaltbar.
     images: process.env.GEMINI_IMAGES === "1" || process.env.GEMINI_IMAGES === "true",
     imageModel: process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image",
+    // Sprachausgabe für die Erzählung (Gemini 3.1 Flash TTS, eigenes
+    // Kontingent — Stand Sommer 2026 z. B. 500 Anfragen/Tag im kostenlosen
+    // Tarif). Standard aus; der Spieler schaltet client-seitig per Umschalter
+    // zusätzlich um (dieses Flag entscheidet nur, ob die Option angeboten wird).
+    tts: process.env.GEMINI_TTS === "1" || process.env.GEMINI_TTS === "true",
+    ttsModel: process.env.GEMINI_TTS_MODEL || "gemini-3.1-flash-tts",
+    ttsVoice: process.env.GEMINI_TTS_VOICE || "Orus",
   },
   openrouter: {
     apiKey: process.env.OPENROUTER_API_KEY || "",

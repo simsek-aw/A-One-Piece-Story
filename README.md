@@ -177,6 +177,11 @@ Mock-Spielleiter.
 - **Manga-Panel-Look**: strenges Schwarz-Weiß mit dicken Tusche-Rahmen, harten
   Panel-Schatten, Screentone-Raster und gotischen Versal-Überschriften.
   Voll invertierbar per Umschalter (◑ „paper" ↔ „ink"); die Wahl wird gemerkt.
+- **Sprachausgabe (optional)**: liest neue Erzähltexte per Gemini-TTS
+  (Stimme "Orus") vor, sobald der 🔊-Umschalter im Menü aktiv ist — nicht-
+  blockierend wie die KI-Bild-Panels: der Text steht sofort da, die Stimme
+  trifft kurz danach ein. Braucht `GEMINI_TTS=1` + `GEMINI_API_KEY` auf dem
+  Server; die Wahl des Spielers wird lokal gemerkt.
 - **Mobil & installierbar (PWA)**: touch-freundliches Layout; oben links per
   Hamburger oder per Swipe-Left öffnet sich das Menü als Off-Canvas-Drawer.
   Als Web-App installierbar (`manifest.json` + Service-Worker mit Offline-Shell,

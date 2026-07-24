@@ -125,6 +125,19 @@ klassischer „kleiner Server" einfacher.
    werden gecacht (Wiederholungen kosten nichts mehr). Ohne aktives Backend
    bleiben die schnellen, kostenlosen SVG-Panels aktiv.
 
+6. Optional **Sprachausgabe** (Gemini-TTS liest die Erzählung vor):
+   - `GEMINI_TTS = 1`
+   - `GEMINI_API_KEY` (derselbe Schlüssel wie oben reicht)
+   - `GEMINI_TTS_MODEL = gemini-3.1-flash-tts` (optional; eigenes Kontingent,
+     unabhängig von der Text-Kontingent-Kette — Stand Sommer 2026 z. B.
+     500 Anfragen/Tag im kostenlosen Tarif, in Google AI Studio prüfen)
+   - `GEMINI_TTS_VOICE = Orus` (optional; eine der 30 Gemini-Stimmen)
+
+   Diese Variable schaltet die Option nur serverseitig frei — jeder Spieler
+   entscheidet zusätzlich per 🔊-Umschalter im Menü, ob er sie hören will
+   (Einstellung wird lokal gemerkt). Schlägt eine Anfrage fehl (Kontingent,
+   Netzwerk), bleibt es einfach still; der Text stand ja schon da.
+
 `PORT` musst du nicht setzen — Render gibt ihn vor, die App liest ihn aus.
 
 ## Fly.io (wenn Spielstände bleiben sollen)

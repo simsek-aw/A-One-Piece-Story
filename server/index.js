@@ -18,6 +18,7 @@ import {
 } from "./engine/turn.js";
 import { createProvider, activeProviderName, availableProviders, openRouterProviderId } from "./ai/provider.js";
 import { getPanelImage, PANELS_DIR, imagesEnabled, activeImageBackendName } from "./ai/imageProvider.js";
+import { ttsEnabled, synthesizeSpeech } from "./ai/ttsProvider.js";
 import { listArchetypes, listStartLocations } from "./content/startingScenarios.js";
 import { creationRules } from "./engine/character.js";
 import { ERA } from "./content/lore.js";
@@ -77,7 +78,20 @@ app.get(
       clock: clockConfig(),
       imagesEnabled: imagesEnabled(),
       imageProvider: activeImageBackendName(),
+      ttsEnabled: ttsEnabled(),
     });
+  }),
+);
+
+// --- Sprachausgabe: Text -> Audio (WAV, base64). Kein Spielstand nötig,
+//     kostet aber Kontingent — darum nur, wenn der Spieler es einschaltet. ---
+app.post(
+  "/api/tts",
+  wrap(async (req, res) => {
+    const text = String(req.body?.text || "").trim();
+    if (!text) return res.json({ audio: null });
+    const result = await synthesizeSpeech(text);
+    res.json(result);
   }),
 );
 

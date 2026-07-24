@@ -131,6 +131,10 @@ async function init() {
   if (aHint) aHint.textContent = state.meta.imagesEnabled
     ? `✎ Bildgenerierung über ${state.meta.imageProvider || "KI"} ist aktiv — dein Porträt wird beim Spielstart gezeichnet.`
     : "ℹ️ Bildgenerierung ist derzeit aus; die Beschreibung wird gespeichert und der Spielleiter bezieht sie ein.";
+  if (state.meta.ttsEnabled) {
+    $("#ttsToggle").classList.remove("hidden");
+    updateTtsToggleLabel();
+  }
 
   const params = new URLSearchParams(location.search);
   const existing = params.get("game");
@@ -511,6 +515,7 @@ function hideRecapBanner() {
 // darum führen "Neuer Charakter" und "Zur Charakterauswahl" beide hierher.
 function beginNewCharacter() {
   if (state.view) rememberCharacter(state.view);
+  stopSpeech();
   state.gameId = null;
   state.view = null;
   state.lastFxNarration = null;
@@ -764,6 +769,7 @@ function renderScene(view) {
   if (isNewNarration) {
     state.lastFxNarration = view.scene.narration;
     playSceneMangaFx(view, previousView);
+    speak(view.scene.narration);
   }
 }
 
@@ -1645,6 +1651,57 @@ $("#themeToggle").addEventListener("click", () => {
   try { localStorage.setItem("ops-theme", next); } catch (e) {}
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute("content", next === "ink" ? "#0f0f0f" : "#e7e4dc");
+  closeNavMenu();
+});
+
+// ---------- Sprachausgabe (Gemini-TTS, optional) ----------
+// Nicht-blockierend wie das KI-Bild-Panel: der Text steht sofort da, die
+// Stimme trifft kurz danach ein. Schlägt die Anfrage fehl (kein Kontingent,
+// Netzwerkfehler), bleibt es einfach still — kein Fehlerbanner, das den
+// Spielfluss stört.
+const TTS_KEY = "aops-tts";
+let ttsOn = false;
+try { ttsOn = localStorage.getItem(TTS_KEY) === "1"; } catch { /* optional */ }
+let currentSpeech = null;
+
+function updateTtsToggleLabel() {
+  const btn = $("#ttsToggle");
+  if (!btn) return;
+  btn.textContent = `🔊 Sprachausgabe: ${ttsOn ? "An" : "Aus"}`;
+  btn.setAttribute("aria-pressed", String(ttsOn));
+}
+
+function stopSpeech() {
+  if (currentSpeech) {
+    currentSpeech.pause();
+    currentSpeech = null;
+  }
+}
+
+async function speak(text) {
+  if (!ttsOn || !text) return;
+  stopSpeech();
+  try {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (!data?.audio) return;
+    const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
+    currentSpeech = audio;
+    audio.play().catch(() => {}); // Autoplay-Sperren o. Ä. -> einfach still bleiben
+  } catch {
+    /* Sprachausgabe ist ein Bonus, kein Kernfeature — Fehler bleiben leise. */
+  }
+}
+
+$("#ttsToggle").addEventListener("click", () => {
+  ttsOn = !ttsOn;
+  try { localStorage.setItem(TTS_KEY, ttsOn ? "1" : "0"); } catch { /* optional */ }
+  updateTtsToggleLabel();
+  if (!ttsOn) stopSpeech();
   closeNavMenu();
 });
 

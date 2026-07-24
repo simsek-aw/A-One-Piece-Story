@@ -225,6 +225,40 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 36) — Sprachausgabe (Gemini-TTS, umschaltbar)
+
+Nutzerwunsch: eine Sprachausgabe für die Erzählung, umschaltbar, über
+Gemini 3.1 Flash TTS (Stimme "Orus", eigenes Kontingent, Stand Sommer 2026
+z. B. 500 Anfragen/Tag im kostenlosen Tarif).
+
+- [x] `server/ai/ttsProvider.js` (neu): `synthesizeSpeech(text)` ruft Gemini
+      über `@google/genai` auf (`responseModalities: ["AUDIO"]`,
+      `speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName`). Gemini
+      liefert rohe PCM-Samples ohne Container — der Server verpackt sie in
+      einen minimalen WAV-Header (Sample-Rate wird aus dem gemeldeten
+      mimeType gelesen, Fallback 24 kHz), damit der Browser sie abspielen
+      kann. Sehr lange Szenen werden an der letzten Satzgrenze vor 900
+      Zeichen gekappt (Latenz/Kontingent). Jeder Fehler liefert `{audio:
+      null}` statt eine Exception zu werfen — eine fehlgeschlagene
+      Sprachausgabe darf den Spielfluss nie unterbrechen.
+- [x] `config.js`: `GEMINI_TTS`/`GEMINI_TTS_MODEL`/`GEMINI_TTS_VOICE` (Default
+      `gemini-3.1-flash-tts` / `Orus`) — schaltet die Option nur serverseitig
+      frei, unabhängig von der Text-Kontingent-Kette.
+- [x] Neue Route `POST /api/tts` (kein Spielstand nötig, reiner Text-zu-
+      Audio-Dienst); `ttsEnabled` in `/api/meta` exponiert.
+- [x] Frontend: 🔊-Umschalter im Menü (nur sichtbar, wenn der Server TTS
+      anbietet), Zustand in `localStorage` gemerkt. Bei jeder NEUEN
+      Erzählung (nicht bei reinem Re-Render) wird — falls aktiv — die
+      Sprachausgabe geholt und abgespielt; laufende Wiedergabe wird vor der
+      nächsten gestoppt, damit sich Stimmen nicht überlappen.
+- [x] 6 neue Tests (`test/ttsProvider.test.js`) für die reine WAV-Verpackung,
+      das Kappen langer Texte und den deaktivierten Zustand. Der eigentliche
+      Gemini-Aufruf ließ sich in dieser Umgebung nicht live testen (kein
+      echter `GEMINI_API_KEY` vorhanden) — mit einem ungültigen Test-Key aber
+      per Playwright verifiziert, dass die Anfrage korrekt bei Google
+      ankommt (echte "API key not valid"-Antwort, kein Client-Fehler) und
+      ein Fehlschlag den Spielzug nicht stört.
+
 ## Erledigt (Ausbaustufe 35) — Namens-Tonalität: konsequent One-Piece-artig statt generisch
 
 Nutzerwunsch: Namen, die auftauchen oder mit denen der Spieler angesprochen
