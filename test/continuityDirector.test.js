@@ -179,6 +179,37 @@ test("accepts an anonymous first-time NPC introduced without naming them", () =>
   assert.deepEqual(auditContinuity(game, context, anon), []);
 });
 
+// Konkreter Nutzer-Vorfall: ein "Flüchtiger Komplize" (der Name IST hier die
+// Beschreibung, keine echte Namensnennung nötig) wird beim Weglaufen
+// eingeführt, nicht beim Ankommen/Beobachten — die alte GENERIC_PRESENCE
+// deckte nur Auftauchen/Beobachten ab, nicht Flucht/Verschwinden.
+test("accepts an anonymous first-time NPC introduced while fleeing the scene", () => {
+  const game = gameOnBoat();
+  game.world.sceneLocation = "Loguetown – Marktplatz";
+  game.scene.presentNpcIds = [];
+  const context = { kind: "turn", playerAction: "Ich verfolge die Spur.", continuity: continuityContext(game) };
+  const anon = scene({
+    narration: "Ein Schatten löst sich aus der Gasse — sein Komplize ergreift die Flucht, bevor du reagieren kannst.",
+    npcs: [{ id: "npc_komplize", name: "Flüchtiger Komplize", role: "", disposition: 0, note: "Erster Auftritt, flieht sofort." }],
+  });
+  assert.deepEqual(auditContinuity(game, context, anon), []);
+});
+
+// Ein mehrteiliger Name wird im Erzähltext oft nur in EINEM seiner Wörter
+// wieder aufgegriffen, nicht als zusammenhängender Substring — das darf
+// nicht als "nicht eingeführt" gewertet werden.
+test("accepts a multi-word name mentioned by only one of its words", () => {
+  const game = gameOnBoat();
+  game.world.sceneLocation = "Loguetown – Marktplatz";
+  game.scene.presentNpcIds = [];
+  const context = { kind: "turn", playerAction: "Ich sehe mich um.", continuity: continuityContext(game) };
+  const partial = scene({
+    narration: "York nickt dir knapp zu, bevor er sich wieder abwendet.",
+    npcs: [{ id: "mister_york", name: "Mister York", role: "Butler", disposition: 0, note: "..." }],
+  });
+  assert.deepEqual(auditContinuity(game, context, partial), []);
+});
+
 // Die Lockerung gilt NUR für einen echten Erst-Auftritt. Taucht ein NPC ganz
 // ohne jede textliche Spur auf (kein Name, kein Rollenwort, keine generische
 // Präsenz-Formulierung), bleibt das weiterhin ein echter Kontinuitätsfehler.

@@ -19,7 +19,11 @@ const LEAVE_INTENT = /\b(weiterzieh|weitergeh|weggeh|fortgeh|verlass|aufbrech|zi
 // dieses Muster) — ein Erst-Auftritt darf also namenlos erzählt werden. Diese
 // generische Präsenz-Formulierung gilt dann als Nachweis, dass die Person
 // wirklich im Text auftaucht, statt strikt Name/Rollenwort zu verlangen.
-const GENERIC_PRESENCE = /\b(jemand|eine? (?:gestalt|person|stimme)|ein(?:e)? (?:fremd\w*|maskiert\w*|unbekannt\w*)|ein (?:mann|reisend\w*|händler)|eine (?:frau|reisende)|tritt (?:heran|hinzu|näher|ein)|spricht dich an|mustert dich|blickt dich an|wendet sich (?:an dich|dir zu)|näher(?:t|st)? sich dir|beobachtet (?:dich|aufmerksam)|sieht dich an)\b/i;
+// Deckt bewusst mehrere Arten ab, wie ein anonymer Auftritt beschrieben sein
+// kann — nicht nur "taucht auf/beobachtet", sondern auch "flieht/verschwindet"
+// (ein "flüchtiger Komplize" wird ja meist beim Weglaufen eingeführt, nicht
+// beim Ankommen) und die besitzanzeigende Form ("sein Komplize", "ihr Helfer").
+const GENERIC_PRESENCE = /\b(jemand|eine? (?:gestalt|person|stimme|silhouette|figur)|ein(?:e)? (?:fremd\w*|maskiert\w*|unbekannt\w*|zweite\w*|weitere\w*)|ein (?:mann|reisend\w*|händler|komplize|helfer|begleiter|angreifer|verfolger)|eine (?:frau|reisende|komplizin)|(?:sein|ihr) (?:komplize|begleiter|helfer)|tritt (?:heran|hinzu|näher|ein)|spricht dich an|mustert dich|blickt dich an|wendet sich (?:an dich|dir zu)|näher(?:t|st)? sich dir|beobachtet (?:dich|aufmerksam)|sieht dich an|flieht|flüchtet|rennt (?:davon|weg)|läuft (?:davon|weg)|ergreift die flucht|entkommt|verschwindet (?:in|hinter|um)|taucht (?:unter|ab)|duckt sich weg)\b/i;
 
 export function continuityContext(game) {
   const present = new Set(game.scene?.presentNpcIds || []);
@@ -281,8 +285,14 @@ function wordSimilarity(a, b) {
 
 function npcMentioned(narration, npc, isFirstAppearance = false) {
   const text = normalize(narration);
+  // Voller Name als zusammenhängender Substring (z. B. "Mister York") UND
+  // wortweise (z. B. nur "York" oder nur "Mister") — ein mehrteiliger Name
+  // wird im Text oft nur in EINEM seiner Wörter oder in anderer Reihenfolge/
+  // Beugung wieder aufgegriffen ("Flüchtiger Komplize" -> "der Komplize").
   const name = normalize(npc.name);
   if (name.length >= 3 && text.includes(name)) return true;
+  const nameWordMatch = String(npc.name || "").split(/[^\p{L}\p{N}]+/u).map(normalize).some((word) => word.length >= 3 && text.includes(word));
+  if (nameWordMatch) return true;
   const roleMatch = String(npc.role || "").split(/[^\p{L}\p{N}]+/u).map(normalize).some((word) => word.length >= 5 && text.includes(word));
   if (roleMatch) return true;
   return isFirstAppearance && GENERIC_PRESENCE.test(narration);

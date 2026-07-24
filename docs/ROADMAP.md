@@ -225,6 +225,27 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 33) — Continuity-Check: weitere NPC-Falsch-Positive behoben
+
+Derselbe Fehlalarm wie bei "Mister York" (Ausbaustufe 29) trat erneut auf:
+"NPC „Flüchtiger Komplize“ steht in der Szene, wird im Erzähltext aber nicht
+eingeführt." Die frühere Lockerung (GENERIC_PRESENCE) deckte nur das
+Auftauchen/Beobachten einer anonymen Person ab — nicht ihr Weglaufen, was bei
+einem "flüchtigen Komplizen" naheliegend die übliche Einführung ist.
+
+- [x] `GENERIC_PRESENCE` um Flucht-/Verschwinden-Formulierungen erweitert
+      (flieht, flüchtet, rennt/läuft davon, ergreift die Flucht, entkommt,
+      verschwindet, taucht ab/unter, duckt sich weg) sowie um die
+      besitzanzeigende Einführung eines Begleiters ("sein/ihr Komplize/
+      Begleiter/Helfer").
+- [x] `npcMentioned()` prüft den NAMEN jetzt zusätzlich WORTWEISE, nicht nur
+      als zusammenhängenden Substring — ein mehrteiliger, beschreibender
+      "Name" wie "Flüchtiger Komplize" wird im Text oft nur in einem seiner
+      Wörter oder anderer Reihenfolge/Beugung wieder aufgegriffen ("der
+      Komplize", "York nickt").
+- [x] 2 neue Tests: anonymer Erst-Auftritt beim Fliehen wird akzeptiert, ein
+      mehrteiliger Name über nur eins seiner Wörter wird erkannt.
+
 ## Erledigt (Ausbaustufe 32) — Continuity-Check: Ortswechsel-Rechtfertigung aus der Vorszene
 
 Konkreter Vorfall (per vorformulierter Auswahlmöglichkeit, nicht Freitext):
