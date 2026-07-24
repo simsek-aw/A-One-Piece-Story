@@ -94,7 +94,10 @@ function skillLabel(id) {
 
 const SAVE_SLOTS_KEY = "aops-save-slots";
 const PROVIDER_KEY = "aops-provider";
-const RANDOM_NAMES = ["Aren", "Bela", "Ciro", "Dena", "Elio", "Fara", "Garo", "Ilya", "Juna", "Keno", "Lira", "Miro", "Nela", "Orin", "Rava", "Sena", "Taro", "Vika", "Yaro", "Zira"];
+// Eigenständig erfundene Namen im Klang der One-Piece-Welt (kurz, einprägsam,
+// oft ungewöhnliche Vor-/Rufnamen) — bewusst KEINE echten Canon-Namen
+// (Ruffy, Zoro, Nami, Sanji, ...), analog zur Perk-Namensregel in character.js.
+const RANDOM_NAMES = ["Kaito", "Riko", "Sango", "Toran", "Miri", "Enzo", "Kael", "Vasha", "Reika", "Jiro", "Amara", "Renzo", "Suri", "Baku", "Nera", "Yuna", "Kohana", "Rook", "Tobo", "Dez"];
 const RANDOM_APPEARANCES = {
   hair: ["kurzes zerzaustes schwarzes Haar", "lange kupferrote Zöpfe", "silberner Undercut", "wilde dunkelblaue Locken", "rasierter Kopf mit auffälliger Tätowierung", "strohblondes Haar unter einem Kopftuch"],
   feature: ["eine feine Narbe über der Augenbraue", "unzählige Sommersprossen", "ein breites herausforderndes Grinsen", "ein ruhiger durchdringender Blick", "eine goldene Zahnlücke", "runde getönte Brillengläser"],

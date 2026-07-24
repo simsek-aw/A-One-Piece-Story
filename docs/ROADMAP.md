@@ -225,6 +225,29 @@ Aussetzer, die ein zweiter Versuch oft schon löst.
       beiden Versuchen weiterhin fehlerhaftes Modell wechselt korrekt zum
       nächsten Modell der Kette.
 
+## Erledigt (Ausbaustufe 35) — Namens-Tonalität: konsequent One-Piece-artig statt generisch
+
+Nutzerwunsch: Namen, die auftauchen oder mit denen der Spieler angesprochen
+wird, sollen klanglich zur One-Piece-Welt passen statt generisch-westlich
+zu wirken — an drei Stellen behoben.
+
+- [x] `systemPrompt.js`: neue Regel für echte KI-Spielleiter — Namen (neue
+      NPCs UND wie der Spieler selbst angesprochen wird) müssen im Stil von
+      Nami/Usopp/Kaya/Coby klingen, nicht wie "Max"/"Anna"/"Peter". Immer
+      eigene, neue Namen erfinden; echte Canon-Namen (Ruffy, Zoro, Kaido, …)
+      bleiben ausschließlich den tatsächlichen kanonischen Fraktionen
+      vorbehalten, sonst wirkt eine gewöhnliche Nebenfigur wie mit einem
+      geklauten Namen.
+- [x] `app.js`: `RANDOM_NAMES` (Schnellstart-Zufallsname) komplett gegen
+      eigenständig erfundene, One-Piece-tonige Namen ausgetauscht (vorher
+      generisch-fantasyartig: "Aren, Bela, Ciro …").
+- [x] `mockProvider.js`: zwei Namen im lokalen NPC-Pool ersetzt — "Kaya die
+      Wirtin" (echte Canon-Figur aus Syrup Village, hätte als beliebige
+      Wirtin missverständlich gewirkt) → "Suzu die Wirtin"; "Der alte Job"
+      (klang wie ein zufälliges englisches Wort) → "Der alte Toma". Dabei
+      auch eine kleine, unabhängig bestehende Textredundanz behoben ("Kaya
+      die Wirtin, die Wirtin" beim Vorstellen).
+
 ## Erledigt (Ausbaustufe 34) — Continuity-Check: strukturelle Ursache der NPC-Falsch-Positive behoben
 
 Nach dem dritten Fehlalarm derselben Art ("Vermummter Fremder steht in der

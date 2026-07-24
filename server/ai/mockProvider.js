@@ -58,13 +58,16 @@ const LOCATION_FLAVOR = {
   ],
 };
 
+// Namen bewusst eigenständig erfunden, keine echten Canon-Namen (vgl.
+// character.js) — "Kaya" ist z. B. eine echte Figur aus Syrup Village und
+// würde als beliebige Wirtin hier missverständlich wirken.
 const NPC_POOL = [
-  { id: "npc_kaya_die_wirtin", name: "Kaya die Wirtin", role: "Kneipenwirtin", locations: ["hafenstadt", "dorf"] },
+  { id: "npc_kaya_die_wirtin", name: "Suzu die Wirtin", role: "Kneipenwirtin", locations: ["hafenstadt", "dorf"] },
   { id: "npc_gunkan_der_soeldner", name: "Gunkan", role: "Söldner mit Narbe", locations: ["hafenstadt", "dorf", "marinestadt"] },
   { id: "npc_lina_navigatorin", name: "Lina", role: "junge Navigatorin", locations: ["hafenstadt", "dorf"] },
   { id: "npc_offizier_borrot", name: "Offizier Borrot", role: "Marine-Offizier", locations: ["marinevorposten", "marinestadt"] },
   { id: "npc_rekrut_nilo", name: "Rekrut Nilo", role: "nervöser Marine-Rekrut", locations: ["marinevorposten", "marinestadt"] },
-  { id: "npc_alter_job", name: "Der alte Job", role: "Schiffszimmermann a.D.", locations: ["hafenstadt", "dorf"] },
+  { id: "npc_alter_job", name: "Der alte Toma", role: "Schiffszimmermann a.D.", locations: ["hafenstadt", "dorf"] },
   { id: "npc_maskierter_fremder", name: "Ein maskierter Fremder", role: "zwielichtiger Reisender", locations: ["hafenstadt", "dorf", "marinestadt"] },
 ];
 
@@ -85,7 +88,7 @@ function npcForContext(context) {
 }
 
 function introduceNpc(npc, context) {
-  if (npc.id === "npc_kaya_die_wirtin") return `Vor der kleinen Hafenkneipe winkt dich ${npc.name}, die Wirtin, zu sich.`;
+  if (npc.id === "npc_kaya_die_wirtin") return `Vor der kleinen Hafenkneipe winkt dich ${npc.name} zu sich.`;
   if (npc.id === "npc_offizier_borrot") return `${npc.name} löst sich aus einer Marine-Patrouille und tritt mit prüfendem Blick auf dich zu.`;
   if (npc.id === "npc_rekrut_nilo") return `${npc.name} wartet, bis sein Vorgesetzter außer Hörweite ist, und spricht dich leise an.`;
   if (npc.id === "npc_lina_navigatorin") return `${npc.name}, eine junge Navigatorin mit Seekarten unter dem Arm, spricht dich nahe dem Kai an.`;
